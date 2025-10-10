@@ -1,3 +1,4 @@
+import 'package:clones_desktop/application/environment_provider.dart';
 import 'package:clones_desktop/application/route_provider.dart';
 import 'package:clones_desktop/application/upload_modal_provider.dart';
 import 'package:clones_desktop/application/version_provider.dart';
@@ -24,6 +25,7 @@ class Sidebar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentRoute = ref.watch(currentRouteProvider);
     final appVersion = ref.watch(appVersionProvider);
+    final environment = ref.watch(environmentProvider);
     final buttons = [
       SidebarButtonData(
         path: HomeView.routeName,
@@ -90,34 +92,25 @@ class Sidebar extends ConsumerWidget {
               child: Column(
                 children: [
                   Text(
-                    '$version - alpha',
+                    version,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: Colors.white.withValues(alpha: 0.5),
                     ),
                   ),
-                  Text(
-                    'TESTNET',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: ClonesColors.error,
-                      fontWeight: FontWeight.bold,
+                  if (environment.shouldShowEnvironmentBadge)
+                    Text(
+                      environment.displayName,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: ClonesColors.error,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                  ),
-                  Text(
-                    'Base sepolia',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: ClonesColors.error,
-                    ),
-                  ),
                 ],
               ),
             ),
             loading: () => const SizedBox(),
-            error: (err, stack) => Text(
-              'v?',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: Colors.white.withValues(alpha: 0.5),
-              ),
-            ),
+            error: (err, stack) => const SizedBox(),
           ),
         ],
       ),

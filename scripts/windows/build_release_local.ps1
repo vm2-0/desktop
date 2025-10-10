@@ -234,11 +234,33 @@ function Build-TauriTarget {
         rustup target add $Target
 
         # Build the Windows application
-        Write-LogInfo "Running: cargo tauri build --target $Target"
+        # Use environment-specific config if provided, otherwise use base config
+        $ConfigFile = "tauri.conf.json"
+        if ($env:ENVIRONMENT) {
+            $EnvConfig = "tauri.$($env:ENVIRONMENT).conf.json"
+            if (Test-Path "src-tauri\$EnvConfig") {
+                $ConfigFile = $EnvConfig
+                Write-LogInfo "Using environment-specific config: $ConfigFile"
+            } else {
+                Write-LogWarning "Environment config $EnvConfig not found, using base config"
+            }
+        }
+        
+        # Ensure Tauri signing variables are exported for the build process
+        if ($env:TAURI_SIGNING_PRIVATE_KEY) {
+            Write-LogInfo "TAURI_SIGNING_PRIVATE_KEY exported for build"
+        }
+        if ($env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD) {
+            Write-LogInfo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD exported for build"
+        } else {
+            Write-LogWarning "TAURI_SIGNING_PRIVATE_KEY_PASSWORD not found - signing may require manual password input"
+        }
+        
+        Write-LogInfo "Running: cargo tauri build --target $Target --config $ConfigFile"
         Write-LogInfo "Current working directory: $(Get-Location)"
 
         # Run the build command directly without capturing output to avoid issues
-        cargo tauri build --target $Target
+        cargo tauri build --target $Target --config $ConfigFile
 
         if ($LASTEXITCODE -ne 0) {
             throw "Tauri build failed with exit code $LASTEXITCODE"

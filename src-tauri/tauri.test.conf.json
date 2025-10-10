@@ -1,81 +1,16 @@
 {
-    "$schema": "https://schema.tauri.app/config/2",
-    "productName": "clones-desktop-test",
-    "version": "0.1.4",
-    "identifier": "ai.clones.desktop.test",
-    "build": {
-        "frontendDist": "../build/web",
-        "devUrl": "http://localhost:3000",
-        "beforeBuildCommand": "flutter build web --release --base-href / --no-web-resources-cdn --csp"
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://releases-test.clones-ai.com/latest/{{target}}/latest.json"
+      ]
     },
-    "plugins": {
-        "deep-link": {
-            "desktop": {
-                "schemes": [
-                    "clones-test"
-                ]
-            }
-        }
-    },
-    "app": {
-        "windows": [
-            {
-                "title": "Clones Desktop Test",
-                "width": 1200,
-                "height": 800,
-                "minWidth": 800,
-                "minHeight": 600,
-                "fullscreen": false,
-                "resizable": true,
-                "visible": true,
-                "center": true
-            }
-        ],
-        "macOSPrivateApi": true,
-        "security": {
-            "assetProtocol": {
-                "enable": true,
-                "scope": [
-                    "**"
-                ]
-            },
-            "csp": {
-                "default-src": "'self' customprotocol: asset:",
-                "connect-src": "'self' ipc: http://ipc.localhost https://api.jup.ag http://localhost http://localhost:8001 https://clones.ai",
-                "font-src": "'self' https://fonts.googleapis.com https://fonts.gstatic.com",
-                "img-src": "'self' asset: https://placehold.co http://asset.localhost https://s2.googleusercontent.com https://t0.gstatic.com https://t1.gstatic.com https://t2.gstatic.com https://t3.gstatic.com https://google.com https://www.google.com blob: data:",
-                "media-src": "'self' data: blob: asset: http://asset.localhost",
-                "style-src": "'self' 'unsafe-inline'  https://fonts.googleapis.com https://fonts.gstatic.com"
-            }
-        }
-    },
-    "bundle": {
-        "createUpdaterArtifacts": false,
-        "active": true,
-        "targets": "all",
-        "windows": {},
-        "macOS": {
-            "dmg": {
-                "appPosition": {
-                    "x": 180,
-                    "y": 170
-                },
-                "applicationFolderPosition": {
-                    "x": 480,
-                    "y": 170
-                },
-                "windowSize": {
-                    "height": 400,
-                    "width": 660
-                }
-            }
-        },
-        "icon": [
-            "icons/32x32.png",
-            "icons/128x128.png",
-            "icons/128x128@2x.png",
-            "icons/icon.icns",
-            "icons/icon.ico"
+    "deep-link": {
+      "desktop": {
+        "schemes": [
+          "clones-dev"
         ]
+      }
     }
+  }
 }

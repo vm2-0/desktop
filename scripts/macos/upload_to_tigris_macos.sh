@@ -2,10 +2,29 @@
 
 set -euo pipefail
 
-# Configuration
-TIGRIS_BUCKET="clones-desktop-release-test"
-TIGRIS_ENDPOINT="https://fly.storage.tigris.dev"
-BUCKET_URL="https://releases-test.clones-ai.com"
+# Environment configuration
+set_environment_config() {
+    local env="$1"
+    
+    case "$env" in
+        "prod")
+            export TIGRIS_BUCKET="clones-desktop-release-prod"
+            export BUCKET_URL="https://releases.clones-ai.com"
+            ;;
+        "test")
+            export TIGRIS_BUCKET="clones-desktop-release-test"
+            export BUCKET_URL="https://releases-test.clones-ai.com"
+            ;;
+        *)
+            log_error "Invalid environment: $env"
+            echo "  Valid environments: prod, test"
+            exit 1
+            ;;
+    esac
+    
+    export TIGRIS_ENDPOINT="https://fly.storage.tigris.dev"
+    log_info "Environment set to: $env (bucket: $TIGRIS_BUCKET)"
+}
 
 # Colors for output
 RED='\033[0;31m'
@@ -30,16 +49,27 @@ log_error() {
     echo -e "${RED}❌ $1${NC}"
 }
 
-# Load environment variables from .env if it exists
+# Load environment variables from environment-specific .env files
 load_env() {
-    if [ -f ".env" ]; then
+    local environment="$1"
+    local env_file=".env.${environment}"
+    
+    # Try environment-specific file first
+    if [ -f "$env_file" ]; then
+        log_info "Loading environment variables from $env_file..."
+        set -a  # automatically export all variables
+        source "$env_file"
+        set +a  # stop auto-export
+        log_success "Environment variables loaded from $env_file"
+    # Fallback to generic .env for backward compatibility
+    elif [ -f ".env" ]; then
         log_info "Loading environment variables from .env..."
         set -a  # automatically export all variables
         source .env
         set +a  # stop auto-export
-        log_success "Environment variables loaded"
+        log_warning "Using generic .env file. Consider using .env.$environment for better security"
     else
-        log_warning ".env not found, using system environment variables"
+        log_warning "No .env files found, using system environment variables"
     fi
 }
 
@@ -486,7 +516,18 @@ main() {
     echo "🚀 Clones Desktop - Tigris Upload Script"
     echo "========================================"
     
-    load_env
+    if [ -z "${1:-}" ]; then
+        log_error "Usage: $0 <environment>"
+        echo "  Environment: prod, test"
+        echo "  Example: $0 prod"
+        echo "  Example: $0 test"
+        exit 1
+    fi
+    
+    local environment="$1"
+    
+    set_environment_config "$environment"
+    load_env "$environment"
     check_prerequisites
     main_upload
 }

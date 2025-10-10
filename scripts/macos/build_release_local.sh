@@ -66,24 +66,67 @@ check_prerequisites() {
     FLUTTER_VERSION=$(flutter --version | head -n 1 | cut -d' ' -f2)
     log_info "Flutter version: $FLUTTER_VERSION (required: $REQUIRED_FLUTTER_VERSION)"
     
-    # Check if .env exists
-    if [ ! -f ".env" ]; then
-        log_error ".env file not found. Please create it with your environment variables."
-        exit 1
+    # Check environment files based on ENVIRONMENT variable
+    if [ -n "${ENVIRONMENT:-}" ]; then
+        local env_file=".env.${ENVIRONMENT}"
+        if [ ! -f "$env_file" ]; then
+            log_error "$env_file file not found. Please create it with your environment variables."
+            exit 1
+        fi
+        log_info "Will use environment file: $env_file"
+    else
+        # Fallback to generic .env for dev/local usage
+        if [ ! -f ".env" ]; then
+            log_error ".env file not found. Please create it with your environment variables."
+            exit 1
+        fi
+        log_info "Will use generic .env file"
     fi
     
     log_success "Prerequisites check passed"
+}
+
+# Load environment variables from environment-specific .env files
+load_env() {
+    local environment="$1"
+    local env_file=".env.${environment}"
+    
+    # Try environment-specific file first
+    if [ -f "$env_file" ]; then
+        log_info "Loading environment variables from $env_file..."
+        set -a  # automatically export all variables
+        source "$env_file"
+        set +a  # stop auto-export
+        log_success "Environment variables loaded from $env_file"
+    # Fallback to generic .env for backward compatibility
+    elif [ -f ".env" ]; then
+        log_info "Loading environment variables from .env..."
+        set -a  # automatically export all variables
+        source .env
+        set +a  # stop auto-export
+        log_warning "Using generic .env file. Consider using .env.$environment for better security"
+    else
+        log_warning "No .env files found, using system environment variables"
+    fi
 }
 
 # Setup environment
 setup_environment() {
     log_info "Setting up environment..."
     
-    # Source .env to load environment variables
-    set -a  # automatically export all variables
-    source .env
-    set +a  # stop auto-export
-    log_info "Loaded environment variables from .env"
+    # Load environment variables based on ENVIRONMENT variable
+    if [ -n "${ENVIRONMENT:-}" ]; then
+        load_env "$ENVIRONMENT"
+    else
+        # Fallback for dev/local usage
+        if [ -f ".env" ]; then
+            log_info "Loading environment variables from .env..."
+            set -a  # automatically export all variables
+            source .env
+            set +a  # stop auto-export
+            log_info "Loaded environment variables from .env"
+        fi
+    fi
     
     # Create build directory
     mkdir -p "$BUILD_DIR"
@@ -124,7 +167,31 @@ build_tauri_target() {
     rustup target add $target 2>/dev/null || true
     
     # Build without notarization (signing only)
-    cargo tauri build --target $target --config tauri.conf.json
+    # Use environment-specific config if provided, otherwise use base config
+    local config_file="tauri.conf.json"
+    if [ -n "${ENVIRONMENT:-}" ]; then
+        local env_config="tauri.${ENVIRONMENT}.conf.json"
+        if [ -f "$env_config" ]; then
+            config_file="$env_config"
+            log_info "Using environment-specific config: $config_file"
+        else
+            log_warning "Environment config $env_config not found, using base config"
+        fi
+    fi
+    
+    # Ensure Tauri signing variables are exported for the build process
+    if [ -n "${TAURI_SIGNING_PRIVATE_KEY:-}" ]; then
+        export TAURI_SIGNING_PRIVATE_KEY
+        log_info "TAURI_SIGNING_PRIVATE_KEY exported for build"
+    fi
+    if [ -n "${TAURI_SIGNING_PRIVATE_KEY_PASSWORD:-}" ]; then
+        export TAURI_SIGNING_PRIVATE_KEY_PASSWORD
+        log_info "TAURI_SIGNING_PRIVATE_KEY_PASSWORD exported for build"
+    else
+        log_warning "TAURI_SIGNING_PRIVATE_KEY_PASSWORD not found - signing may require manual password input"
+    fi
+    
+    cargo tauri build --target $target --config "$config_file"
     
     local target_dir="$ROOT_DIR/src-tauri/target/$target/release/bundle"
     

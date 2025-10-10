@@ -30,8 +30,18 @@ main() {
     echo "🚀 Clones Desktop - Complete Build & Deploy"
     echo "==========================================="
     
+    if [ -z "${1:-}" ]; then
+        log_error "Usage: $0 <environment>"
+        echo "  Environment: prod, test"
+        echo "  Example: $0 prod"
+        echo "  Example: $0 test"
+        exit 1
+    fi
+    
+    local environment="$1"
+    
     log_info "Step 1/2: Building release..."
-    ./scripts/macos/build_release_local.sh
+    ENVIRONMENT="$environment" ./scripts/macos/build_release_local.sh
     
     if [ $? -ne 0 ]; then
         log_error "Build failed, aborting deployment"
@@ -40,8 +50,8 @@ main() {
     
     log_success "Build completed successfully!"
     
-    log_info "Step 2/2: Uploading to Tigris..."
-    ./scripts/macos/upload_to_tigris_macos.sh
+    log_info "Step 2/2: Uploading to Tigris ($environment)..."
+    ./scripts/macos/upload_to_tigris_macos.sh "$environment"
     
     if [ $? -ne 0 ]; then
         log_error "Upload failed"
@@ -50,7 +60,15 @@ main() {
     
     log_success "🎉 Complete deployment finished!"
     log_info "Your app is now available for download at:"
-    echo "  🌐 https://releases-test.clones-ai.com/latest/darwin/"
+    
+    case "$environment" in
+        "prod")
+            echo "  🌐 https://releases.clones-ai.com/latest/darwin/"
+            ;;
+        "test")
+            echo "  🌐 https://releases-test.clones-ai.com/latest/darwin/"
+            ;;
+    esac
 }
 
 # Run if executed directly

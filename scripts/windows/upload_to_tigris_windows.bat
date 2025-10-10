@@ -1,14 +1,25 @@
 @echo off
 setlocal enabledelayedexpansion
 
-:: Configuration
-set "TIGRIS_BUCKET=clones-desktop-release-test"
-set "TIGRIS_ENDPOINT=https://fly.storage.tigris.dev"
-set "BUCKET_URL=https://releases-test.clones-ai.com"
+:: Check for environment parameter
+if "%~1"=="" (
+    echo ❌ Usage: %0 ^<environment^>
+    echo   Environment: prod, test
+    echo   Example: %0 prod
+    echo   Example: %0 test
+    exit /b 1
+)
+
+set "ENVIRONMENT=%~1"
+
+:: Environment configuration
+call :set_environment_config "%ENVIRONMENT%"
+if errorlevel 1 exit /b 1
+
 set "AWS_CLI_PATH=C:\Program Files\Amazon\AWSCLIV2\aws.exe"
 
-:: Load environment variables from .env if it exists
-call :load_env
+:: Load environment variables from environment-specific .env files
+call :load_env "%ENVIRONMENT%"
 
 :: Check prerequisites
 call :check_prerequisites
@@ -28,17 +39,48 @@ echo   🔄 Tauri updater: %BUCKET_URL%/latest/windows/latest.json
 echo   📚 All versions: %BUCKET_URL%/versions/
 goto :eof
 
+:set_environment_config
+set "env=%~1"
+if "%env%"=="prod" (
+    set "TIGRIS_BUCKET=clones-desktop-release-prod"
+    set "TIGRIS_ENDPOINT=https://fly.storage.tigris.dev"
+    set "BUCKET_URL=https://releases.clones-ai.com"
+    echo ℹ️ Environment set to: prod (bucket: %TIGRIS_BUCKET%^)
+) else if "%env%"=="test" (
+    set "TIGRIS_BUCKET=clones-desktop-release-test"
+    set "TIGRIS_ENDPOINT=https://fly.storage.tigris.dev"
+    set "BUCKET_URL=https://releases-test.clones-ai.com"
+    echo ℹ️ Environment set to: test (bucket: %TIGRIS_BUCKET%^)
+) else (
+    echo ❌ Invalid environment: %env%
+    echo   Valid environments: prod, test
+    exit /b 1
+)
+goto :eof
+
 :load_env
-if exist ".env" (
+set "environment=%~1"
+set "env_file=.env.%environment%"
+
+:: Try environment-specific file first
+if exist "%env_file%" (
+    echo ℹ️ Loading environment variables from %env_file%...
+    for /f "usebackq tokens=1,* delims==" %%a in ("%env_file%") do (
+        if not "%%a"=="" if not "%%b"=="" (
+            set "%%a=%%b"
+        )
+    )
+    echo ✅ Environment variables loaded from %env_file%
+) else if exist ".env" (
     echo ℹ️ Loading environment variables from .env...
     for /f "usebackq tokens=1,* delims==" %%a in (".env") do (
         if not "%%a"=="" if not "%%b"=="" (
             set "%%a=%%b"
         )
     )
-    echo ✅ Environment variables loaded
+    echo ⚠️ Using generic .env file. Consider using .env.%environment% for better security
 ) else (
-    echo ⚠️ .env not found, using system environment variables
+    echo ⚠️ No .env files found, using system environment variables
 )
 goto :eof
 

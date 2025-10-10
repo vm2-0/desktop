@@ -1,5 +1,8 @@
 # Clones Desktop - Complete Build & Deploy (Windows)
 param(
+    [Parameter(Mandatory=$true)]
+    [ValidateSet("prod", "test")]
+    [string]$Environment,
     [switch]$Verbose
 )
 
@@ -25,6 +28,7 @@ function Main {
 
     # Execute build script
     try {
+        $env:ENVIRONMENT = $Environment
         if ($Verbose) {
             & "scripts\windows\build_release_local.ps1" -Verbose
         } else {
@@ -42,14 +46,14 @@ function Main {
 
     Write-Success "Build completed successfully!"
 
-    Write-Info "Step 2/2: Uploading to Tigris..."
+    Write-Info "Step 2/2: Uploading to Tigris ($Environment)..."
 
     # Execute upload script
     try {
         if ($Verbose) {
-            & "scripts\windows\upload_to_tigris_windows.ps1" -Verbose
+            & "scripts\windows\upload_to_tigris_windows.ps1" -Environment $Environment -Verbose
         } else {
-            & "scripts\windows\upload_to_tigris_windows.ps1"
+            & "scripts\windows\upload_to_tigris_windows.ps1" -Environment $Environment
         }
 
         if ($LASTEXITCODE -ne 0) {
@@ -63,7 +67,15 @@ function Main {
 
     Write-Success "🎉 Complete deployment finished!"
     Write-Info "Your app is now available for download at:"
-    Write-Host "  🌐 https://releases-test.clones-ai.com/latest/windows/" -ForegroundColor Cyan
+    
+    switch ($Environment) {
+        "prod" {
+            Write-Host "  🌐 https://releases.clones-ai.com/latest/windows/" -ForegroundColor Cyan
+        }
+        "test" {
+            Write-Host "  🌐 https://releases-test.clones-ai.com/latest/windows/" -ForegroundColor Cyan
+        }
+    }
 }
 
 # Run if executed directly

@@ -1,13 +1,35 @@
 # Clones Desktop - Windows Tigris Upload Script
 param(
+    [Parameter(Mandatory=$true)]
+    [ValidateSet("prod", "test")]
+    [string]$Environment,
     [switch]$Verbose
 )
 
-# Configuration
-$TIGRIS_BUCKET = "clones-desktop-release-test"
-$TIGRIS_ENDPOINT = "https://fly.storage.tigris.dev"
-$BUCKET_URL = "https://releases-test.clones-ai.com"
-$AWS_CLI_PATH = "C:\Program Files\Amazon\AWSCLIV2\aws.exe"
+# Environment configuration
+function Set-EnvironmentConfig {
+    param([string]$Env)
+    
+    switch ($Env) {
+        "prod" {
+            $script:TIGRIS_BUCKET = "clones-desktop-release-prod"
+            $script:BUCKET_URL = "https://releases.clones-ai.com"
+        }
+        "test" {
+            $script:TIGRIS_BUCKET = "clones-desktop-release-test"
+            $script:BUCKET_URL = "https://releases-test.clones-ai.com"
+        }
+        default {
+            Write-Error "Invalid environment: $Env"
+            Write-Host "  Valid environments: prod, test"
+            exit 1
+        }
+    }
+    
+    $script:TIGRIS_ENDPOINT = "https://fly.storage.tigris.dev"
+    $script:AWS_CLI_PATH = "C:\Program Files\Amazon\AWSCLIV2\aws.exe"
+    Write-Info "Environment set to: $Env (bucket: $script:TIGRIS_BUCKET)"
+}
 
 # Functions for colored output
 function Write-Info($Message) {
@@ -26,9 +48,27 @@ function Write-Error($Message) {
     Write-Host "❌ $Message" -ForegroundColor Red
 }
 
-# Load environment variables from .env file
+# Load environment variables from environment-specific .env files
 function Load-Env {
-    if (Test-Path ".env") {
+    param([string]$Environment)
+    
+    $envFile = ".env.$Environment"
+    
+    # Try environment-specific file first
+    if (Test-Path $envFile) {
+        Write-Info "Loading environment variables from $envFile..."
+        Get-Content $envFile | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') {
+                $name = $matches[1].Trim()
+                $value = $matches[2].Trim()
+                if ($name -and $value) {
+                    [Environment]::SetEnvironmentVariable($name, $value, "Process")
+                }
+            }
+        }
+        Write-Success "Environment variables loaded from $envFile"
+    # Fallback to generic .env for backward compatibility
+    } elseif (Test-Path ".env") {
         Write-Info "Loading environment variables from .env..."
         Get-Content ".env" | ForEach-Object {
             if ($_ -match '^([^=]+)=(.*)$') {
@@ -39,9 +79,9 @@ function Load-Env {
                 }
             }
         }
-        Write-Success "Environment variables loaded"
+        Write-Warning "Using generic .env file. Consider using .env.$Environment for better security"
     } else {
-        Write-Warning ".env not found, using system environment variables"
+        Write-Warning "No .env files found, using system environment variables"
     }
 }
 
@@ -413,7 +453,8 @@ function Main {
     Write-Host "🚀 Clones Desktop - Tigris Upload Script" -ForegroundColor Cyan
     Write-Host "========================================" -ForegroundColor Cyan
 
-    Load-Env
+    Set-EnvironmentConfig $Environment
+    Load-Env $Environment
 
     if (-not (Test-Prerequisites)) {
         exit 1
