@@ -1,6 +1,6 @@
 //! Input event listening and logging utilities for capturing keyboard, mouse, and joystick events across platforms.
 
-use crate::core::record;
+use crate::core::record::{self, DemonstrationState};
 use crate::tools::helpers::lock_with_timeout;
 use log::{error, info};
 use rdev::{listen, Event as RdevEvent, EventType as RdevEventType};
@@ -134,12 +134,23 @@ impl InputEvent {
         }
     }
 
-    /// Converts the input event to a log entry with a timestamp.
-    pub fn to_log_entry(&self) -> serde_json::Value {
+    /// Converts the input event to a log entry with a timestamp relative to recording start.
+    pub fn to_log_entry(&self, recording_start_time: Option<chrono::DateTime<chrono::Local>>) -> serde_json::Value {
+        let timestamp = if let Some(start_time) = recording_start_time {
+            // Calculate milliseconds since recording started
+            chrono::Local::now()
+                .signed_duration_since(start_time)
+                .num_milliseconds()
+                .max(0) // Ensure non-negative
+        } else {
+            // Fallback to absolute timestamp if no recording start time
+            chrono::Local::now().timestamp_millis()
+        };
+        
         serde_json::json!({
             "event": self.event,
             "data": self.data,
-            "time": chrono::Local::now().timestamp_millis()
+            "time": timestamp
         })
     }
 }
@@ -148,12 +159,19 @@ impl InputEvent {
 ///
 /// # Arguments
 /// * `app_handle` - The Tauri application handle for emitting events.
+/// * `demonstration_state` - State containing recording start time for relative timestamps.
 ///
 /// # Returns
 /// * `Ok(())` if the listener was started successfully.
 /// * `Err` if an error occurred.
-pub fn start_input_listener<R: Runtime>(app_handle: tauri::AppHandle<R>) -> Result<(), String> {
+pub fn start_input_listener<R: Runtime>(
+    app_handle: tauri::AppHandle<R>,
+    demonstration_state: &DemonstrationState,
+) -> Result<(), String> {
     info!("[Input] Starting input listener");
+    // Get recording start time for relative timestamps
+    let recording_start_time = demonstration_state.get_recording_start_time();
+    
     // Check if already listening
     let lock = lock_with_timeout(&INPUT_LISTENER_STATE, std::time::Duration::from_secs(2));
     let mut state = match lock {
@@ -254,7 +272,7 @@ pub fn start_input_listener<R: Runtime>(app_handle: tauri::AppHandle<R>) -> Resu
                             error!("Failed to emit input event: {}", e);
                         }
                         // Log the input event
-                        let _ = record::log_input(event.to_log_entry());
+                        let _ = record::log_input(event.to_log_entry(recording_start_time));
 
                         // Trigger UI dump for significant interactions
                         let should_dump = should_trigger_ui_dump(&event);
@@ -287,7 +305,7 @@ pub fn start_input_listener<R: Runtime>(app_handle: tauri::AppHandle<R>) -> Resu
                         }),
                     );
                     // Log the mouse move event
-                    let _ = record::log_input(input_event.to_log_entry());
+                    let _ = record::log_input(input_event.to_log_entry(recording_start_time));
                 }
             };
 
@@ -369,7 +387,7 @@ pub fn start_input_listener<R: Runtime>(app_handle: tauri::AppHandle<R>) -> Resu
                         error!("Failed to emit input event: {}", e);
                     }
                     // Log the input event
-                    let _ = record::log_input(event.to_log_entry());
+                    let _ = record::log_input(event.to_log_entry(recording_start_time));
 
                     // Trigger UI dump for significant interactions
                     let should_dump = should_trigger_ui_dump(&event);
@@ -442,7 +460,7 @@ mod tests {
         let event_data = json!({ "detail": "some_info" });
         let input_event = InputEvent::new(event_name, event_data.clone());
 
-        let log_entry = input_event.to_log_entry();
+        let log_entry = input_event.to_log_entry(None); // Test without recording start time
 
         assert_eq!(log_entry["event"], event_name);
         assert_eq!(log_entry["data"], event_data);
