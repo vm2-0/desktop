@@ -20,9 +20,51 @@ use std::process::Command;
 use std::sync::{Arc, Mutex};
 use tauri::{Emitter, State};
 use zip::{write::FileOptions, ZipWriter};
+/// Schema version for meta.json files - Semantic versioning for backward compatibility
+#[derive(Serialize, Deserialize, Clone)]
+pub struct SchemaVersion {
+    pub major: u32,   // Breaking changes
+    pub minor: u32,   // New features, backward compatible
+    pub patch: u32,   // Bug fixes
+}
+
+impl Default for SchemaVersion {
+    fn default() -> Self {
+        Self {
+            major: 1,
+            minor: 0,
+            patch: 0,
+        }
+    }
+}
+
+impl SchemaVersion {
+    pub fn to_string(&self) -> String {
+        format!("{}.{}.{}", self.major, self.minor, self.patch)
+    }
+    
+    pub fn is_compatible(&self, other: &SchemaVersion) -> bool {
+        // Compatible if same major version and this minor >= other minor
+        self.major == other.major && self.minor >= other.minor
+    }
+}
+
+/// Metadata for input_log.jsonl file
+#[derive(Serialize, Deserialize, Clone)]
+pub struct InputLogMeta {
+    pub schema_version: SchemaVersion,
+    pub format: String,
+    pub event_count: u32,
+    pub timestamp_type: String,
+    pub created_at: String,
+}
+
 /// Metadata for a recording session, including quest, platform, and monitor info.
 #[derive(Serialize, Deserialize, Clone)]
 pub struct RecordingMeta {
+    /// Schema version for backward compatibility
+    #[serde(default)]
+    pub schema_version: SchemaVersion,
     id: String,
     timestamp: String,
     duration_seconds: u64,
@@ -248,6 +290,13 @@ pub struct DemonstrationState {
     pub current_demonstration: Mutex<Option<Demonstration>>,
 }
 
+impl DemonstrationState {
+    /// Get the current recording start time for timestamp calculations
+    pub fn get_recording_start_time(&self) -> Option<chrono::DateTime<chrono::Local>> {
+        *self.recording_start_time.lock().unwrap()
+    }
+}
+
 // Global state for recording and logging
 lazy_static::lazy_static! {
     static ref RECORDER_STATE: Arc<Mutex<Option<Recorder>>> = Arc::new(Mutex::new(None));
@@ -420,6 +469,7 @@ pub async fn start_recording(
 
     // Create and save initial meta file
     let meta = RecordingMeta {
+        schema_version: SchemaVersion::default(),
         id: timestamp.clone(),
         timestamp: Local::now().to_rfc3339(),
         duration_seconds: 0,
@@ -467,7 +517,7 @@ pub async fn start_recording(
     }
 
     // Start input listener
-    input::start_input_listener(app.clone())?;
+    input::start_input_listener(app.clone(), &demonstration_state)?;
 
     // Start event-driven UI dumps during recording
     axtree::set_recording_mode(true)?;
@@ -543,6 +593,31 @@ pub async fn stop_recording(
                         .map_err(|e| format!("Failed to serialize meta: {}", e))?,
                 )
                 .map_err(|e| format!("Failed to write meta file: {}", e))?;
+
+                // Generate input_log_meta.json
+                let input_log_path = latest_dir.path().join("input_log.jsonl");
+                if input_log_path.exists() {
+                    let input_log_content = fs::read_to_string(&input_log_path)
+                        .map_err(|e| format!("Failed to read input_log.jsonl: {}", e))?;
+                    
+                    let event_count = input_log_content.lines().filter(|line| !line.trim().is_empty()).count() as u32;
+                    
+                    let input_log_meta = InputLogMeta {
+                        schema_version: SchemaVersion::default(),
+                        format: "jsonl".to_string(),
+                        event_count,
+                        timestamp_type: "relative".to_string(), // Since we now use relative timestamps
+                        created_at: Local::now().to_rfc3339(),
+                    };
+
+                    let input_log_meta_path = latest_dir.path().join("input_log_meta.json");
+                    fs::write(
+                        &input_log_meta_path,
+                        serde_json::to_string_pretty(&input_log_meta)
+                            .map_err(|e| format!("Failed to serialize input_log_meta: {}", e))?,
+                    )
+                    .map_err(|e| format!("Failed to write input_log_meta file: {}", e))?;
+                }
             }
         }
     }
