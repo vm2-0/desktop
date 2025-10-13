@@ -10,7 +10,16 @@ use std::process::Command;
 use std::sync::OnceLock;
 
 // #[cfg(not(target_os = "macos"))]
-use {std::io::Write, std::process::Stdio, std::thread, std::time::Duration};
+use {
+    std::io::Write,
+    std::process::Stdio,
+    std::sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+    std::thread,
+    std::time::Duration,
+};
 
 /// Path to the FFmpeg binary, initialized once per session.
 pub static FFMPEG_PATH: OnceLock<PathBuf> = OnceLock::new();
@@ -442,6 +451,8 @@ pub struct FFmpegRecorder {
     process: Option<std::process::Child>,
     input_format: Option<String>,
     input_device: Option<String>,
+    /// Signal that FFmpeg is ready and capturing frames
+    pub ready_signal: Arc<AtomicBool>,
 }
 
 // #[cfg(not(target_os = "macos"))]
@@ -483,7 +494,29 @@ impl FFmpegRecorder {
             process: None,
             input_format: Some(input_format),
             input_device: Some(input_device),
+            ready_signal: Arc::new(AtomicBool::new(false)),
         }
+    }
+
+    /// Wait for FFmpeg to be ready (capturing frames)
+    /// Returns true if ready within timeout, false otherwise
+    pub fn wait_until_ready(&self, timeout_ms: u64) -> bool {
+        let start = std::time::Instant::now();
+        let timeout = Duration::from_millis(timeout_ms);
+
+        while start.elapsed() < timeout {
+            if self.ready_signal.load(Ordering::Relaxed) {
+                log::info!("[FFmpeg] Ready signal received after {:?}", start.elapsed());
+                return true;
+            }
+            std::thread::sleep(Duration::from_millis(50));
+        }
+
+        log::warn!(
+            "[FFmpeg] Timeout waiting for ready signal after {:?}",
+            timeout
+        );
+        false
     }
 
     /// Starts the recording process using FFmpeg.
@@ -605,11 +638,22 @@ impl FFmpegRecorder {
 
         if let Some(stderr) = process.stderr.take() {
             let stderr_reader = std::io::BufReader::new(stderr);
+            let ready_signal = self.ready_signal.clone();
             thread::spawn(move || {
                 use std::io::BufRead;
                 for line in stderr_reader.lines() {
                     if let Ok(line) = line {
                         log::info!("[FFmpeg] stderr: {}", line);
+
+                        // Detect when FFmpeg is ready to capture
+                        // "Press [q] to stop" indicates FFmpeg has started encoding
+                        if line.contains("Press [q] to stop") {
+                            log::info!(
+                                "[FFmpeg] Ready signal detected: FFmpeg is capturing frames"
+                            );
+                            ready_signal.store(true, Ordering::Relaxed);
+                        }
+
                         let _ = crate::core::record::log_ffmpeg(&line, true);
                     }
                 }
@@ -801,12 +845,10 @@ fn get_ffmpeg_url_linux() -> String {
     })
 }
 fn get_ffmpeg_url_macos() -> String {
-    std::env::var("FFMPEG_URL_MACOS").unwrap_or_else(|_| {
-        "https://www.osxexperts.net/ffmpeg71intel.zip".to_string()
-    })
+    std::env::var("FFMPEG_URL_MACOS")
+        .unwrap_or_else(|_| "https://www.osxexperts.net/ffmpeg71intel.zip".to_string())
 }
 fn get_ffprobe_url_macos() -> String {
-    std::env::var("FFPROBE_URL_MACOS").unwrap_or_else(|_| {
-        "https://www.osxexperts.net/ffprobe71intel.zip".to_string()
-    })
+    std::env::var("FFPROBE_URL_MACOS")
+        .unwrap_or_else(|_| "https://www.osxexperts.net/ffprobe71intel.zip".to_string())
 }

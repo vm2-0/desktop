@@ -306,6 +306,7 @@ pub struct DemonstrationState {
 
 impl DemonstrationState {
     /// Get the current recording start time for timestamp calculations
+    #[allow(dead_code)]
     pub fn get_recording_start_time(&self) -> Option<chrono::DateTime<chrono::Local>> {
         self.recording_start_time
     }
@@ -527,9 +528,6 @@ pub async fn start_recording(
 
     let (session_dir, timestamp) = get_session_path(&app)?;
 
-    // CRITICAL: Store ALL demonstration state in a SINGLE lock to avoid deadlocks
-    // This must happen BEFORE starting any threads that might also lock DEMONSTRATION_STATE
-    let recording_start = Local::now();
     {
         let mut global_state = DEMONSTRATION_STATE
             .lock()
@@ -539,22 +537,13 @@ pub async fn start_recording(
             global_state.current_demonstration = Some(demonstration_data.clone());
         }
         global_state.current_recording_id = Some(timestamp.clone());
-        global_state.recording_start_time = Some(recording_start);
 
         log::info!(
             "[record] Initialized demonstration state: recording_id={}, has_demo={}",
             timestamp,
             demonstration.is_some()
         );
-    } // Lock is released here before we start any threads
-
-    // Store recording start time in atomic variable (lock-free, thread-safe)
-    // This allows input/ffmpeg threads to read it without mutex contention
-    RECORDING_START_TIME_MILLIS.store(recording_start.timestamp_millis(), Ordering::Relaxed);
-    log::info!(
-        "[record] Stored recording start time: {} ms",
-        recording_start.timestamp_millis()
-    );
+    }
 
     let video_path = session_dir.join("recording.mp4");
 
@@ -626,18 +615,49 @@ pub async fn start_recording(
         primary.height
     );
 
-    // Extract recording start time ONCE (already set in DEMONSTRATION_STATE above)
-    let recording_start_time = if let Ok(global_state) = DEMONSTRATION_STATE.lock() {
-        global_state.get_recording_start_time()
-    } else {
-        None
-    };
-
     set_rec_state(&app, "recording".to_string(), None)?;
 
     let mut recorder = Recorder::new(&video_path, &primary, fps)?;
+
+    // Start FFmpeg process
     recorder.start()?;
+
+    log::info!("[record] FFmpeg process started, waiting for ready signal...");
+
+    // CRITICAL: Wait dynamically for FFmpeg to signal it's ready
+    // FFmpeg will set ready_signal when it outputs "Press [q] to stop"
+    // Timeout after 5 seconds if something goes wrong
+    let ffmpeg_ready = match &recorder {
+        Recorder::FFmpeg(r) => r.wait_until_ready(5000),
+    };
+
+    if !ffmpeg_ready {
+        log::warn!("[record] FFmpeg ready signal timeout - proceeding anyway with fallback delay");
+        std::thread::sleep(std::time::Duration::from_millis(1500));
+    }
+
+    // NOW capture recording_start_time - FFmpeg is capturing frames
+    let recording_start = Local::now();
+    log::info!(
+        "[record] ⏱️  Recording start time captured (FFmpeg ready: {}): {}",
+        ffmpeg_ready,
+        recording_start.to_rfc3339()
+    );
+
+    // Store in DEMONSTRATION_STATE
+    {
+        let mut global_state = DEMONSTRATION_STATE
+            .lock()
+            .map_err(|e| format!("Failed to lock demonstration state: {}", e))?;
+        global_state.recording_start_time = Some(recording_start);
+    }
+
+    // Store in atomic variable (lock-free access for input/ffmpeg threads)
+    RECORDING_START_TIME_MILLIS.store(recording_start.timestamp_millis(), Ordering::Relaxed);
+
     *recorder_state = Some(recorder);
+
+    log::info!("[record] Timestamp synchronized with actual video capture start");
 
     // Start input logging and listening
     let mut log_state = LOGGER_STATE.lock().map_err(|e| e.to_string())?;
@@ -654,14 +674,14 @@ pub async fn start_recording(
             // Optionally prompt the user (no-op in headless runs)
             request_ax_perms();
         } else {
-            input::start_input_listener(app.clone(), recording_start_time)?;
+            input::start_input_listener(app.clone(), Some(recording_start))?;
             axtree::set_recording_mode(true)?;
         }
     }
 
     #[cfg(not(target_os = "macos"))]
     {
-        input::start_input_listener(app.clone(), recording_start_time)?;
+        input::start_input_listener(app.clone(), Some(recording_start))?;
         axtree::set_recording_mode(true)?;
     }
 
