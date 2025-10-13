@@ -21,6 +21,7 @@ class GenerateFactoryModalStep1 extends ConsumerStatefulWidget {
 class _GenerateFactoryModalStep1State
     extends ConsumerState<GenerateFactoryModalStep1> {
   late TextEditingController skillsController;
+  late TextEditingController fundingAmountController;
 
   @override
   void initState() {
@@ -30,17 +31,32 @@ class _GenerateFactoryModalStep1State
     });
     final generateFactory = ref.read(generateFactoryNotifierProvider);
     skillsController = TextEditingController(text: generateFactory.skills);
+    fundingAmountController =
+        TextEditingController(text: generateFactory.fundingAmount);
   }
 
   @override
   void dispose() {
     skillsController.dispose();
+    fundingAmountController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final generateFactoryState = ref.watch(generateFactoryNotifierProvider);
+
+    // Synchronize controllers with state when navigating back
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (skillsController.text != (generateFactoryState.skills ?? '')) {
+        skillsController.text = generateFactoryState.skills ?? '';
+      }
+      if (fundingAmountController.text !=
+          (generateFactoryState.fundingAmount ?? '')) {
+        fundingAmountController.text = generateFactoryState.fundingAmount ?? '';
+      }
+    });
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -309,6 +325,7 @@ class _GenerateFactoryModalStep1State
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
             child: TextField(
+              controller: fundingAmountController,
               onChanged: generateFactoryNotifier.setFundingAmount,
               keyboardType: TextInputType.number,
               style: theme.textTheme.bodyMedium,
@@ -367,7 +384,7 @@ class _GenerateFactoryModalStep1State
         ],
         if (generateFactoryState.predictedPoolAddress != null) ...[
           const SizedBox(height: 8),
-          Text(
+          SelectableText(
             'Pool address: ${generateFactoryState.predictedPoolAddress}',
             style: theme.textTheme.bodySmall?.copyWith(
               fontFamily: 'monospace',

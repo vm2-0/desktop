@@ -204,7 +204,7 @@ class FactoriesRepositoryImpl implements FactoriesRepository {
   }) async {
     try {
       return await _apiClient.post<Map<String, dynamic>>(
-        '/forge/pools/predict-address',
+        '/forge/factories/pools/predict-address',
         data: {
           'creator': creator,
           'token': token,

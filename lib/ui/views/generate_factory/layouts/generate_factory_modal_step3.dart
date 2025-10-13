@@ -267,14 +267,13 @@ class GenerateFactoryModalStep3 extends ConsumerWidget {
             const SizedBox(height: 8),
           ],
           if (generateFactory.predictedPoolAddress != null) ...[
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Row(
               children: [
                 Text(
                   'Reward Pool Address:',
                   style: theme.textTheme.bodySmall,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(width: 4),
                 SelectableText(
                   generateFactory.predictedPoolAddress!,
                   style: theme.textTheme.bodySmall?.copyWith(
