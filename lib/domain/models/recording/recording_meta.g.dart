@@ -8,6 +8,10 @@ part of 'recording_meta.dart';
 
 _$RecordingMetaImpl _$$RecordingMetaImplFromJson(Map<String, dynamic> json) =>
     _$RecordingMetaImpl(
+      schemaVersion: json['schema_version'] == null
+          ? null
+          : SchemaVersion.fromJson(
+              json['schema_version'] as Map<String, dynamic>),
       id: json['id'] as String,
       timestamp: json['timestamp'] as String,
       durationSeconds: (json['duration_seconds'] as num).toInt(),
@@ -19,12 +23,18 @@ _$RecordingMetaImpl _$$RecordingMetaImplFromJson(Map<String, dynamic> json) =>
       arch: json['arch'] as String,
       version: json['version'] as String,
       locale: json['locale'] as String,
+      keyboardLayout: json['keyboard_layout'] as String?,
+      primaryMonitor: json['primary_monitor'] == null
+          ? null
+          : MonitorInfo.fromJson(
+              json['primary_monitor'] as Map<String, dynamic>),
       demonstration:
           Demonstration.fromJson(json['quest'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$$RecordingMetaImplToJson(_$RecordingMetaImpl instance) =>
     <String, dynamic>{
+      'schema_version': instance.schemaVersion,
       'id': instance.id,
       'timestamp': instance.timestamp,
       'duration_seconds': instance.durationSeconds,
@@ -36,17 +46,7 @@ Map<String, dynamic> _$$RecordingMetaImplToJson(_$RecordingMetaImpl instance) =>
       'arch': instance.arch,
       'version': instance.version,
       'locale': instance.locale,
+      'keyboard_layout': instance.keyboardLayout,
+      'primary_monitor': instance.primaryMonitor,
       'quest': instance.demonstration,
-    };
-
-_$MonitorInfoImpl _$$MonitorInfoImplFromJson(Map<String, dynamic> json) =>
-    _$MonitorInfoImpl(
-      width: (json['width'] as num).toInt(),
-      height: (json['height'] as num).toInt(),
-    );
-
-Map<String, dynamic> _$$MonitorInfoImplToJson(_$MonitorInfoImpl instance) =>
-    <String, dynamic>{
-      'width': instance.width,
-      'height': instance.height,
     };

@@ -18,14 +18,14 @@ use std::io::{BufReader, Cursor, Read, Write};
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::{Arc, Mutex};
-use tauri::{Emitter, State};
+use tauri::Emitter;
 use zip::{write::FileOptions, ZipWriter};
 /// Schema version for meta.json files - Semantic versioning for backward compatibility
 #[derive(Serialize, Deserialize, Clone)]
 pub struct SchemaVersion {
-    pub major: u32,   // Breaking changes
-    pub minor: u32,   // New features, backward compatible
-    pub patch: u32,   // Bug fixes
+    pub major: u32, // Breaking changes
+    pub minor: u32, // New features, backward compatible
+    pub patch: u32, // Bug fixes
 }
 
 impl Default for SchemaVersion {
@@ -42,7 +42,7 @@ impl SchemaVersion {
     pub fn to_string(&self) -> String {
         format!("{}.{}.{}", self.major, self.minor, self.patch)
     }
-    
+
     pub fn is_compatible(&self, other: &SchemaVersion) -> bool {
         // Compatible if same major version and this minor >= other minor
         self.major == other.major && self.minor >= other.minor
@@ -108,8 +108,17 @@ pub struct DemonstrationReward {
 /// Information about the primary monitor used for recording.
 #[derive(Serialize, Deserialize, Clone)]
 pub struct MonitorInfo {
-    width: u32,
-    height: u32,
+    pub width: u32,
+    pub height: u32,
+    #[serde(default)]
+    pub scale_factor: f32,
+    /// Position in virtual screen space (for multi-monitor setups)
+    /// Note: display_info crate doesn't provide x,y coordinates
+    /// These will be 0,0 for now but structure is future-proof
+    #[serde(default)]
+    pub x: i32,
+    #[serde(default)]
+    pub y: i32,
 }
 
 enum Recorder {
@@ -285,23 +294,80 @@ impl Recorder {
 /// State for managing the current demonstration and recording session.
 #[derive(Default)]
 pub struct DemonstrationState {
-    pub recording_start_time: Mutex<Option<chrono::DateTime<chrono::Local>>>,
-    pub current_recording_id: Mutex<Option<String>>,
-    pub current_demonstration: Mutex<Option<Demonstration>>,
+    pub recording_start_time: Option<chrono::DateTime<chrono::Local>>,
+    pub current_recording_id: Option<String>,
+    pub current_demonstration: Option<Demonstration>,
 }
 
 impl DemonstrationState {
     /// Get the current recording start time for timestamp calculations
     pub fn get_recording_start_time(&self) -> Option<chrono::DateTime<chrono::Local>> {
-        *self.recording_start_time.lock().unwrap()
+        self.recording_start_time
     }
 }
+
+// Separate atomic storage for monitor dimensions to avoid Mutex issues
+use std::sync::atomic::{AtomicU32, Ordering};
+pub(crate) static MONITOR_WIDTH: AtomicU32 = AtomicU32::new(0);
+pub(crate) static MONITOR_HEIGHT: AtomicU32 = AtomicU32::new(0);
 
 // Global state for recording and logging
 lazy_static::lazy_static! {
     static ref RECORDER_STATE: Arc<Mutex<Option<Recorder>>> = Arc::new(Mutex::new(None));
     static ref RECORDING_STATE: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(Some("off".to_string())));
     static ref LOGGER_STATE: Arc<Mutex<Option<Logger>>> = Arc::new(Mutex::new(None));
+    static ref DEMONSTRATION_STATE: Arc<Mutex<DemonstrationState>> = Arc::new(Mutex::new(DemonstrationState::default()));
+}
+
+// Defensive wrappers around tauri_plugin_os calls to avoid panics on some macOS setups
+fn safe_os_platform() -> String {
+    match std::panic::catch_unwind(|| tauri_plugin_os::platform().to_string()) {
+        Ok(val) => val,
+        Err(_) => {
+            log::warn!("[record] tauri_plugin_os::platform() panicked; defaulting to empty");
+            String::new()
+        }
+    }
+}
+
+fn safe_os_arch() -> String {
+    match std::panic::catch_unwind(|| tauri_plugin_os::arch().to_string()) {
+        Ok(val) => val,
+        Err(_) => {
+            log::warn!("[record] tauri_plugin_os::arch() panicked; defaulting to empty");
+            String::new()
+        }
+    }
+}
+
+fn safe_os_version() -> String {
+    match std::panic::catch_unwind(|| tauri_plugin_os::version().to_string()) {
+        Ok(val) => val,
+        Err(_) => {
+            log::warn!("[record] tauri_plugin_os::version() panicked; defaulting to empty");
+            String::new()
+        }
+    }
+}
+
+fn safe_os_locale() -> String {
+    match std::panic::catch_unwind(|| tauri_plugin_os::locale().unwrap_or_default()) {
+        Ok(val) => val,
+        Err(_) => {
+            log::warn!("[record] tauri_plugin_os::locale() panicked; defaulting to empty");
+            String::new()
+        }
+    }
+}
+
+fn safe_keyboard_layout_id() -> Option<String> {
+    match std::panic::catch_unwind(|| keyboard_layout::get_current_keyboard_layout()) {
+        Ok(res) => res.ok().map(|info| info.layout_id),
+        Err(_) => {
+            log::warn!("[record] keyboard_layout::get_current_keyboard_layout() panicked; defaulting to None");
+            None
+        }
+    }
 }
 
 fn get_session_path(app: &tauri::AppHandle) -> Result<(PathBuf, String), String> {
@@ -371,22 +437,24 @@ pub fn set_rec_state(
     let mut recording_state = RECORDING_STATE.lock().map_err(|e| e.to_string())?;
     *recording_state = Some(state.clone());
     if id.is_some() {
-        app.emit(
+        if let Err(e) = app.emit(
             "recording-status",
             serde_json::json!({
                 "state": state,
-                    "id": id
+                "id": id
             }),
-        )
-        .unwrap();
+        ) {
+            log::warn!("[record] Failed to emit recording-status with id: {}", e);
+        }
     } else {
-        app.emit(
+        if let Err(e) = app.emit(
             "recording-status",
             serde_json::json!({
                 "state": state
             }),
-        )
-        .unwrap();
+        ) {
+            log::warn!("[record] Failed to emit recording-status: {}", e);
+        }
     }
     Ok(())
 }
@@ -417,7 +485,6 @@ pub async fn get_recording_state() -> Result<String, String> {
 /// * `Err` if an error occurred.
 pub async fn start_recording(
     app: tauri::AppHandle,
-    demonstration_state: State<'_, DemonstrationState>,
     demonstration: Option<Demonstration>,
     fps: u32,
 ) -> Result<(), String> {
@@ -435,17 +502,19 @@ pub async fn start_recording(
     crate::tools::ffmpeg::init_ffprobe()
         .map_err(|e| format!("Failed to initialize FFprobe: {}", e))?;
 
-    // Store demonstration data in state if available
+    // Store demonstration data in global state if available
     if let Some(demonstration_data) = &demonstration {
-        // Store in DemonstrationState for later retrieval
-        *demonstration_state.current_demonstration.lock().unwrap() =
-            Some(demonstration_data.clone());
+        if let Ok(mut global_state) = DEMONSTRATION_STATE.lock() {
+            global_state.current_demonstration = Some(demonstration_data.clone());
+        }
     }
 
     let (session_dir, timestamp) = get_session_path(&app)?;
 
-    // Store the recording ID
-    *demonstration_state.current_recording_id.lock().unwrap() = Some(timestamp.clone());
+    // Store the recording ID in global state
+    if let Ok(mut global_state) = DEMONSTRATION_STATE.lock() {
+        global_state.current_recording_id = Some(timestamp.clone());
+    }
 
     let video_path = session_dir.join("recording.mp4");
 
@@ -479,17 +548,23 @@ pub async fn start_recording(
         } else {
             "Recording Session".to_string()
         },
-        description: "".to_string(),
-        platform: tauri_plugin_os::platform().to_string(),
-        arch: tauri_plugin_os::arch().to_string(),
-        version: tauri_plugin_os::version().to_string(),
-        locale: tauri_plugin_os::locale().unwrap_or_default(),
-        keyboard_layout: keyboard_layout::get_current_keyboard_layout()
-            .map(|info| info.layout_id)
-            .ok(),
+        description: if let Some(q) = &demonstration {
+            q.content.clone()
+        } else {
+            "".to_string()
+        },
+        platform: safe_os_platform(),
+        arch: safe_os_arch(),
+        version: safe_os_version(),
+        locale: safe_os_locale(),
+        keyboard_layout: safe_keyboard_layout_id(),
         primary_monitor: MonitorInfo {
+            // Store physical dimensions for video recording (meta.json)
             width: physical_width,
             height: physical_height,
+            scale_factor: primary.scale_factor,
+            x: 0, // display_info doesn't provide position yet
+            y: 0, // display_info doesn't provide position yet
         },
         reason: None,
         quest: demonstration,
@@ -502,7 +577,20 @@ pub async fn start_recording(
     )
     .map_err(|e| format!("Failed to write meta file: {}", e))?;
 
-    *demonstration_state.recording_start_time.lock().unwrap() = Some(Local::now());
+    // Store monitor dimensions in atomic variables (thread-safe, no Mutex needed)
+    MONITOR_WIDTH.store(primary.width, Ordering::Relaxed);
+    MONITOR_HEIGHT.store(primary.height, Ordering::Relaxed);
+    log::info!(
+        "[record] Stored monitor dimensions: {}x{}",
+        primary.width,
+        primary.height
+    );
+
+    // Store recording start time in global state
+    let recording_start = Local::now();
+    if let Ok(mut global_state) = DEMONSTRATION_STATE.lock() {
+        global_state.recording_start_time = Some(recording_start);
+    }
 
     set_rec_state(&app, "recording".to_string(), None)?;
 
@@ -516,8 +604,13 @@ pub async fn start_recording(
         *log_state = Some(Logger::new(session_dir.clone())?);
     }
 
-    // Start input listener
-    input::start_input_listener(app.clone(), &demonstration_state)?;
+    // Start input listener - pass recording start time directly
+    let recording_start_time = if let Ok(global_state) = DEMONSTRATION_STATE.lock() {
+        global_state.get_recording_start_time()
+    } else {
+        None
+    };
+    input::start_input_listener(app.clone(), recording_start_time)?;
 
     // Start event-driven UI dumps during recording
     axtree::set_recording_mode(true)?;
@@ -537,7 +630,6 @@ pub async fn start_recording(
 /// * `Err` if an error occurred.
 pub async fn stop_recording(
     app: tauri::AppHandle,
-    demonstration_state: State<'_, DemonstrationState>,
     reason: Option<String>,
 ) -> Result<String, String> {
     // Emit recording stopping event
@@ -561,63 +653,105 @@ pub async fn stop_recording(
     }
 
     // Update meta file with duration
-    if let Some(start_time) = *demonstration_state.recording_start_time.lock().unwrap() {
-        let duration = Local::now().signed_duration_since(start_time).num_seconds() as u64;
+    let recordings_dir = get_custom_app_local_data_dir(&app)?.join("recordings");
 
-        let recordings_dir = get_custom_app_local_data_dir(&app)?.join("recordings");
+    // Find the most recent recording directory
+    let mut entries: Vec<_> = fs::read_dir(&recordings_dir)
+        .map_err(|e| format!("Failed to read recordings directory: {}", e))?
+        .collect::<Result<_, _>>()
+        .map_err(|e| format!("Failed to read directory entries: {}", e))?;
 
-        // Find the most recent recording directory
-        let mut entries: Vec<_> = fs::read_dir(&recordings_dir)
-            .map_err(|e| format!("Failed to read recordings directory: {}", e))?
-            .collect::<Result<_, _>>()
-            .map_err(|e| format!("Failed to read directory entries: {}", e))?;
+    entries.sort_by_key(|entry| std::cmp::Reverse(entry.metadata().unwrap().modified().unwrap()));
 
-        entries
-            .sort_by_key(|entry| std::cmp::Reverse(entry.metadata().unwrap().modified().unwrap()));
+    if let Some(latest_dir) = entries.first() {
+        let video_path = latest_dir.path().join("recording.mp4");
 
-        if let Some(latest_dir) = entries.first() {
-            let meta_path = latest_dir.path().join("meta.json");
-            if meta_path.exists() {
-                let meta_str = fs::read_to_string(&meta_path)
-                    .map_err(|e| format!("Failed to read meta file: {}", e))?;
-                let mut meta: RecordingMeta = serde_json::from_str(&meta_str)
-                    .map_err(|e| format!("Failed to parse meta file: {}", e))?;
-
-                meta.duration_seconds = duration;
-                meta.status = "completed".to_string();
-                meta.reason = reason;
-
-                fs::write(
-                    &meta_path,
-                    serde_json::to_string_pretty(&meta)
-                        .map_err(|e| format!("Failed to serialize meta: {}", e))?,
-                )
-                .map_err(|e| format!("Failed to write meta file: {}", e))?;
-
-                // Generate input_log_meta.json
-                let input_log_path = latest_dir.path().join("input_log.jsonl");
-                if input_log_path.exists() {
-                    let input_log_content = fs::read_to_string(&input_log_path)
-                        .map_err(|e| format!("Failed to read input_log.jsonl: {}", e))?;
-                    
-                    let event_count = input_log_content.lines().filter(|line| !line.trim().is_empty()).count() as u32;
-                    
-                    let input_log_meta = InputLogMeta {
-                        schema_version: SchemaVersion::default(),
-                        format: "jsonl".to_string(),
-                        event_count,
-                        timestamp_type: "relative".to_string(), // Since we now use relative timestamps
-                        created_at: Local::now().to_rfc3339(),
-                    };
-
-                    let input_log_meta_path = latest_dir.path().join("input_log_meta.json");
-                    fs::write(
-                        &input_log_meta_path,
-                        serde_json::to_string_pretty(&input_log_meta)
-                            .map_err(|e| format!("Failed to serialize input_log_meta: {}", e))?,
-                    )
-                    .map_err(|e| format!("Failed to write input_log_meta file: {}", e))?;
+        // Get the actual video duration from the file using FFprobe
+        // This ensures meta.json duration matches the real video file duration
+        let duration = if video_path.exists() {
+            match get_video_duration(&video_path) {
+                Ok(duration_f64) => {
+                    log::info!(
+                        "[stop_recording] Video duration from FFprobe: {:.2}s",
+                        duration_f64
+                    );
+                    duration_f64.round() as u64
                 }
+                Err(e) => {
+                    log::warn!(
+                        "[stop_recording] Failed to get video duration from FFprobe: {}. Using wallclock time as fallback.",
+                        e
+                    );
+                    // Fallback to wallclock time if FFprobe fails
+                    if let Ok(global_state) = DEMONSTRATION_STATE.lock() {
+                        if let Some(start_time) = global_state.recording_start_time {
+                            Local::now().signed_duration_since(start_time).num_seconds() as u64
+                        } else {
+                            0
+                        }
+                    } else {
+                        0
+                    }
+                }
+            }
+        } else {
+            log::warn!("[stop_recording] Video file not found, using wallclock time");
+            // Fallback if video file doesn't exist yet
+            if let Ok(global_state) = DEMONSTRATION_STATE.lock() {
+                if let Some(start_time) = global_state.recording_start_time {
+                    Local::now().signed_duration_since(start_time).num_seconds() as u64
+                } else {
+                    0
+                }
+            } else {
+                0
+            }
+        };
+
+        let meta_path = latest_dir.path().join("meta.json");
+        if meta_path.exists() {
+            let meta_str = fs::read_to_string(&meta_path)
+                .map_err(|e| format!("Failed to read meta file: {}", e))?;
+            let mut meta: RecordingMeta = serde_json::from_str(&meta_str)
+                .map_err(|e| format!("Failed to parse meta file: {}", e))?;
+
+            meta.duration_seconds = duration;
+            meta.status = "completed".to_string();
+            meta.reason = reason;
+
+            fs::write(
+                &meta_path,
+                serde_json::to_string_pretty(&meta)
+                    .map_err(|e| format!("Failed to serialize meta: {}", e))?,
+            )
+            .map_err(|e| format!("Failed to write meta file: {}", e))?;
+
+            // Generate input_log_meta.json
+            let input_log_path = latest_dir.path().join("input_log.jsonl");
+            if input_log_path.exists() {
+                let input_log_content = fs::read_to_string(&input_log_path)
+                    .map_err(|e| format!("Failed to read input_log.jsonl: {}", e))?;
+
+                let event_count = input_log_content
+                    .lines()
+                    .filter(|line| !line.trim().is_empty())
+                    .count() as u32;
+
+                let input_log_meta = InputLogMeta {
+                    schema_version: SchemaVersion::default(),
+                    format: "jsonl".to_string(),
+                    event_count,
+                    timestamp_type: "relative".to_string(), // Since we now use relative timestamps
+                    created_at: Local::now().to_rfc3339(),
+                };
+
+                let input_log_meta_path = latest_dir.path().join("input_log_meta.json");
+                fs::write(
+                    &input_log_meta_path,
+                    serde_json::to_string_pretty(&input_log_meta)
+                        .map_err(|e| format!("Failed to serialize input_log_meta: {}", e))?,
+                )
+                .map_err(|e| format!("Failed to write input_log_meta file: {}", e))?;
             }
         }
     }
@@ -632,16 +766,15 @@ pub async fn stop_recording(
 
     entries.sort_by_key(|entry| std::cmp::Reverse(entry.metadata().unwrap().modified().unwrap()));
 
-    // Clear the current demonstration
-    *demonstration_state.current_demonstration.lock().unwrap() = None;
+    // Clear the current demonstration and get recording ID from global state
+    let recording_id_opt = if let Ok(mut global_state) = DEMONSTRATION_STATE.lock() {
+        global_state.current_demonstration = None;
+        global_state.current_recording_id.clone()
+    } else {
+        None
+    };
 
-    // Get the recording ID from state
-    if let Some(recording_id) = demonstration_state
-        .current_recording_id
-        .lock()
-        .unwrap()
-        .take()
-    {
+    if let Some(recording_id) = recording_id_opt {
         set_rec_state(&app, "saved".to_string(), Some(recording_id.clone()))?;
         set_rec_state(&app, "off".to_string(), None)?;
 
@@ -652,6 +785,7 @@ pub async fn stop_recording(
 }
 
 /// Log an input event to the current recording session.
+/// Automatically converts absolute timestamps to relative for axtree_interaction events.
 ///
 /// # Arguments
 /// * `event` - The event as a JSON value.
@@ -659,7 +793,35 @@ pub async fn stop_recording(
 /// # Returns
 /// * `Ok(())` if successful.
 /// * `Err` if an error occurred.
-pub fn log_input(event: serde_json::Value) -> Result<(), String> {
+pub fn log_input(mut event: serde_json::Value) -> Result<(), String> {
+    // Check if this is an axtree_interaction event and convert timestamp to relative
+    if let Some(event_type) = event.get("event").and_then(|v| v.as_str()) {
+        if event_type == "axtree_interaction" {
+            // Get recording start time for relative timestamp calculation
+            let recording_start_time = if let Ok(state) = DEMONSTRATION_STATE.lock() {
+                state.get_recording_start_time()
+            } else {
+                None
+            };
+
+            // Recalculate timestamp to be relative
+            if let Some(start_time) = recording_start_time {
+                let relative_timestamp = chrono::Local::now()
+                    .signed_duration_since(start_time)
+                    .num_milliseconds()
+                    .max(0);
+
+                // Update the time field in the event
+                if let Some(obj) = event.as_object_mut() {
+                    obj.insert(
+                        "time".to_string(),
+                        serde_json::Value::Number(serde_json::Number::from(relative_timestamp)),
+                    );
+                }
+            }
+        }
+    }
+
     if let Ok(mut state) = LOGGER_STATE.lock() {
         if let Some(logger) = state.as_mut() {
             logger.log_event(event)?;
@@ -669,6 +831,7 @@ pub fn log_input(event: serde_json::Value) -> Result<(), String> {
 }
 
 /// Log FFmpeg output (stdout or stderr) to the current recording session.
+/// Uses global demonstration state for timestamp calculation.
 ///
 /// # Arguments
 /// * `output` - The output string.
@@ -678,9 +841,36 @@ pub fn log_input(event: serde_json::Value) -> Result<(), String> {
 /// * `Ok(())` if successful.
 /// * `Err` if an error occurred.
 pub fn log_ffmpeg(output: &str, is_stderr: bool) -> Result<(), String> {
+    // Get the global demonstration state for timestamp calculation
+    let recording_start_time = if let Ok(state) = DEMONSTRATION_STATE.lock() {
+        state.get_recording_start_time()
+    } else {
+        None
+    };
+
+    // Calculate relative timestamp
+    let timestamp = if let Some(start_time) = recording_start_time {
+        chrono::Local::now()
+            .signed_duration_since(start_time)
+            .num_milliseconds()
+            .max(0)
+    } else {
+        chrono::Local::now().timestamp_millis()
+    };
+
+    // Create event with relative timestamp
+    let event = serde_json::json!({
+        "event": if is_stderr { "ffmpeg_stderr" } else { "ffmpeg_stdout" },
+        "data": {
+            "output": output
+        },
+        "time": timestamp
+    });
+
+    // Log to file
     if let Ok(mut state) = LOGGER_STATE.lock() {
         if let Some(logger) = state.as_mut() {
-            logger.log_ffmpeg(output, is_stderr)?;
+            logger.log_event(event)?;
         }
     }
     Ok(())
@@ -1331,12 +1521,10 @@ fn get_video_duration(video_path: &std::path::Path) -> Result<f64, String> {
         .map_err(|e| format!("Failed to parse duration: {}", e))
 }
 
-pub async fn get_current_demonstration(
-    demonstration_state: State<'_, DemonstrationState>,
-) -> Result<Option<Demonstration>, String> {
-    let current_demonstration = demonstration_state
-        .current_demonstration
-        .lock()
-        .map_err(|e| e.to_string())?;
-    Ok(current_demonstration.clone())
+pub async fn get_current_demonstration() -> Result<Option<Demonstration>, String> {
+    if let Ok(global_state) = DEMONSTRATION_STATE.lock() {
+        Ok(global_state.current_demonstration.clone())
+    } else {
+        Ok(None)
+    }
 }

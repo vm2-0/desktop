@@ -61,27 +61,6 @@ impl Logger {
         Ok(())
     }
 
-    /// Logs ffmpeg process output (stdout or stderr) as a structured event.
-    ///
-    /// # Arguments
-    /// * `output` - The output string from ffmpeg.
-    /// * `is_stderr` - Whether the output is from stderr (true) or stdout (false).
-    ///
-    /// # Returns
-    /// * `Ok(())` if the event was logged successfully.
-    /// * `Err` if serialization or writing failed.
-    // #[cfg(not(target_os = "macos"))]
-    pub fn log_ffmpeg(&mut self, output: &str, is_stderr: bool) -> Result<(), String> {
-        let event = serde_json::json!({
-            "event": if is_stderr { "ffmpeg_stderr" } else { "ffmpeg_stdout" },
-            "data": {
-                "output": output
-            },
-            "time": chrono::Local::now().timestamp_millis()
-        });
-
-        self.log_event(event)
-    }
 }
 
 #[cfg(test)]
@@ -122,7 +101,15 @@ mod tests {
 
         let ffmpeg_output =
             "frame= 1 fps=0.0 q=0.0 size=       0kB time=00:00:00.00 bitrate=N/A speed=N/A";
-        logger.log_ffmpeg(ffmpeg_output, false).unwrap(); // false for stdout
+        // Use record::log_ffmpeg instead for testing
+        let event = serde_json::json!({
+            "event": "ffmpeg_stdout",
+            "data": {
+                "output": ffmpeg_output
+            },
+            "time": chrono::Local::now().timestamp_millis()
+        });
+        logger.log_event(event).unwrap();
 
         let log_file_path = session_dir.join("input_log.jsonl");
         let content = fs::read_to_string(log_file_path).unwrap();
@@ -137,7 +124,14 @@ mod tests {
 
         // Test for stderr
         let ffmpeg_error_output = "Error: Something went wrong";
-        logger.log_ffmpeg(ffmpeg_error_output, true).unwrap(); // true for stderr
+        let error_event = serde_json::json!({
+            "event": "ffmpeg_stderr", 
+            "data": {
+                "output": ffmpeg_error_output
+            },
+            "time": chrono::Local::now().timestamp_millis()
+        });
+        logger.log_event(error_event).unwrap();
 
         let content_after_second_log =
             fs::read_to_string(session_dir.join("input_log.jsonl")).unwrap();

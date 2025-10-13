@@ -20,6 +20,8 @@ SubmissionMeta _$SubmissionMetaFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$SubmissionMeta {
+  @JsonKey(name: 'schema_version')
+  SchemaVersion? get schemaVersion => throw _privateConstructorUsedError;
   String get id => throw _privateConstructorUsedError;
   String get timestamp => throw _privateConstructorUsedError;
   @JsonKey(name: 'duration_seconds')
@@ -32,6 +34,8 @@ mixin _$SubmissionMeta {
   String get arch => throw _privateConstructorUsedError;
   String get version => throw _privateConstructorUsedError;
   String get locale => throw _privateConstructorUsedError;
+  @JsonKey(name: 'keyboard_layout')
+  String? get keyboardLayout => throw _privateConstructorUsedError;
   @JsonKey(name: 'primary_monitor')
   MonitorInfo get primaryMonitor => throw _privateConstructorUsedError;
   @JsonKey(name: 'quest')
@@ -55,7 +59,8 @@ abstract class $SubmissionMetaCopyWith<$Res> {
       _$SubmissionMetaCopyWithImpl<$Res, SubmissionMeta>;
   @useResult
   $Res call(
-      {String id,
+      {@JsonKey(name: 'schema_version') SchemaVersion? schemaVersion,
+      String id,
       String timestamp,
       @JsonKey(name: 'duration_seconds') int durationSeconds,
       String status,
@@ -66,10 +71,12 @@ abstract class $SubmissionMetaCopyWith<$Res> {
       String arch,
       String version,
       String locale,
+      @JsonKey(name: 'keyboard_layout') String? keyboardLayout,
       @JsonKey(name: 'primary_monitor') MonitorInfo primaryMonitor,
       @JsonKey(name: 'quest') Demonstration demonstration,
       String? poolId});
 
+  $SchemaVersionCopyWith<$Res>? get schemaVersion;
   $MonitorInfoCopyWith<$Res> get primaryMonitor;
   $DemonstrationCopyWith<$Res> get demonstration;
 }
@@ -89,6 +96,7 @@ class _$SubmissionMetaCopyWithImpl<$Res, $Val extends SubmissionMeta>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? schemaVersion = freezed,
     Object? id = null,
     Object? timestamp = null,
     Object? durationSeconds = null,
@@ -100,11 +108,16 @@ class _$SubmissionMetaCopyWithImpl<$Res, $Val extends SubmissionMeta>
     Object? arch = null,
     Object? version = null,
     Object? locale = null,
+    Object? keyboardLayout = freezed,
     Object? primaryMonitor = null,
     Object? demonstration = null,
     Object? poolId = freezed,
   }) {
     return _then(_value.copyWith(
+      schemaVersion: freezed == schemaVersion
+          ? _value.schemaVersion
+          : schemaVersion // ignore: cast_nullable_to_non_nullable
+              as SchemaVersion?,
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
@@ -149,6 +162,10 @@ class _$SubmissionMetaCopyWithImpl<$Res, $Val extends SubmissionMeta>
           ? _value.locale
           : locale // ignore: cast_nullable_to_non_nullable
               as String,
+      keyboardLayout: freezed == keyboardLayout
+          ? _value.keyboardLayout
+          : keyboardLayout // ignore: cast_nullable_to_non_nullable
+              as String?,
       primaryMonitor: null == primaryMonitor
           ? _value.primaryMonitor
           : primaryMonitor // ignore: cast_nullable_to_non_nullable
@@ -162,6 +179,20 @@ class _$SubmissionMetaCopyWithImpl<$Res, $Val extends SubmissionMeta>
           : poolId // ignore: cast_nullable_to_non_nullable
               as String?,
     ) as $Val);
+  }
+
+  /// Create a copy of SubmissionMeta
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $SchemaVersionCopyWith<$Res>? get schemaVersion {
+    if (_value.schemaVersion == null) {
+      return null;
+    }
+
+    return $SchemaVersionCopyWith<$Res>(_value.schemaVersion!, (value) {
+      return _then(_value.copyWith(schemaVersion: value) as $Val);
+    });
   }
 
   /// Create a copy of SubmissionMeta
@@ -194,7 +225,8 @@ abstract class _$$SubmissionMetaImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String id,
+      {@JsonKey(name: 'schema_version') SchemaVersion? schemaVersion,
+      String id,
       String timestamp,
       @JsonKey(name: 'duration_seconds') int durationSeconds,
       String status,
@@ -205,10 +237,13 @@ abstract class _$$SubmissionMetaImplCopyWith<$Res>
       String arch,
       String version,
       String locale,
+      @JsonKey(name: 'keyboard_layout') String? keyboardLayout,
       @JsonKey(name: 'primary_monitor') MonitorInfo primaryMonitor,
       @JsonKey(name: 'quest') Demonstration demonstration,
       String? poolId});
 
+  @override
+  $SchemaVersionCopyWith<$Res>? get schemaVersion;
   @override
   $MonitorInfoCopyWith<$Res> get primaryMonitor;
   @override
@@ -228,6 +263,7 @@ class __$$SubmissionMetaImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? schemaVersion = freezed,
     Object? id = null,
     Object? timestamp = null,
     Object? durationSeconds = null,
@@ -239,11 +275,16 @@ class __$$SubmissionMetaImplCopyWithImpl<$Res>
     Object? arch = null,
     Object? version = null,
     Object? locale = null,
+    Object? keyboardLayout = freezed,
     Object? primaryMonitor = null,
     Object? demonstration = null,
     Object? poolId = freezed,
   }) {
     return _then(_$SubmissionMetaImpl(
+      schemaVersion: freezed == schemaVersion
+          ? _value.schemaVersion
+          : schemaVersion // ignore: cast_nullable_to_non_nullable
+              as SchemaVersion?,
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
@@ -288,6 +329,10 @@ class __$$SubmissionMetaImplCopyWithImpl<$Res>
           ? _value.locale
           : locale // ignore: cast_nullable_to_non_nullable
               as String,
+      keyboardLayout: freezed == keyboardLayout
+          ? _value.keyboardLayout
+          : keyboardLayout // ignore: cast_nullable_to_non_nullable
+              as String?,
       primaryMonitor: null == primaryMonitor
           ? _value.primaryMonitor
           : primaryMonitor // ignore: cast_nullable_to_non_nullable
@@ -308,7 +353,8 @@ class __$$SubmissionMetaImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$SubmissionMetaImpl implements _SubmissionMeta {
   const _$SubmissionMetaImpl(
-      {required this.id,
+      {@JsonKey(name: 'schema_version') this.schemaVersion,
+      required this.id,
       required this.timestamp,
       @JsonKey(name: 'duration_seconds') required this.durationSeconds,
       required this.status,
@@ -319,6 +365,7 @@ class _$SubmissionMetaImpl implements _SubmissionMeta {
       required this.arch,
       required this.version,
       required this.locale,
+      @JsonKey(name: 'keyboard_layout') this.keyboardLayout,
       @JsonKey(name: 'primary_monitor') required this.primaryMonitor,
       @JsonKey(name: 'quest') required this.demonstration,
       this.poolId});
@@ -326,6 +373,9 @@ class _$SubmissionMetaImpl implements _SubmissionMeta {
   factory _$SubmissionMetaImpl.fromJson(Map<String, dynamic> json) =>
       _$$SubmissionMetaImplFromJson(json);
 
+  @override
+  @JsonKey(name: 'schema_version')
+  final SchemaVersion? schemaVersion;
   @override
   final String id;
   @override
@@ -350,6 +400,9 @@ class _$SubmissionMetaImpl implements _SubmissionMeta {
   @override
   final String locale;
   @override
+  @JsonKey(name: 'keyboard_layout')
+  final String? keyboardLayout;
+  @override
   @JsonKey(name: 'primary_monitor')
   final MonitorInfo primaryMonitor;
   @override
@@ -360,7 +413,7 @@ class _$SubmissionMetaImpl implements _SubmissionMeta {
 
   @override
   String toString() {
-    return 'SubmissionMeta(id: $id, timestamp: $timestamp, durationSeconds: $durationSeconds, status: $status, reason: $reason, title: $title, description: $description, platform: $platform, arch: $arch, version: $version, locale: $locale, primaryMonitor: $primaryMonitor, demonstration: $demonstration, poolId: $poolId)';
+    return 'SubmissionMeta(schemaVersion: $schemaVersion, id: $id, timestamp: $timestamp, durationSeconds: $durationSeconds, status: $status, reason: $reason, title: $title, description: $description, platform: $platform, arch: $arch, version: $version, locale: $locale, keyboardLayout: $keyboardLayout, primaryMonitor: $primaryMonitor, demonstration: $demonstration, poolId: $poolId)';
   }
 
   @override
@@ -368,6 +421,8 @@ class _$SubmissionMetaImpl implements _SubmissionMeta {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$SubmissionMetaImpl &&
+            (identical(other.schemaVersion, schemaVersion) ||
+                other.schemaVersion == schemaVersion) &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.timestamp, timestamp) ||
                 other.timestamp == timestamp) &&
@@ -383,6 +438,8 @@ class _$SubmissionMetaImpl implements _SubmissionMeta {
             (identical(other.arch, arch) || other.arch == arch) &&
             (identical(other.version, version) || other.version == version) &&
             (identical(other.locale, locale) || other.locale == locale) &&
+            (identical(other.keyboardLayout, keyboardLayout) ||
+                other.keyboardLayout == keyboardLayout) &&
             (identical(other.primaryMonitor, primaryMonitor) ||
                 other.primaryMonitor == primaryMonitor) &&
             (identical(other.demonstration, demonstration) ||
@@ -394,6 +451,7 @@ class _$SubmissionMetaImpl implements _SubmissionMeta {
   @override
   int get hashCode => Object.hash(
       runtimeType,
+      schemaVersion,
       id,
       timestamp,
       durationSeconds,
@@ -405,6 +463,7 @@ class _$SubmissionMetaImpl implements _SubmissionMeta {
       arch,
       version,
       locale,
+      keyboardLayout,
       primaryMonitor,
       demonstration,
       poolId);
@@ -428,7 +487,8 @@ class _$SubmissionMetaImpl implements _SubmissionMeta {
 
 abstract class _SubmissionMeta implements SubmissionMeta {
   const factory _SubmissionMeta(
-      {required final String id,
+      {@JsonKey(name: 'schema_version') final SchemaVersion? schemaVersion,
+      required final String id,
       required final String timestamp,
       @JsonKey(name: 'duration_seconds') required final int durationSeconds,
       required final String status,
@@ -439,6 +499,7 @@ abstract class _SubmissionMeta implements SubmissionMeta {
       required final String arch,
       required final String version,
       required final String locale,
+      @JsonKey(name: 'keyboard_layout') final String? keyboardLayout,
       @JsonKey(name: 'primary_monitor')
       required final MonitorInfo primaryMonitor,
       @JsonKey(name: 'quest') required final Demonstration demonstration,
@@ -447,6 +508,9 @@ abstract class _SubmissionMeta implements SubmissionMeta {
   factory _SubmissionMeta.fromJson(Map<String, dynamic> json) =
       _$SubmissionMetaImpl.fromJson;
 
+  @override
+  @JsonKey(name: 'schema_version')
+  SchemaVersion? get schemaVersion;
   @override
   String get id;
   @override
@@ -470,6 +534,9 @@ abstract class _SubmissionMeta implements SubmissionMeta {
   String get version;
   @override
   String get locale;
+  @override
+  @JsonKey(name: 'keyboard_layout')
+  String? get keyboardLayout;
   @override
   @JsonKey(name: 'primary_monitor')
   MonitorInfo get primaryMonitor;

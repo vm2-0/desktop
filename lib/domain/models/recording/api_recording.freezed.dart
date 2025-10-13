@@ -20,6 +20,8 @@ ApiRecording _$ApiRecordingFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$ApiRecording {
+  @JsonKey(name: 'schema_version')
+  SchemaVersion? get schemaVersion => throw _privateConstructorUsedError;
   String get id => throw _privateConstructorUsedError;
   String get timestamp => throw _privateConstructorUsedError;
   int get durationSeconds => throw _privateConstructorUsedError;
@@ -30,6 +32,8 @@ mixin _$ApiRecording {
   String get arch => throw _privateConstructorUsedError;
   String get version => throw _privateConstructorUsedError;
   String get locale => throw _privateConstructorUsedError;
+  @JsonKey(name: 'keyboard_layout')
+  String? get keyboardLayout => throw _privateConstructorUsedError;
   MonitorInfo get primaryMonitor => throw _privateConstructorUsedError;
   @JsonKey(name: 'quest')
   Demonstration? get demonstration => throw _privateConstructorUsedError;
@@ -53,7 +57,8 @@ abstract class $ApiRecordingCopyWith<$Res> {
       _$ApiRecordingCopyWithImpl<$Res, ApiRecording>;
   @useResult
   $Res call(
-      {String id,
+      {@JsonKey(name: 'schema_version') SchemaVersion? schemaVersion,
+      String id,
       String timestamp,
       int durationSeconds,
       String status,
@@ -63,11 +68,13 @@ abstract class $ApiRecordingCopyWith<$Res> {
       String arch,
       String version,
       String locale,
+      @JsonKey(name: 'keyboard_layout') String? keyboardLayout,
       MonitorInfo primaryMonitor,
       @JsonKey(name: 'quest') Demonstration? demonstration,
       String? location,
       SubmissionStatus? submission});
 
+  $SchemaVersionCopyWith<$Res>? get schemaVersion;
   $MonitorInfoCopyWith<$Res> get primaryMonitor;
   $DemonstrationCopyWith<$Res>? get demonstration;
   $SubmissionStatusCopyWith<$Res>? get submission;
@@ -88,6 +95,7 @@ class _$ApiRecordingCopyWithImpl<$Res, $Val extends ApiRecording>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? schemaVersion = freezed,
     Object? id = null,
     Object? timestamp = null,
     Object? durationSeconds = null,
@@ -98,12 +106,17 @@ class _$ApiRecordingCopyWithImpl<$Res, $Val extends ApiRecording>
     Object? arch = null,
     Object? version = null,
     Object? locale = null,
+    Object? keyboardLayout = freezed,
     Object? primaryMonitor = null,
     Object? demonstration = freezed,
     Object? location = freezed,
     Object? submission = freezed,
   }) {
     return _then(_value.copyWith(
+      schemaVersion: freezed == schemaVersion
+          ? _value.schemaVersion
+          : schemaVersion // ignore: cast_nullable_to_non_nullable
+              as SchemaVersion?,
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
@@ -144,6 +157,10 @@ class _$ApiRecordingCopyWithImpl<$Res, $Val extends ApiRecording>
           ? _value.locale
           : locale // ignore: cast_nullable_to_non_nullable
               as String,
+      keyboardLayout: freezed == keyboardLayout
+          ? _value.keyboardLayout
+          : keyboardLayout // ignore: cast_nullable_to_non_nullable
+              as String?,
       primaryMonitor: null == primaryMonitor
           ? _value.primaryMonitor
           : primaryMonitor // ignore: cast_nullable_to_non_nullable
@@ -161,6 +178,20 @@ class _$ApiRecordingCopyWithImpl<$Res, $Val extends ApiRecording>
           : submission // ignore: cast_nullable_to_non_nullable
               as SubmissionStatus?,
     ) as $Val);
+  }
+
+  /// Create a copy of ApiRecording
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $SchemaVersionCopyWith<$Res>? get schemaVersion {
+    if (_value.schemaVersion == null) {
+      return null;
+    }
+
+    return $SchemaVersionCopyWith<$Res>(_value.schemaVersion!, (value) {
+      return _then(_value.copyWith(schemaVersion: value) as $Val);
+    });
   }
 
   /// Create a copy of ApiRecording
@@ -211,7 +242,8 @@ abstract class _$$ApiRecordingImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String id,
+      {@JsonKey(name: 'schema_version') SchemaVersion? schemaVersion,
+      String id,
       String timestamp,
       int durationSeconds,
       String status,
@@ -221,11 +253,14 @@ abstract class _$$ApiRecordingImplCopyWith<$Res>
       String arch,
       String version,
       String locale,
+      @JsonKey(name: 'keyboard_layout') String? keyboardLayout,
       MonitorInfo primaryMonitor,
       @JsonKey(name: 'quest') Demonstration? demonstration,
       String? location,
       SubmissionStatus? submission});
 
+  @override
+  $SchemaVersionCopyWith<$Res>? get schemaVersion;
   @override
   $MonitorInfoCopyWith<$Res> get primaryMonitor;
   @override
@@ -247,6 +282,7 @@ class __$$ApiRecordingImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? schemaVersion = freezed,
     Object? id = null,
     Object? timestamp = null,
     Object? durationSeconds = null,
@@ -257,12 +293,17 @@ class __$$ApiRecordingImplCopyWithImpl<$Res>
     Object? arch = null,
     Object? version = null,
     Object? locale = null,
+    Object? keyboardLayout = freezed,
     Object? primaryMonitor = null,
     Object? demonstration = freezed,
     Object? location = freezed,
     Object? submission = freezed,
   }) {
     return _then(_$ApiRecordingImpl(
+      schemaVersion: freezed == schemaVersion
+          ? _value.schemaVersion
+          : schemaVersion // ignore: cast_nullable_to_non_nullable
+              as SchemaVersion?,
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
@@ -303,6 +344,10 @@ class __$$ApiRecordingImplCopyWithImpl<$Res>
           ? _value.locale
           : locale // ignore: cast_nullable_to_non_nullable
               as String,
+      keyboardLayout: freezed == keyboardLayout
+          ? _value.keyboardLayout
+          : keyboardLayout // ignore: cast_nullable_to_non_nullable
+              as String?,
       primaryMonitor: null == primaryMonitor
           ? _value.primaryMonitor
           : primaryMonitor // ignore: cast_nullable_to_non_nullable
@@ -327,7 +372,8 @@ class __$$ApiRecordingImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$ApiRecordingImpl implements _ApiRecording {
   const _$ApiRecordingImpl(
-      {required this.id,
+      {@JsonKey(name: 'schema_version') this.schemaVersion,
+      required this.id,
       required this.timestamp,
       required this.durationSeconds,
       required this.status,
@@ -337,6 +383,7 @@ class _$ApiRecordingImpl implements _ApiRecording {
       required this.arch,
       required this.version,
       required this.locale,
+      @JsonKey(name: 'keyboard_layout') this.keyboardLayout,
       required this.primaryMonitor,
       @JsonKey(name: 'quest') this.demonstration,
       this.location,
@@ -345,6 +392,9 @@ class _$ApiRecordingImpl implements _ApiRecording {
   factory _$ApiRecordingImpl.fromJson(Map<String, dynamic> json) =>
       _$$ApiRecordingImplFromJson(json);
 
+  @override
+  @JsonKey(name: 'schema_version')
+  final SchemaVersion? schemaVersion;
   @override
   final String id;
   @override
@@ -366,6 +416,9 @@ class _$ApiRecordingImpl implements _ApiRecording {
   @override
   final String locale;
   @override
+  @JsonKey(name: 'keyboard_layout')
+  final String? keyboardLayout;
+  @override
   final MonitorInfo primaryMonitor;
   @override
   @JsonKey(name: 'quest')
@@ -377,7 +430,7 @@ class _$ApiRecordingImpl implements _ApiRecording {
 
   @override
   String toString() {
-    return 'ApiRecording(id: $id, timestamp: $timestamp, durationSeconds: $durationSeconds, status: $status, title: $title, description: $description, platform: $platform, arch: $arch, version: $version, locale: $locale, primaryMonitor: $primaryMonitor, demonstration: $demonstration, location: $location, submission: $submission)';
+    return 'ApiRecording(schemaVersion: $schemaVersion, id: $id, timestamp: $timestamp, durationSeconds: $durationSeconds, status: $status, title: $title, description: $description, platform: $platform, arch: $arch, version: $version, locale: $locale, keyboardLayout: $keyboardLayout, primaryMonitor: $primaryMonitor, demonstration: $demonstration, location: $location, submission: $submission)';
   }
 
   @override
@@ -385,6 +438,8 @@ class _$ApiRecordingImpl implements _ApiRecording {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$ApiRecordingImpl &&
+            (identical(other.schemaVersion, schemaVersion) ||
+                other.schemaVersion == schemaVersion) &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.timestamp, timestamp) ||
                 other.timestamp == timestamp) &&
@@ -399,6 +454,8 @@ class _$ApiRecordingImpl implements _ApiRecording {
             (identical(other.arch, arch) || other.arch == arch) &&
             (identical(other.version, version) || other.version == version) &&
             (identical(other.locale, locale) || other.locale == locale) &&
+            (identical(other.keyboardLayout, keyboardLayout) ||
+                other.keyboardLayout == keyboardLayout) &&
             (identical(other.primaryMonitor, primaryMonitor) ||
                 other.primaryMonitor == primaryMonitor) &&
             (identical(other.demonstration, demonstration) ||
@@ -413,6 +470,7 @@ class _$ApiRecordingImpl implements _ApiRecording {
   @override
   int get hashCode => Object.hash(
       runtimeType,
+      schemaVersion,
       id,
       timestamp,
       durationSeconds,
@@ -423,6 +481,7 @@ class _$ApiRecordingImpl implements _ApiRecording {
       arch,
       version,
       locale,
+      keyboardLayout,
       primaryMonitor,
       demonstration,
       location,
@@ -446,7 +505,8 @@ class _$ApiRecordingImpl implements _ApiRecording {
 
 abstract class _ApiRecording implements ApiRecording {
   const factory _ApiRecording(
-      {required final String id,
+      {@JsonKey(name: 'schema_version') final SchemaVersion? schemaVersion,
+      required final String id,
       required final String timestamp,
       required final int durationSeconds,
       required final String status,
@@ -456,6 +516,7 @@ abstract class _ApiRecording implements ApiRecording {
       required final String arch,
       required final String version,
       required final String locale,
+      @JsonKey(name: 'keyboard_layout') final String? keyboardLayout,
       required final MonitorInfo primaryMonitor,
       @JsonKey(name: 'quest') final Demonstration? demonstration,
       final String? location,
@@ -464,6 +525,9 @@ abstract class _ApiRecording implements ApiRecording {
   factory _ApiRecording.fromJson(Map<String, dynamic> json) =
       _$ApiRecordingImpl.fromJson;
 
+  @override
+  @JsonKey(name: 'schema_version')
+  SchemaVersion? get schemaVersion;
   @override
   String get id;
   @override
@@ -484,6 +548,9 @@ abstract class _ApiRecording implements ApiRecording {
   String get version;
   @override
   String get locale;
+  @override
+  @JsonKey(name: 'keyboard_layout')
+  String? get keyboardLayout;
   @override
   MonitorInfo get primaryMonitor;
   @override

@@ -41,7 +41,9 @@ class InputEventDisplay extends StatelessWidget {
   }
 
   bool _isMouseEvent(String eventType) {
-    return eventType == 'mousedown' || eventType == 'mouseup';
+    return eventType == 'mousedown' ||
+        eventType == 'mouseup' ||
+        eventType == 'mousemove';
   }
 
   bool _isAxTreeEvent(String eventType) {
@@ -168,6 +170,12 @@ class InputEventDisplay extends StatelessWidget {
   }
 
   Widget _buildMouseEventUI(ThemeData theme) {
+    // Handle mousemove differently - coordinates but no button
+    if (eventType == 'mousemove') {
+      return _buildMouseMoveUI(theme);
+    }
+
+    // Handle mousedown/mouseup - button events
     final button = eventData['button'] as String? ?? 'Unknown';
     final action = eventType == 'mousedown' ? 'Pressed' : 'Released';
 
@@ -182,6 +190,229 @@ class InputEventDisplay extends StatelessWidget {
         // Details section
         _buildMouseDetailsSection(button, action, theme),
       ],
+    );
+  }
+
+  Widget _buildMouseMoveUI(ThemeData theme) {
+    // Extract normalized and raw coordinates
+    final x = (eventData['x'] as num?)?.toDouble() ?? 0.0;
+    final y = (eventData['y'] as num?)?.toDouble() ?? 0.0;
+    final rawX = (eventData['raw_x'] as num?)?.toDouble();
+    final rawY = (eventData['raw_y'] as num?)?.toDouble();
+
+    // Check if we have raw coordinates that differ from normalized
+    final hasRawCoords = rawX != null && rawY != null;
+    final coordsDiffer = hasRawCoords && (rawX != x || rawY != y);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Main coordinate display
+        _buildMouseCoordinatesDisplay(x, y, theme),
+
+        if (coordsDiffer) ...[
+          const SizedBox(height: 8),
+          // Raw coordinates (multi-monitor context)
+          _buildRawCoordinatesDisplay(rawX, rawY, theme),
+        ],
+
+        const SizedBox(height: 8),
+
+        // Details section
+        _buildMouseMoveDetailsSection(x, y, rawX, rawY, theme),
+      ],
+    );
+  }
+
+  Widget _buildMouseCoordinatesDisplay(double x, double y, ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.blue.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          // Mouse icon
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.blue.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Icon(
+              Icons.mouse,
+              size: 16,
+              color: Colors.blue[700],
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // Coordinate information
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Mouse Position',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        'X: ${x.toStringAsFixed(0)}',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue[700],
+                          fontFamily: 'monospace',
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        'Y: ${y.toStringAsFixed(0)}',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue[700],
+                          fontFamily: 'monospace',
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRawCoordinatesDisplay(
+    double rawX,
+    double rawY,
+    ThemeData theme,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.warning_amber,
+            size: 14,
+            color: Colors.orange[700],
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Raw Coordinates (Multi-Monitor)',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.orange[800],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'X: ${rawX.toStringAsFixed(0)}, Y: ${rawY.toStringAsFixed(0)}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontSize: 10,
+                    fontFamily: 'monospace',
+                    color: Colors.orange[700],
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Cursor was outside primary monitor bounds',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontSize: 9,
+                    color: Colors.orange[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMouseMoveDetailsSection(
+    double x,
+    double y,
+    double? rawX,
+    double? rawY,
+    ThemeData theme,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.all(4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildDetailRow(
+            'Normalized Position',
+            '(${x.toStringAsFixed(0)}, ${y.toStringAsFixed(0)})',
+            Icons.center_focus_strong,
+            theme,
+          ),
+          if (rawX != null && rawY != null && (rawX != x || rawY != y))
+            _buildDetailRow(
+              'Raw Position',
+              '(${rawX.toStringAsFixed(0)}, ${rawY.toStringAsFixed(0)})',
+              Icons.location_searching,
+              theme,
+            ),
+          _buildDetailRow(
+            'Coordinate Type',
+            'Logical Pixels (DPI-Independent)',
+            Icons.straighten,
+            theme,
+          ),
+          _buildDetailRow(
+            'Reference',
+            'Primary Monitor Top-Left',
+            Icons.monitor,
+            theme,
+          ),
+        ],
+      ),
     );
   }
 
@@ -322,7 +553,11 @@ class InputEventDisplay extends StatelessWidget {
       children: [
         // Main AXTree display
         _buildAxTreeDisplay(
-            applications.length, duration, focusedAppName, theme),
+          applications.length,
+          duration,
+          focusedAppName,
+          theme,
+        ),
 
         const SizedBox(height: 8),
 
@@ -339,7 +574,11 @@ class InputEventDisplay extends StatelessWidget {
   }
 
   Widget _buildAxTreeDisplay(
-      int appCount, int duration, String focusedAppName, ThemeData theme) {
+    int appCount,
+    int duration,
+    String focusedAppName,
+    ThemeData theme,
+  ) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(

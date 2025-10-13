@@ -8,6 +8,10 @@ part of 'api_recording.dart';
 
 _$ApiRecordingImpl _$$ApiRecordingImplFromJson(Map<String, dynamic> json) =>
     _$ApiRecordingImpl(
+      schemaVersion: json['schema_version'] == null
+          ? null
+          : SchemaVersion.fromJson(
+              json['schema_version'] as Map<String, dynamic>),
       id: json['id'] as String,
       timestamp: json['timestamp'] as String,
       durationSeconds: (json['durationSeconds'] as num).toInt(),
@@ -18,6 +22,7 @@ _$ApiRecordingImpl _$$ApiRecordingImplFromJson(Map<String, dynamic> json) =>
       arch: json['arch'] as String,
       version: json['version'] as String,
       locale: json['locale'] as String,
+      keyboardLayout: json['keyboard_layout'] as String?,
       primaryMonitor:
           MonitorInfo.fromJson(json['primaryMonitor'] as Map<String, dynamic>),
       demonstration: json['quest'] == null
@@ -32,6 +37,7 @@ _$ApiRecordingImpl _$$ApiRecordingImplFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$$ApiRecordingImplToJson(_$ApiRecordingImpl instance) =>
     <String, dynamic>{
+      'schema_version': instance.schemaVersion,
       'id': instance.id,
       'timestamp': instance.timestamp,
       'durationSeconds': instance.durationSeconds,
@@ -42,6 +48,7 @@ Map<String, dynamic> _$$ApiRecordingImplToJson(_$ApiRecordingImpl instance) =>
       'arch': instance.arch,
       'version': instance.version,
       'locale': instance.locale,
+      'keyboard_layout': instance.keyboardLayout,
       'primaryMonitor': instance.primaryMonitor,
       'quest': instance.demonstration,
       'location': instance.location,

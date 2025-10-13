@@ -1,5 +1,6 @@
 import 'package:clones_desktop/domain/models/demonstration/demonstration.dart';
 import 'package:clones_desktop/domain/models/recording/monitor_info.dart';
+import 'package:clones_desktop/domain/models/submission/schema_version.dart';
 import 'package:clones_desktop/domain/models/submission/submission_status.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -9,6 +10,7 @@ part 'api_recording.g.dart';
 @freezed
 class ApiRecording with _$ApiRecording {
   const factory ApiRecording({
+    @JsonKey(name: 'schema_version') SchemaVersion? schemaVersion,
     required String id,
     required String timestamp,
     required int durationSeconds,
@@ -19,6 +21,7 @@ class ApiRecording with _$ApiRecording {
     required String arch,
     required String version,
     required String locale,
+    @JsonKey(name: 'keyboard_layout') String? keyboardLayout,
     required MonitorInfo primaryMonitor,
     @JsonKey(name: 'quest') Demonstration? demonstration,
     String? location,

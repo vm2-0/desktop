@@ -20,6 +20,8 @@ RecordingMeta _$RecordingMetaFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$RecordingMeta {
+  @JsonKey(name: 'schema_version')
+  SchemaVersion? get schemaVersion => throw _privateConstructorUsedError;
   String get id => throw _privateConstructorUsedError;
   String get timestamp => throw _privateConstructorUsedError;
   @JsonKey(name: 'duration_seconds')
@@ -32,6 +34,10 @@ mixin _$RecordingMeta {
   String get arch => throw _privateConstructorUsedError;
   String get version => throw _privateConstructorUsedError;
   String get locale => throw _privateConstructorUsedError;
+  @JsonKey(name: 'keyboard_layout')
+  String? get keyboardLayout => throw _privateConstructorUsedError;
+  @JsonKey(name: 'primary_monitor')
+  MonitorInfo? get primaryMonitor => throw _privateConstructorUsedError;
   @JsonKey(name: 'quest')
   Demonstration get demonstration => throw _privateConstructorUsedError;
 
@@ -52,7 +58,8 @@ abstract class $RecordingMetaCopyWith<$Res> {
       _$RecordingMetaCopyWithImpl<$Res, RecordingMeta>;
   @useResult
   $Res call(
-      {String id,
+      {@JsonKey(name: 'schema_version') SchemaVersion? schemaVersion,
+      String id,
       String timestamp,
       @JsonKey(name: 'duration_seconds') int durationSeconds,
       String status,
@@ -63,8 +70,12 @@ abstract class $RecordingMetaCopyWith<$Res> {
       String arch,
       String version,
       String locale,
+      @JsonKey(name: 'keyboard_layout') String? keyboardLayout,
+      @JsonKey(name: 'primary_monitor') MonitorInfo? primaryMonitor,
       @JsonKey(name: 'quest') Demonstration demonstration});
 
+  $SchemaVersionCopyWith<$Res>? get schemaVersion;
+  $MonitorInfoCopyWith<$Res>? get primaryMonitor;
   $DemonstrationCopyWith<$Res> get demonstration;
 }
 
@@ -83,6 +94,7 @@ class _$RecordingMetaCopyWithImpl<$Res, $Val extends RecordingMeta>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? schemaVersion = freezed,
     Object? id = null,
     Object? timestamp = null,
     Object? durationSeconds = null,
@@ -94,9 +106,15 @@ class _$RecordingMetaCopyWithImpl<$Res, $Val extends RecordingMeta>
     Object? arch = null,
     Object? version = null,
     Object? locale = null,
+    Object? keyboardLayout = freezed,
+    Object? primaryMonitor = freezed,
     Object? demonstration = null,
   }) {
     return _then(_value.copyWith(
+      schemaVersion: freezed == schemaVersion
+          ? _value.schemaVersion
+          : schemaVersion // ignore: cast_nullable_to_non_nullable
+              as SchemaVersion?,
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
@@ -141,11 +159,47 @@ class _$RecordingMetaCopyWithImpl<$Res, $Val extends RecordingMeta>
           ? _value.locale
           : locale // ignore: cast_nullable_to_non_nullable
               as String,
+      keyboardLayout: freezed == keyboardLayout
+          ? _value.keyboardLayout
+          : keyboardLayout // ignore: cast_nullable_to_non_nullable
+              as String?,
+      primaryMonitor: freezed == primaryMonitor
+          ? _value.primaryMonitor
+          : primaryMonitor // ignore: cast_nullable_to_non_nullable
+              as MonitorInfo?,
       demonstration: null == demonstration
           ? _value.demonstration
           : demonstration // ignore: cast_nullable_to_non_nullable
               as Demonstration,
     ) as $Val);
+  }
+
+  /// Create a copy of RecordingMeta
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $SchemaVersionCopyWith<$Res>? get schemaVersion {
+    if (_value.schemaVersion == null) {
+      return null;
+    }
+
+    return $SchemaVersionCopyWith<$Res>(_value.schemaVersion!, (value) {
+      return _then(_value.copyWith(schemaVersion: value) as $Val);
+    });
+  }
+
+  /// Create a copy of RecordingMeta
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $MonitorInfoCopyWith<$Res>? get primaryMonitor {
+    if (_value.primaryMonitor == null) {
+      return null;
+    }
+
+    return $MonitorInfoCopyWith<$Res>(_value.primaryMonitor!, (value) {
+      return _then(_value.copyWith(primaryMonitor: value) as $Val);
+    });
   }
 
   /// Create a copy of RecordingMeta
@@ -168,7 +222,8 @@ abstract class _$$RecordingMetaImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String id,
+      {@JsonKey(name: 'schema_version') SchemaVersion? schemaVersion,
+      String id,
       String timestamp,
       @JsonKey(name: 'duration_seconds') int durationSeconds,
       String status,
@@ -179,8 +234,14 @@ abstract class _$$RecordingMetaImplCopyWith<$Res>
       String arch,
       String version,
       String locale,
+      @JsonKey(name: 'keyboard_layout') String? keyboardLayout,
+      @JsonKey(name: 'primary_monitor') MonitorInfo? primaryMonitor,
       @JsonKey(name: 'quest') Demonstration demonstration});
 
+  @override
+  $SchemaVersionCopyWith<$Res>? get schemaVersion;
+  @override
+  $MonitorInfoCopyWith<$Res>? get primaryMonitor;
   @override
   $DemonstrationCopyWith<$Res> get demonstration;
 }
@@ -198,6 +259,7 @@ class __$$RecordingMetaImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? schemaVersion = freezed,
     Object? id = null,
     Object? timestamp = null,
     Object? durationSeconds = null,
@@ -209,9 +271,15 @@ class __$$RecordingMetaImplCopyWithImpl<$Res>
     Object? arch = null,
     Object? version = null,
     Object? locale = null,
+    Object? keyboardLayout = freezed,
+    Object? primaryMonitor = freezed,
     Object? demonstration = null,
   }) {
     return _then(_$RecordingMetaImpl(
+      schemaVersion: freezed == schemaVersion
+          ? _value.schemaVersion
+          : schemaVersion // ignore: cast_nullable_to_non_nullable
+              as SchemaVersion?,
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
@@ -256,6 +324,14 @@ class __$$RecordingMetaImplCopyWithImpl<$Res>
           ? _value.locale
           : locale // ignore: cast_nullable_to_non_nullable
               as String,
+      keyboardLayout: freezed == keyboardLayout
+          ? _value.keyboardLayout
+          : keyboardLayout // ignore: cast_nullable_to_non_nullable
+              as String?,
+      primaryMonitor: freezed == primaryMonitor
+          ? _value.primaryMonitor
+          : primaryMonitor // ignore: cast_nullable_to_non_nullable
+              as MonitorInfo?,
       demonstration: null == demonstration
           ? _value.demonstration
           : demonstration // ignore: cast_nullable_to_non_nullable
@@ -268,7 +344,8 @@ class __$$RecordingMetaImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$RecordingMetaImpl implements _RecordingMeta {
   const _$RecordingMetaImpl(
-      {required this.id,
+      {@JsonKey(name: 'schema_version') this.schemaVersion,
+      required this.id,
       required this.timestamp,
       @JsonKey(name: 'duration_seconds') required this.durationSeconds,
       required this.status,
@@ -279,11 +356,16 @@ class _$RecordingMetaImpl implements _RecordingMeta {
       required this.arch,
       required this.version,
       required this.locale,
+      @JsonKey(name: 'keyboard_layout') this.keyboardLayout,
+      @JsonKey(name: 'primary_monitor') this.primaryMonitor,
       @JsonKey(name: 'quest') required this.demonstration});
 
   factory _$RecordingMetaImpl.fromJson(Map<String, dynamic> json) =>
       _$$RecordingMetaImplFromJson(json);
 
+  @override
+  @JsonKey(name: 'schema_version')
+  final SchemaVersion? schemaVersion;
   @override
   final String id;
   @override
@@ -308,12 +390,18 @@ class _$RecordingMetaImpl implements _RecordingMeta {
   @override
   final String locale;
   @override
+  @JsonKey(name: 'keyboard_layout')
+  final String? keyboardLayout;
+  @override
+  @JsonKey(name: 'primary_monitor')
+  final MonitorInfo? primaryMonitor;
+  @override
   @JsonKey(name: 'quest')
   final Demonstration demonstration;
 
   @override
   String toString() {
-    return 'RecordingMeta(id: $id, timestamp: $timestamp, durationSeconds: $durationSeconds, status: $status, reason: $reason, title: $title, description: $description, platform: $platform, arch: $arch, version: $version, locale: $locale, demonstration: $demonstration)';
+    return 'RecordingMeta(schemaVersion: $schemaVersion, id: $id, timestamp: $timestamp, durationSeconds: $durationSeconds, status: $status, reason: $reason, title: $title, description: $description, platform: $platform, arch: $arch, version: $version, locale: $locale, keyboardLayout: $keyboardLayout, primaryMonitor: $primaryMonitor, demonstration: $demonstration)';
   }
 
   @override
@@ -321,6 +409,8 @@ class _$RecordingMetaImpl implements _RecordingMeta {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$RecordingMetaImpl &&
+            (identical(other.schemaVersion, schemaVersion) ||
+                other.schemaVersion == schemaVersion) &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.timestamp, timestamp) ||
                 other.timestamp == timestamp) &&
@@ -336,6 +426,10 @@ class _$RecordingMetaImpl implements _RecordingMeta {
             (identical(other.arch, arch) || other.arch == arch) &&
             (identical(other.version, version) || other.version == version) &&
             (identical(other.locale, locale) || other.locale == locale) &&
+            (identical(other.keyboardLayout, keyboardLayout) ||
+                other.keyboardLayout == keyboardLayout) &&
+            (identical(other.primaryMonitor, primaryMonitor) ||
+                other.primaryMonitor == primaryMonitor) &&
             (identical(other.demonstration, demonstration) ||
                 other.demonstration == demonstration));
   }
@@ -344,6 +438,7 @@ class _$RecordingMetaImpl implements _RecordingMeta {
   @override
   int get hashCode => Object.hash(
       runtimeType,
+      schemaVersion,
       id,
       timestamp,
       durationSeconds,
@@ -355,6 +450,8 @@ class _$RecordingMetaImpl implements _RecordingMeta {
       arch,
       version,
       locale,
+      keyboardLayout,
+      primaryMonitor,
       demonstration);
 
   /// Create a copy of RecordingMeta
@@ -375,7 +472,8 @@ class _$RecordingMetaImpl implements _RecordingMeta {
 
 abstract class _RecordingMeta implements RecordingMeta {
   const factory _RecordingMeta(
-          {required final String id,
+          {@JsonKey(name: 'schema_version') final SchemaVersion? schemaVersion,
+          required final String id,
           required final String timestamp,
           @JsonKey(name: 'duration_seconds') required final int durationSeconds,
           required final String status,
@@ -386,12 +484,17 @@ abstract class _RecordingMeta implements RecordingMeta {
           required final String arch,
           required final String version,
           required final String locale,
+          @JsonKey(name: 'keyboard_layout') final String? keyboardLayout,
+          @JsonKey(name: 'primary_monitor') final MonitorInfo? primaryMonitor,
           @JsonKey(name: 'quest') required final Demonstration demonstration}) =
       _$RecordingMetaImpl;
 
   factory _RecordingMeta.fromJson(Map<String, dynamic> json) =
       _$RecordingMetaImpl.fromJson;
 
+  @override
+  @JsonKey(name: 'schema_version')
+  SchemaVersion? get schemaVersion;
   @override
   String get id;
   @override
@@ -416,6 +519,12 @@ abstract class _RecordingMeta implements RecordingMeta {
   @override
   String get locale;
   @override
+  @JsonKey(name: 'keyboard_layout')
+  String? get keyboardLayout;
+  @override
+  @JsonKey(name: 'primary_monitor')
+  MonitorInfo? get primaryMonitor;
+  @override
   @JsonKey(name: 'quest')
   Demonstration get demonstration;
 
@@ -424,172 +533,5 @@ abstract class _RecordingMeta implements RecordingMeta {
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$RecordingMetaImplCopyWith<_$RecordingMetaImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-MonitorInfo _$MonitorInfoFromJson(Map<String, dynamic> json) {
-  return _MonitorInfo.fromJson(json);
-}
-
-/// @nodoc
-mixin _$MonitorInfo {
-  int get width => throw _privateConstructorUsedError;
-  int get height => throw _privateConstructorUsedError;
-
-  /// Serializes this MonitorInfo to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of MonitorInfo
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $MonitorInfoCopyWith<MonitorInfo> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $MonitorInfoCopyWith<$Res> {
-  factory $MonitorInfoCopyWith(
-          MonitorInfo value, $Res Function(MonitorInfo) then) =
-      _$MonitorInfoCopyWithImpl<$Res, MonitorInfo>;
-  @useResult
-  $Res call({int width, int height});
-}
-
-/// @nodoc
-class _$MonitorInfoCopyWithImpl<$Res, $Val extends MonitorInfo>
-    implements $MonitorInfoCopyWith<$Res> {
-  _$MonitorInfoCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of MonitorInfo
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? width = null,
-    Object? height = null,
-  }) {
-    return _then(_value.copyWith(
-      width: null == width
-          ? _value.width
-          : width // ignore: cast_nullable_to_non_nullable
-              as int,
-      height: null == height
-          ? _value.height
-          : height // ignore: cast_nullable_to_non_nullable
-              as int,
-    ) as $Val);
-  }
-}
-
-/// @nodoc
-abstract class _$$MonitorInfoImplCopyWith<$Res>
-    implements $MonitorInfoCopyWith<$Res> {
-  factory _$$MonitorInfoImplCopyWith(
-          _$MonitorInfoImpl value, $Res Function(_$MonitorInfoImpl) then) =
-      __$$MonitorInfoImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({int width, int height});
-}
-
-/// @nodoc
-class __$$MonitorInfoImplCopyWithImpl<$Res>
-    extends _$MonitorInfoCopyWithImpl<$Res, _$MonitorInfoImpl>
-    implements _$$MonitorInfoImplCopyWith<$Res> {
-  __$$MonitorInfoImplCopyWithImpl(
-      _$MonitorInfoImpl _value, $Res Function(_$MonitorInfoImpl) _then)
-      : super(_value, _then);
-
-  /// Create a copy of MonitorInfo
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? width = null,
-    Object? height = null,
-  }) {
-    return _then(_$MonitorInfoImpl(
-      width: null == width
-          ? _value.width
-          : width // ignore: cast_nullable_to_non_nullable
-              as int,
-      height: null == height
-          ? _value.height
-          : height // ignore: cast_nullable_to_non_nullable
-              as int,
-    ));
-  }
-}
-
-/// @nodoc
-@JsonSerializable()
-class _$MonitorInfoImpl implements _MonitorInfo {
-  const _$MonitorInfoImpl({required this.width, required this.height});
-
-  factory _$MonitorInfoImpl.fromJson(Map<String, dynamic> json) =>
-      _$$MonitorInfoImplFromJson(json);
-
-  @override
-  final int width;
-  @override
-  final int height;
-
-  @override
-  String toString() {
-    return 'MonitorInfo(width: $width, height: $height)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$MonitorInfoImpl &&
-            (identical(other.width, width) || other.width == width) &&
-            (identical(other.height, height) || other.height == height));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(runtimeType, width, height);
-
-  /// Create a copy of MonitorInfo
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$MonitorInfoImplCopyWith<_$MonitorInfoImpl> get copyWith =>
-      __$$MonitorInfoImplCopyWithImpl<_$MonitorInfoImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$MonitorInfoImplToJson(
-      this,
-    );
-  }
-}
-
-abstract class _MonitorInfo implements MonitorInfo {
-  const factory _MonitorInfo(
-      {required final int width,
-      required final int height}) = _$MonitorInfoImpl;
-
-  factory _MonitorInfo.fromJson(Map<String, dynamic> json) =
-      _$MonitorInfoImpl.fromJson;
-
-  @override
-  int get width;
-  @override
-  int get height;
-
-  /// Create a copy of MonitorInfo
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$MonitorInfoImplCopyWith<_$MonitorInfoImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

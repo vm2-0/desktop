@@ -475,15 +475,151 @@ fn parse_klid_fallback(klid: &str) -> (String, String) {
 
 #[cfg(target_os = "macos")]
 fn get_macos_keyboard_layout() -> Result<KeyboardLayoutInfo, LayoutError> {
-    // Simplified implementation that avoids problematic TIS APIs
-    // Returns a safe fallback until TIS issues are resolved
-    Ok(KeyboardLayoutInfo {
-        layout_id: "us-qwerty".to_string(),
-        layout_name: "US QWERTY (Safe Fallback)".to_string(),
-        detection_method: "macos_safe_fallback".to_string(),
-        raw_id: Some("com.apple.keylayout.US".to_string()),
-        kind: LayoutKind::KeyboardLayout,
-    })
+    use core_foundation::base::TCFType;
+    use core_foundation::string::{CFString, CFStringRef};
+
+    extern "C" {
+        fn TISCopyCurrentKeyboardInputSource() -> *const std::ffi::c_void;
+        fn TISGetInputSourceProperty(inputSource: *const std::ffi::c_void, propertyKey: CFStringRef) -> *const std::ffi::c_void;
+        static kTISPropertyInputSourceID: CFStringRef;
+        static kTISPropertyLocalizedName: CFStringRef;
+        static kTISPropertyInputSourceCategory: CFStringRef;
+        static kTISCategoryKeyboardInputSource: CFStringRef;
+    }
+
+    unsafe {
+        let input_source = TISCopyCurrentKeyboardInputSource();
+        if input_source.is_null() {
+            return Err(LayoutError::PlatformApiError("TISCopyCurrentKeyboardInputSource returned null".to_string()));
+        }
+
+        // Get the input source ID
+        let id_key = CFString::wrap_under_get_rule(kTISPropertyInputSourceID);
+        let id_ref = TISGetInputSourceProperty(input_source, id_key.as_concrete_TypeRef());
+        
+        // Get the localized name
+        let name_key = CFString::wrap_under_get_rule(kTISPropertyLocalizedName);
+        let name_ref = TISGetInputSourceProperty(input_source, name_key.as_concrete_TypeRef());
+
+        // Get the category to determine if it's a keyboard layout or input method
+        let category_key = CFString::wrap_under_get_rule(kTISPropertyInputSourceCategory);
+        let category_ref = TISGetInputSourceProperty(input_source, category_key.as_concrete_TypeRef());
+
+        let raw_id = if !id_ref.is_null() {
+            let cf_string = CFString::wrap_under_get_rule(id_ref as CFStringRef);
+            Some(cf_string.to_string())
+        } else {
+            None
+        };
+
+        let layout_name = if !name_ref.is_null() {
+            let cf_string = CFString::wrap_under_get_rule(name_ref as CFStringRef);
+            cf_string.to_string()
+        } else {
+            "Unknown Layout".to_string()
+        };
+
+        // Determine if this is a keyboard layout or input method
+        let kind = if !category_ref.is_null() {
+            let cf_string = CFString::wrap_under_get_rule(category_ref as CFStringRef);
+            let category = cf_string.to_string();
+            let keyboard_category = CFString::wrap_under_get_rule(kTISCategoryKeyboardInputSource).to_string();
+            
+            if category == keyboard_category {
+                LayoutKind::KeyboardLayout
+            } else {
+                LayoutKind::InputMethod
+            }
+        } else {
+            LayoutKind::Unknown
+        };
+
+        let layout_id = generate_layout_id_from_macos_source(&raw_id, &layout_name);
+
+        Ok(KeyboardLayoutInfo {
+            layout_id,
+            layout_name,
+            detection_method: "macos_tis_api".to_string(),
+            raw_id,
+            kind,
+        })
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn generate_layout_id_from_macos_source(source_id: &Option<String>, layout_name: &str) -> String {
+    let name_lower = layout_name.to_lowercase();
+    
+    // Handle known source IDs
+    if let Some(id) = source_id {
+        match id.as_str() {
+            "com.apple.keylayout.US" => return "us-qwerty".to_string(),
+            "com.apple.keylayout.French" | "com.apple.keylayout.French-numerical" => return "fr-azerty".to_string(),
+            "com.apple.keylayout.German" => return "de-qwertz".to_string(),
+            "com.apple.keylayout.Spanish" => return "es-qwerty".to_string(),
+            "com.apple.keylayout.Italian" => return "it-qwerty".to_string(),
+            "com.apple.keylayout.Dutch" => return "nl-qwerty".to_string(),
+            "com.apple.keylayout.Portuguese" => return "pt-qwerty".to_string(),
+            "com.apple.keylayout.Russian" => return "ru-qwerty".to_string(),
+            "com.apple.keylayout.British" => return "gb-qwerty".to_string(),
+            "com.apple.keylayout.Dvorak" => return "us-dvorak".to_string(),
+            "com.apple.keylayout.Dvorak-Left" => return "us-dvorak-lh".to_string(),
+            "com.apple.keylayout.Dvorak-Right" => return "us-dvorak-rh".to_string(),
+            "com.apple.keylayout.Colemak" => return "us-colemak".to_string(),
+            "com.apple.keylayout.SwissGerman" => return "de-ch".to_string(),
+            "com.apple.keylayout.SwissFrench" => return "fr-ch".to_string(),
+            "com.apple.keylayout.Canadian" => return "en-ca".to_string(),
+            "com.apple.keylayout.CanadianFrench" => return "fr-ca".to_string(),
+            _ => {}
+        }
+        
+        // Extract language from source ID if it contains language hints
+        if id.contains("French") {
+            return "fr-azerty".to_string();
+        } else if id.contains("German") {
+            return "de-qwertz".to_string();
+        } else if id.contains("Spanish") {
+            return "es-qwerty".to_string();
+        } else if id.contains("Italian") {
+            return "it-qwerty".to_string();
+        } else if id.contains("Russian") {
+            return "ru-qwerty".to_string();
+        } else if id.contains("British") {
+            return "gb-qwerty".to_string();
+        }
+    }
+    
+    // Fallback to name-based detection
+    if name_lower.contains("french") || name_lower.contains("français") || name_lower.contains("azerty") {
+        "fr-azerty".to_string()
+    } else if name_lower.contains("german") || name_lower.contains("deutsch") || name_lower.contains("qwertz") {
+        "de-qwertz".to_string()
+    } else if name_lower.contains("spanish") || name_lower.contains("español") {
+        "es-qwerty".to_string()
+    } else if name_lower.contains("italian") || name_lower.contains("italiano") {
+        "it-qwerty".to_string()
+    } else if name_lower.contains("dutch") || name_lower.contains("nederlands") {
+        "nl-qwerty".to_string()
+    } else if name_lower.contains("portuguese") || name_lower.contains("português") {
+        "pt-qwerty".to_string()
+    } else if name_lower.contains("russian") || name_lower.contains("русский") {
+        "ru-qwerty".to_string()
+    } else if name_lower.contains("british") || name_lower.contains("uk") {
+        "gb-qwerty".to_string()
+    } else if name_lower.contains("dvorak") {
+        if name_lower.contains("left") {
+            "us-dvorak-lh".to_string()
+        } else if name_lower.contains("right") {
+            "us-dvorak-rh".to_string()
+        } else {
+            "us-dvorak".to_string()
+        }
+    } else if name_lower.contains("colemak") {
+        "us-colemak".to_string()
+    } else {
+        // Default fallback
+        "us-qwerty".to_string()
+    }
 }
 
 
