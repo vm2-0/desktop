@@ -1,8 +1,8 @@
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
-import 'package:clones_desktop/ui/components/design_widget/message_box/message_box.dart';
 import 'package:clones_desktop/ui/views/generate_factory/bloc/provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class GenerateFactoryModalStep1 extends ConsumerStatefulWidget {
@@ -110,9 +110,24 @@ class _GenerateFactoryModalStep1State
         _buildErrorMessage(context, ref),
         _examplePrompts(ref),
         const SizedBox(height: 20),
-        _buildRewardTokenSelector(context, ref),
-        const SizedBox(height: 20),
-        _buildFundingSection(context, ref),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _buildRewardTokenSelector(context, ref),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: _buildFundingSection(context, ref),
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 20),
         _footerButtons(ref),
       ],
@@ -214,6 +229,25 @@ class _GenerateFactoryModalStep1State
             ),
           ),
         ),
+        if (generateFactoryState.predictedPoolAddress != null) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(
+                Icons.info_outline,
+                size: 16,
+                color: theme.textTheme.bodySmall?.color,
+              ),
+              const SizedBox(width: 4),
+              SelectableText(
+                'Future Factory Pool address: ${generateFactoryState.predictedPoolAddress}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontFamily: 'monospace',
+                ),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -255,22 +289,6 @@ class _GenerateFactoryModalStep1State
             );
           }).toList(),
         ),
-        if (generateFactory.error != null) ...[
-          const SizedBox(height: 20),
-          MessageBox(
-            messageBoxType: MessageBoxType.warning,
-            content: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    generateFactory.error!,
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ],
     );
   }
@@ -327,7 +345,19 @@ class _GenerateFactoryModalStep1State
             child: TextField(
               controller: fundingAmountController,
               onChanged: generateFactoryNotifier.setFundingAmount,
-              keyboardType: TextInputType.number,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                TextInputFormatter.withFunction((oldValue, newValue) {
+                  if (newValue.text.isEmpty) return newValue;
+                  final value = double.tryParse(newValue.text);
+                  if (value == null || value < 0) {
+                    return oldValue;
+                  }
+                  return newValue;
+                }),
+              ],
               style: theme.textTheme.bodyMedium,
               decoration: InputDecoration(
                 border: InputBorder.none,
@@ -379,15 +409,6 @@ class _GenerateFactoryModalStep1State
                   ),
                 ),
               ],
-            ),
-          ),
-        ],
-        if (generateFactoryState.predictedPoolAddress != null) ...[
-          const SizedBox(height: 8),
-          SelectableText(
-            'Pool address: ${generateFactoryState.predictedPoolAddress}',
-            style: theme.textTheme.bodySmall?.copyWith(
-              fontFamily: 'monospace',
             ),
           ),
         ],

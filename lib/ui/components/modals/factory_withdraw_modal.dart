@@ -134,38 +134,36 @@ class FactoryWithdrawModal extends ConsumerWidget {
                               ],
                             ),
                           ],
-                          if (modalState.validationLoading) ...[
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                SizedBox(
-                                  width: 12,
-                                  height: 12,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      theme.colorScheme.primary,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Checking pool health...',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.textTheme.bodySmall?.color!
-                                        .withValues(alpha: 0.5),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
                         ],
                       ),
                     ),
                     const SizedBox(height: 8),
                     // Pool Health Alerts
-                    _buildPoolHealthAlerts(context, ref),
+                    if (modalState.validationLoading)
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 10,
+                            height: 10,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 1,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                theme.colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Checking pool health...',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ],
+                      )
+                    else
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: _buildPoolHealthAlerts(context, ref),
+                      ),
                     const SizedBox(height: 8),
                   ],
                   Column(
