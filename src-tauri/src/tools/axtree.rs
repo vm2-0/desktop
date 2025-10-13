@@ -2,7 +2,6 @@
 use crate::tools::helpers::lock_with_timeout;
 use log::info;
 use serde_json::{json, Value};
-use std::process::Command;
 use std::sync::{Arc, Mutex, OnceLock};
 use std::thread;
 use std::time::{Duration, Instant};
@@ -125,6 +124,82 @@ pub fn trigger_ui_dump_on_interaction<R: tauri::Runtime>(
                     }
 
                     obj.insert("event".to_string(), json!("axtree_interaction"));
+
+                    // Calculate app_status before logging
+                    info!("[AxTree] Starting app_status calculation");
+
+                    // First, extract data immutably to calculate status
+                    let app_status = if let Some(data) = obj.get("data").and_then(|v| v.as_object())
+                    {
+                        info!("[AxTree] Found data object for app_status");
+
+                        let focused_app_name = data
+                            .get("focused_app")
+                            .and_then(|v| v.as_object())
+                            .and_then(|app| app.get("name"))
+                            .and_then(|name| name.as_str());
+
+                        let available_apps: Vec<String> = data
+                            .get("tree")
+                            .and_then(|v| v.as_array())
+                            .map(|tree| {
+                                tree.iter()
+                                    .filter_map(|app| {
+                                        app.get("name")
+                                            .and_then(|n| n.as_str())
+                                            .map(|s| s.to_string())
+                                    })
+                                    .collect()
+                            })
+                            .unwrap_or_default();
+
+                        info!(
+                            "[AxTree] Focused app: {:?}, Available apps count: {}",
+                            focused_app_name,
+                            available_apps.len()
+                        );
+
+                        if let Some(focused_name) = focused_app_name {
+                            if !available_apps.is_empty() {
+                                // Check if focused app is in the available apps list
+                                let is_ready = available_apps.iter().any(|app_name| {
+                                    let app_lower = app_name.to_lowercase();
+                                    let focused_lower = focused_name.to_lowercase();
+                                    app_lower.contains(&focused_lower)
+                                        || focused_lower.contains(&app_lower)
+                                });
+
+                                if is_ready {
+                                    info!("[AxTree] App status: ready");
+                                    "ready"
+                                } else {
+                                    info!(
+                                        "[AxTree] App '{}' is launching - not in available apps",
+                                        focused_name
+                                    );
+                                    "launching"
+                                }
+                            } else {
+                                info!("[AxTree] App status: unknown (no available apps)");
+                                "unknown"
+                            }
+                        } else {
+                            info!("[AxTree] App status: unknown (no focused app)");
+                            "unknown"
+                        }
+                    } else {
+                        info!("[AxTree] App status: unknown (no data object)");
+                        "unknown"
+                    };
+
+                    // Now insert app_status with a mutable borrow
+                    info!("[AxTree] Inserting app_status: {}", app_status);
+                    if let Some(data) = obj.get_mut("data").and_then(|v| v.as_object_mut()) {
+                        data.insert("app_status".to_string(), json!(app_status));
+                        info!("[AxTree] Successfully added app_status");
+                    } else {
+                        info!("[AxTree] Warning: Could not insert app_status (no data object)");
+                    }
 
                     // Convert floating point coordinates to integers for backend compatibility
                     convert_coordinates_to_integers(obj);
