@@ -167,8 +167,9 @@ class GenerateFactoryModalStep3 extends ConsumerWidget {
       children: [
         BtnPrimary(
           buttonText: 'Back',
-          onTap: () =>
-              generateFactoryNotifier.setCurrentStep(GenerateFactoryStep.input),
+          onTap: () => generateFactoryNotifier
+            ..setError(null)
+            ..setCurrentStep(GenerateFactoryStep.input),
           btnPrimaryType: BtnPrimaryType.outlinePrimary,
         ),
         const SizedBox(width: 10),
