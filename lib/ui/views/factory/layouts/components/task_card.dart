@@ -2,12 +2,15 @@ import 'dart:convert';
 
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:clones_desktop/application/factory.dart';
+import 'package:clones_desktop/application/feature_flags.dart';
+import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/domain/app_info.dart';
 import 'package:clones_desktop/domain/models/factory/factory_app.dart';
 import 'package:clones_desktop/domain/models/factory/factory_task.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
+import 'package:clones_desktop/ui/views/demo_detail/layouts/components/referral_required_dialog.dart';
 import 'package:clones_desktop/ui/components/memory_image_tauri.dart';
 import 'package:clones_desktop/ui/views/demo_detail/layouts/demo_detail_view.dart';
 import 'package:clones_desktop/utils/fav_tools.dart';
@@ -44,6 +47,15 @@ class TaskCard extends ConsumerWidget {
         '${formatNumberWithSeparator(factory.pricePerDemo)} $tokenSymbol';
 
     Future<void> onTap(BuildContext context) async {
+      // Check if farming is locked without referral code
+      if (FeatureFlags.lockFarmingWithoutReferral) {
+        final session = ref.read(sessionNotifierProvider);
+        if (session.referrerCode == null || session.referrerCode!.isEmpty) {
+          await ReferralRequiredDialog.show(context, ref);
+          return;
+        }
+      }
+
       final appInfo = AppInfo(
         type: 'website',
         name: app.name,
