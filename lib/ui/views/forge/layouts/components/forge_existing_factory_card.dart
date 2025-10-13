@@ -8,7 +8,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ForgeExistingFactoryCard extends ConsumerStatefulWidget {
+class ForgeExistingFactoryCard extends ConsumerWidget {
   const ForgeExistingFactoryCard({
     super.key,
     required this.factory,
@@ -19,62 +19,25 @@ class ForgeExistingFactoryCard extends ConsumerStatefulWidget {
   final VoidCallback onTap;
 
   @override
-  ConsumerState<ForgeExistingFactoryCard> createState() =>
-      _ForgeExistingFactoryCardState();
-}
-
-class _ForgeExistingFactoryCardState
-    extends ConsumerState<ForgeExistingFactoryCard> {
-  double? _balance;
-  bool _isLoadingBalance = true;
-  String? _balanceError;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadBalance();
-  }
-
-  Future<void> _loadBalance() async {
-    try {
-      final balance = await ref.read(
-        getFactoryBalanceProvider(
-          poolAddress: widget.factory.poolAddress,
-        ).future,
-      );
-      if (mounted) {
-        setState(() {
-          _balance = balance;
-          _isLoadingBalance = false;
-          _balanceError = null;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingBalance = false;
-          _balanceError = 'Error loading balance';
-        });
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final factoryBalanceAsync = ref.watch(
+      getFactoryBalanceProvider(poolAddress: factory.poolAddress),
+    );
+    
     return CardWidget(
       padding: CardPadding.small,
       child: InkWell(
-        onTap: widget.onTap,
+        onTap: onTap,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Align(
               alignment: Alignment.topRight,
-              child: FactoryStatusBadge(status: widget.factory.status),
+              child: FactoryStatusBadge(status: factory.status),
             ),
             Text(
-              widget.factory.name,
+              factory.name,
               style: theme.textTheme.titleMedium,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -91,12 +54,10 @@ class _ForgeExistingFactoryCardState
                     fontWeight: FontWeight.w300,
                   ),
                 ),
-                _getBalanceText(),
+                _getBalanceText(factoryBalanceAsync, theme),
               ],
             ),
-            _demoProgress(
-              context,
-            ),
+            _demoProgress(context, factoryBalanceAsync),
             const SizedBox(height: 8),
             _viewDetailsButton(),
           ],
@@ -105,34 +66,40 @@ class _ForgeExistingFactoryCardState
     );
   }
 
-  Widget _getBalanceText() {
-    if (_isLoadingBalance) {
-      return const SizedBox.square(
+  Widget _getBalanceText(AsyncValue<double> factoryBalanceAsync, ThemeData theme) {
+    return factoryBalanceAsync.when(
+      data: (balance) {
+        return Text(
+          '$balance ${factory.token.symbol}',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: balance == 0 ? ClonesColors.error : ClonesColors.secondary,
+          ),
+        );
+      },
+      loading: () => const SizedBox.square(
         dimension: 12,
         child: CircularProgressIndicator(
           strokeWidth: 0.5,
         ),
-      );
-    }
-
-    final balanceValue = _balance ?? widget.factory.balance;
-
-    final theme = Theme.of(context);
-    return Text(
-      _balanceError != null
-          ? _balanceError.toString()
-          : '$balanceValue ${widget.factory.token.symbol}',
-      style: theme.textTheme.bodyMedium?.copyWith(
-        color: balanceValue == 0 ? ClonesColors.error : ClonesColors.secondary,
+      ),
+      error: (error, stack) => Text(
+        'Error loading balance',
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: ClonesColors.error,
+        ),
       ),
     );
   }
 
   Widget _demoProgress(
     BuildContext context,
+    AsyncValue<double> factoryBalanceAsync,
   ) {
-    final pricePerDemo = widget.factory.pricePerDemo;
-    final balance = _balance ?? widget.factory.balance;
+    final pricePerDemo = factory.pricePerDemo;
+    final balance = factoryBalanceAsync.maybeWhen(
+      data: (value) => value,
+      orElse: () => factory.balance,
+    );
     final possibleDemos = (pricePerDemo > 0)
         ? (Decimal.parse(
                   balance.toString(),
@@ -143,7 +110,7 @@ class _ForgeExistingFactoryCardState
         : 0;
 
     final demoPercentage = possibleDemos > 0
-        ? (widget.factory.demonstrations / possibleDemos * 100).clamp(0, 100)
+        ? (factory.demonstrations / possibleDemos * 100).clamp(0, 100)
         : 0;
 
     if (pricePerDemo == 0) {
@@ -170,7 +137,7 @@ class _ForgeExistingFactoryCardState
             ),
             const SizedBox(width: 4),
             Text(
-              '${widget.factory.demonstrations} / $possibleDemos',
+              '${factory.demonstrations} / $possibleDemos',
               style: TextStyle(
                 color: ClonesColors.secondaryText,
                 fontSize: 12,
@@ -195,7 +162,7 @@ class _ForgeExistingFactoryCardState
                 borderRadius: BorderRadius.circular(3),
               ),
             ),
-            if (widget.factory.demonstrations >= possibleDemos)
+            if (factory.demonstrations >= possibleDemos)
               FractionallySizedBox(
                 widthFactor: demoPercentage / 100,
                 child: Container(
@@ -238,7 +205,7 @@ class _ForgeExistingFactoryCardState
       alignment: Alignment.centerRight,
       child: BtnPrimary(
         widthExpanded: true,
-        onTap: widget.onTap,
+        onTap: onTap,
         buttonText: 'View Details',
       ),
     );

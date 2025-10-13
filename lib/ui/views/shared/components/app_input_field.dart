@@ -96,10 +96,10 @@ class _AppInputFieldState extends State<AppInputField> {
                         borderRadius: BorderRadius.circular(16),
                         child: Image.network(
                           'http://127.0.0.1:19847/proxy-image?url=${Uri.encodeComponent('https://www.google.com/s2/favicons?domain=${widget.iconUrl}&sz=32')}',
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(
+                          errorBuilder: (context, error, stackTrace) => Icon(
                             Icons.apps,
                             size: 16,
+                            color: ClonesColors.secondaryText,
                           ),
                           fit: BoxFit.cover,
                         ),
