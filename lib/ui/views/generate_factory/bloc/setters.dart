@@ -30,7 +30,7 @@ mixin GenerateFactorySetters on AutoDisposeNotifier<GenerateFactoryState> {
     }
   }
 
-  void setError(String error) {
+  void setError(String? error) {
     state = state.copyWith(error: error);
   }
 

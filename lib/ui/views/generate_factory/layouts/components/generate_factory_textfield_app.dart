@@ -93,7 +93,7 @@ class GenerateFactoryTextFieldAppState
                             keyboardType: TextInputType.text,
                             inputFormatters: <TextInputFormatter>[
                               LengthLimitingTextInputFormatter(
-                                20,
+                                60,
                               ),
                             ],
                             decoration: InputDecoration(

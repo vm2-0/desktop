@@ -1,3 +1,4 @@
+import 'package:clones_desktop/application/feature_flags.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/domain/models/factory/factory.dart';
 
@@ -64,7 +65,8 @@ class ForgeFactoryGeneralTab extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 20),
-          const ForgeFactoryGeneralTabFactoryUploadLimit(),
+          if (FeatureFlags.uploadLimits)
+            const ForgeFactoryGeneralTabFactoryUploadLimit(),
         ],
       ),
     );
