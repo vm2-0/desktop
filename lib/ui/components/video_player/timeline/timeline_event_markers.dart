@@ -21,7 +21,6 @@ class TimelineEventMarkers extends ConsumerWidget {
     final events = ref.watch(demoDetailNotifierProvider).events;
     final enabledEventTypes =
         ref.watch(demoDetailNotifierProvider).enabledEventTypes;
-    final startTime = ref.watch(demoDetailNotifierProvider).startTime;
 
     if (durationMs > 0) {
       return Stack(
@@ -29,11 +28,11 @@ class TimelineEventMarkers extends ConsumerWidget {
             .where(
               (event) =>
                   enabledEventTypes.contains(event.event) &&
-                  (event.time - startTime) <= durationMs,
+                  event.time <= durationMs,
             )
             .map(
               (event) => Positioned(
-                left: ((event.time - startTime) / durationMs) * timelineWidth,
+                left: (event.time / durationMs) * timelineWidth,
                 top: 0,
                 bottom: 0,
                 child: Center(

@@ -97,10 +97,12 @@ Future<List<ApiRecording>> mergedRecordings(Ref ref) async {
 
           // If submission exists and has been successfully uploaded (completed status),
           // use backend data as source of truth
-          if (submission != null && 
-              (submission.status == 'completed' || submission.status == 'processing')) {
+          if (submission != null &&
+              (submission.status == 'completed' ||
+                  submission.status == 'processing')) {
             final meta = submission.meta;
             return ApiRecording(
+              schemaVersion: meta.schemaVersion,
               id: meta.id,
               timestamp: meta.timestamp,
               durationSeconds: meta.durationSeconds,
@@ -111,6 +113,7 @@ Future<List<ApiRecording>> mergedRecordings(Ref ref) async {
               arch: meta.arch,
               version: meta.version,
               locale: meta.locale,
+              keyboardLayout: meta.keyboardLayout,
               primaryMonitor: meta.primaryMonitor,
               demonstration: meta.demonstration,
               submission: submission,
@@ -120,6 +123,7 @@ Future<List<ApiRecording>> mergedRecordings(Ref ref) async {
 
           // Otherwise, use local data (not uploaded yet or upload failed)
           return ApiRecording(
+            schemaVersion: rec.schemaVersion,
             id: rec.id,
             timestamp: rec.timestamp,
             durationSeconds: rec.durationSeconds,
@@ -130,7 +134,9 @@ Future<List<ApiRecording>> mergedRecordings(Ref ref) async {
             arch: rec.arch,
             version: rec.version,
             locale: rec.locale,
-            primaryMonitor: const MonitorInfo(width: 0, height: 0),
+            keyboardLayout: rec.keyboardLayout,
+            primaryMonitor:
+                rec.primaryMonitor ?? const MonitorInfo(width: 0, height: 0),
             demonstration: rec.demonstration,
             submission: submission,
             location: 'local',

@@ -3,18 +3,18 @@
 //! This module provides commands for managing recording sessions, files, and metadata from the frontend.
 
 use crate::{
-    core::record::{self, Demonstration, DemonstrationState, RecordingMeta},
+    core::record::{self, Demonstration, RecordingMeta},
     core::video_server,
     utils::settings::get_custom_app_local_data_dir,
 };
-use tauri::{AppHandle, State};
+use tauri::AppHandle;
 
 /// Starts a new recording session.
 ///
 /// # Arguments
 /// * `app` - The Tauri `AppHandle`.
-/// * `demonstration_state` - The current demonstration state.
 /// * `demonstration` - Optional demonstration information.
+/// * `fps` - Frame rate for recording.
 ///
 /// # Returns
 /// * `Ok(())` if recording started successfully.
@@ -22,18 +22,16 @@ use tauri::{AppHandle, State};
 #[tauri::command]
 pub async fn start_recording(
     app: AppHandle,
-    demonstration_state: State<'_, DemonstrationState>,
     demonstration: Option<Demonstration>,
     fps: u32,
 ) -> Result<(), String> {
-    record::start_recording(app, demonstration_state, demonstration, fps).await
+    record::start_recording(app, demonstration, fps).await
 }
 
 /// Stops the current recording session.
 ///
 /// # Arguments
 /// * `app` - The Tauri `AppHandle`.
-/// * `demonstration_state` - The current demonstration state.
 /// * `reason` - Optional reason for stopping.
 ///
 /// # Returns
@@ -42,10 +40,9 @@ pub async fn start_recording(
 #[tauri::command]
 pub async fn stop_recording(
     app: AppHandle,
-    demonstration_state: State<'_, DemonstrationState>,
     reason: Option<String>,
 ) -> Result<String, String> {
-    record::stop_recording(app, demonstration_state, reason).await
+    record::stop_recording(app, reason).await
 }
 
 /// Gets the current recording state as a string.
@@ -212,18 +209,13 @@ pub async fn get_app_data_dir(app: AppHandle) -> Result<String, String> {
 
 /// Gets the current demonstration from the demonstration state.
 ///
-/// # Arguments
-/// * `demonstration_state` - The current demonstration state.
-///
 /// # Returns
 /// * `Ok(Some(Demonstration))` if a demonstration is active.
 /// * `Ok(None)` if no demonstration is active.
 /// * `Err` if retrieval failed.
 #[tauri::command]
-pub async fn get_current_demonstration(
-    demonstration_state: State<'_, DemonstrationState>,
-) -> Result<Option<Demonstration>, String> {
-    record::get_current_demonstration(demonstration_state).await
+pub async fn get_current_demonstration() -> Result<Option<Demonstration>, String> {
+    record::get_current_demonstration().await
 }
 
 fn validate_id(id: &str) -> Result<(), String> {

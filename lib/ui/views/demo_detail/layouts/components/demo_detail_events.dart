@@ -137,7 +137,7 @@ class DemoDetailEvents extends ConsumerWidget {
               final originalEventIndex = filteredEventIndices[index];
 
               // Use memoized deleted zone check (computed once per state change)
-              final relativeTime = event.time - startTime;
+              final relativeTime = event.time;
               final isInDeletedZone =
                   eventsInDeletedZones.contains(originalEventIndex);
 
@@ -216,7 +216,7 @@ class DemoDetailEvents extends ConsumerWidget {
                           ],
                         ),
                         child: Text(
-                          formatTimeMs(event.time - startTime),
+                          formatTimeMs(event.time),
                           style: theme.textTheme.bodySmall!.copyWith(
                             color: isInDeletedZone
                                 ? Colors.redAccent

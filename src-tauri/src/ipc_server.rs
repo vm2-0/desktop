@@ -353,11 +353,8 @@ async fn start_recording_handler(
     State(state): State<AppState>,
     Json(payload): Json<StartRecordingPayload>,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    // We get the "DemonstrationState" from the Tauri state manager via the AppHandle
-    let demonstration_state: tauri::State<record::DemonstrationState> = state.app_handle.state();
     match record::start_recording(
         state.app_handle.clone(),
-        demonstration_state,
         payload.demonstration,
         payload.fps,
     )
@@ -373,10 +370,8 @@ async fn stop_recording_handler(
     State(state): State<AppState>,
     Json(payload): Json<StopRecordingPayload>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    let demonstration_state: tauri::State<record::DemonstrationState> = state.app_handle.state();
     match record::stop_recording(
         state.app_handle.clone(),
-        demonstration_state,
         Some(payload.status),
     )
     .await

@@ -91,38 +91,104 @@ class DemoDetailInfos extends ConsumerWidget {
     final submittedAt = DateTime.parse(recording.timestamp);
     final formattedDate = DateFormat.yMd().add_jm().format(submittedAt);
 
-    return Column(
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildInfoRow('ID: ', recording.id, context),
-            ),
-            Expanded(
-              child: _buildInfoRow('Submitted: ', formattedDate, context),
-            ),
-          ],
-        ),
-        Row(
-          children: [
-            Expanded(
-              child: _buildInfoRow(
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildInfoRow('ID: ', recording.id, context),
+              const SizedBox(height: 4),
+              _buildInfoRow(
                 'OS: ',
                 '${recording.platform} ${recording.version} (${recording.arch})',
                 context,
               ),
-            ),
-            Expanded(
-              child: _buildInfoRow(
+              const SizedBox(height: 4),
+              _buildInfoRow('Locale: ', recording.locale, context),
+              if (recording.demonstration != null) ...[
+                const SizedBox(height: 4),
+                _buildInfoRow('App: ', recording.demonstration!.app, context),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildInfoRow('Submitted: ', formattedDate, context),
+              const SizedBox(height: 4),
+              _buildInfoRow(
                 'Resolution: ',
                 '${recording.primaryMonitor.width}x${recording.primaryMonitor.height}',
                 context,
               ),
-            ),
-          ],
+              if (recording.keyboardLayout != null) ...[
+                const SizedBox(height: 4),
+                _buildInfoRow(
+                  'Keyboard: ',
+                  recording.keyboardLayout!,
+                  context,
+                ),
+              ],
+            ],
+          ),
         ),
-        _buildInfoRow('Locale: ', recording.locale, context),
+        const SizedBox(width: 10),
+        Expanded(
+          child: recording.demonstration != null &&
+                  recording.demonstration!.objectives.isNotEmpty
+              ? _buildObjectivesSection(
+                  context,
+                  recording.demonstration!.objectives,
+                )
+              : const SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildObjectivesSection(
+    BuildContext context,
+    List<String> objectives,
+  ) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Objectives:',
+          style:
+              theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 6),
+        ...objectives.asMap().entries.map((entry) {
+          final index = entry.key + 1;
+          final objective = entry.value;
+          // Remove HTML tags if present (like <app> tags in the objectives)
+          final cleanObjective = objective.replaceAll(RegExp(r'<[^>]*>'), '');
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$index. ',
+                  style: theme.textTheme.bodySmall,
+                ),
+                Expanded(
+                  child: Text(
+                    cleanObjective,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
       ],
     );
   }

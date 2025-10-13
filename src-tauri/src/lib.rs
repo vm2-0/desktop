@@ -7,11 +7,10 @@ mod commands;
 mod core;
 pub mod ipc_server;
 mod tools;
-mod utils;
+pub mod utils;
 use std::sync::{Arc, Mutex};
 use tauri::Listener;
 
-use core::record::DemonstrationState;
 use utils::permissions::{has_ax_perms, has_record_perms, request_ax_perms, request_record_perms};
 
 use crate::commands::general::{greet, list_apps, take_screenshot};
@@ -62,7 +61,6 @@ pub fn setup_builder() -> tauri::Builder<tauri::Wry> {
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
-        .manage(DemonstrationState::default())
         .manage(DeepLinkState(Arc::new(Mutex::new(None))))
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![

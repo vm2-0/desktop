@@ -1,6 +1,6 @@
 //! Input event listening and logging utilities for capturing keyboard, mouse, and joystick events across platforms.
 
-use crate::core::record::{self, DemonstrationState};
+use crate::core::record;
 use crate::tools::helpers::lock_with_timeout;
 use log::{error, info};
 use rdev::{listen, Event as RdevEvent, EventType as RdevEventType};
@@ -135,7 +135,10 @@ impl InputEvent {
     }
 
     /// Converts the input event to a log entry with a timestamp relative to recording start.
-    pub fn to_log_entry(&self, recording_start_time: Option<chrono::DateTime<chrono::Local>>) -> serde_json::Value {
+    pub fn to_log_entry(
+        &self,
+        recording_start_time: Option<chrono::DateTime<chrono::Local>>,
+    ) -> serde_json::Value {
         let timestamp = if let Some(start_time) = recording_start_time {
             // Calculate milliseconds since recording started
             chrono::Local::now()
@@ -146,12 +149,32 @@ impl InputEvent {
             // Fallback to absolute timestamp if no recording start time
             chrono::Local::now().timestamp_millis()
         };
-        
+
         serde_json::json!({
             "event": self.event,
             "data": self.data,
             "time": timestamp
         })
+    }
+}
+
+/// Normalizes mouse coordinates by clamping to monitor bounds
+/// Returns (clamped_x, clamped_y, raw_x, raw_y)
+fn normalize_coordinates(x: f64, y: f64) -> (f64, f64, f64, f64) {
+    use std::sync::atomic::Ordering;
+
+    // Get monitor dimensions from atomic variables (lock-free, thread-safe)
+    let width = crate::core::record::MONITOR_WIDTH.load(Ordering::Relaxed);
+    let height = crate::core::record::MONITOR_HEIGHT.load(Ordering::Relaxed);
+
+    if width > 0 && height > 0 {
+        // Clamp coordinates to [0, width] and [0, height]
+        let clamped_x = x.max(0.0).min(width as f64);
+        let clamped_y = y.max(0.0).min(height as f64);
+        (clamped_x, clamped_y, x, y)
+    } else {
+        // Monitor dimensions not set yet - return raw coords
+        (x, y, x, y)
     }
 }
 
@@ -166,12 +189,10 @@ impl InputEvent {
 /// * `Err` if an error occurred.
 pub fn start_input_listener<R: Runtime>(
     app_handle: tauri::AppHandle<R>,
-    demonstration_state: &DemonstrationState,
+    recording_start_time: Option<chrono::DateTime<chrono::Local>>,
 ) -> Result<(), String> {
     info!("[Input] Starting input listener");
-    // Get recording start time for relative timestamps
-    let recording_start_time = demonstration_state.get_recording_start_time();
-    
+
     // Check if already listening
     let lock = lock_with_timeout(&INPUT_LISTENER_STATE, std::time::Duration::from_secs(2));
     let mut state = match lock {
@@ -297,11 +318,14 @@ pub fn start_input_listener<R: Runtime>(
         let handle = thread::spawn(move || {
             let callback = move |event: RdevEvent| {
                 if let RdevEventType::MouseMove { x, y } = event.event_type {
+                    let (norm_x, norm_y, raw_x, raw_y) = normalize_coordinates(x, y);
                     let input_event = InputEvent::new(
                         "mousemove",
                         serde_json::json!({
-                            "x": x,
-                            "y": y
+                            "x": norm_x,
+                            "y": norm_y,
+                            "raw_x": raw_x,
+                            "raw_y": raw_y
                         }),
                     );
                     // Log the mouse move event
@@ -373,13 +397,18 @@ pub fn start_input_listener<R: Runtime>(
                             "delta": delta_y as f32
                         }),
                     )),
-                    RdevEventType::MouseMove { x, y } => Some(InputEvent::new(
-                        "mousemove",
-                        serde_json::json!({
-                            "x": x,
-                            "y": y
-                        }),
-                    )),
+                    RdevEventType::MouseMove { x, y } => {
+                        let (norm_x, norm_y, raw_x, raw_y) = normalize_coordinates(x, y);
+                        Some(InputEvent::new(
+                            "mousemove",
+                            serde_json::json!({
+                                "x": norm_x,
+                                "y": norm_y,
+                                "raw_x": raw_x,
+                                "raw_y": raw_y
+                            }),
+                        ))
+                    }
                 };
 
                 if let Some(event) = input_event {
