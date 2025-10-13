@@ -150,12 +150,19 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
   Future<void> fetchSupportedTokens() async {
     try {
       final tokens = await ref.read(getSupportedTokensProvider.future);
+      // Preserve previously selected token if it exists and is valid
+      var selectedToken = state.selectedTokenSymbol;
+      if (selectedToken == null ||
+          !tokens.any((t) => t.symbol == selectedToken)) {
+        selectedToken = tokens.isNotEmpty ? tokens.first.symbol : null;
+      }
+
       state = state.copyWith(
         supportedTokens: tokens,
-        selectedTokenSymbol: tokens.isNotEmpty ? tokens.first.symbol : null,
+        selectedTokenSymbol: selectedToken,
       );
       // Predict pool address when token is selected
-      if (tokens.isNotEmpty) {
+      if (selectedToken != null) {
         await _predictPoolAddress();
       }
     } catch (e) {
@@ -173,15 +180,13 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
       final prediction = await ref.read(
         predictPoolAddressProvider(
           creator: creatorAddress,
-          token: state
-              .selectedTokenSymbol!, // Pass symbol, backend handles address conversion
+          token: state.selectedTokenSymbol!,
         ).future,
       );
 
-      final predictedAddress =
-          prediction['data']['predictedAddress'] as String?;
-      if (predictedAddress != null) {
-        state = state.copyWith(predictedPoolAddress: predictedAddress);
+      final predictedPoolAddress = prediction['predicted'] as String?;
+      if (predictedPoolAddress != null) {
+        state = state.copyWith(predictedPoolAddress: predictedPoolAddress);
       }
     } catch (e) {
       // Silent fail for prediction - not critical for UX
