@@ -538,6 +538,7 @@ class InputEventDisplay extends StatelessWidget {
     final tree = eventData['tree'] as List<dynamic>? ?? [];
     final duration = eventData['duration'] as int? ?? 0;
     final focusedApp = eventData['focused_app'] as Map<String, dynamic>?;
+    final appStatus = eventData['app_status'] as String? ?? 'unknown';
 
     // Extract applications from the tree
     final applications = tree
@@ -556,6 +557,7 @@ class InputEventDisplay extends StatelessWidget {
           applications.length,
           duration,
           focusedAppName,
+          appStatus,
           theme,
         ),
 
@@ -577,8 +579,12 @@ class InputEventDisplay extends StatelessWidget {
     int appCount,
     int duration,
     String focusedAppName,
+    String appStatus,
     ThemeData theme,
   ) {
+    // Get status badge configuration
+    final statusConfig = _getAppStatusConfig(appStatus);
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -627,6 +633,41 @@ class InputEventDisplay extends StatelessWidget {
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // App Status Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusConfig['color'].withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: statusConfig['color'].withValues(alpha: 0.5),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            statusConfig['icon'],
+                            size: 10,
+                            color: statusConfig['color'],
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            statusConfig['label'],
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w600,
+                              color: statusConfig['color'],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -1054,6 +1095,30 @@ class InputEventDisplay extends StatelessWidget {
         return '🖱️ Forward Button';
       default:
         return button;
+    }
+  }
+
+  Map<String, dynamic> _getAppStatusConfig(String status) {
+    switch (status) {
+      case 'ready':
+        return {
+          'color': Colors.green,
+          'icon': Icons.check_circle,
+          'label': 'Ready',
+        };
+      case 'launching':
+        return {
+          'color': Colors.orange,
+          'icon': Icons.hourglass_empty,
+          'label': 'Launching',
+        };
+      case 'unknown':
+      default:
+        return {
+          'color': Colors.grey,
+          'icon': Icons.help_outline,
+          'label': 'Unknown',
+        };
     }
   }
 }
