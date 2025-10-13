@@ -2,9 +2,8 @@ import 'package:clones_desktop/application/transaction/provider.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:clones_desktop/ui/views/generate_factory/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/generate_factory/bloc/state.dart';
-import 'package:clones_desktop/ui/views/generate_factory/layouts/components/generate_factory_textfield_app.dart';
 import 'package:clones_desktop/ui/views/generate_factory/layouts/components/generate_factory_textfield_factory_app.dart';
-import 'package:clones_desktop/ui/views/generate_factory/layouts/components/generate_factory_textfield_factory_prompt.dart';
+import 'package:clones_desktop/ui/views/shared/components/editable_app_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -62,73 +61,49 @@ class GenerateFactoryModalStep3 extends ConsumerWidget {
                 itemCount: (generateFactory.apps! as List).length,
                 itemBuilder: (context, appIdx) {
                   final app = generateFactory.apps![appIdx];
-                  return Card(
-                    color: Colors.transparent,
-                    margin: const EdgeInsets.symmetric(vertical: 6),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(16),
-                                  child: Image.network(
-                                    'http://127.0.0.1:19847/proxy-image?url=${Uri.encodeComponent('https://www.google.com/s2/favicons?domain=${app.domain}&sz=32')}',
-                                    errorBuilder:
-                                        (context, error, stackTrace) =>
-                                            const Icon(
-                                      Icons.apps,
-                                    ),
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: GenerateFactoryTextFieldApp(
-                                  appIdx: appIdx,
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (app.tasks.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(left: 60, top: 4),
-                              child: Column(
-                                children: List.generate(
-                                  app.tasks.length,
-                                  (taskIdx) {
-                                    return Column(
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 4,
-                                          ),
-                                          child:
-                                              GenerateFactoryTextFieldFactoryPrompt(
-                                            appIdx: appIdx,
-                                            taskIdx: taskIdx,
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
+                  final generateFactoryNotifier =
+                      ref.watch(generateFactoryNotifierProvider.notifier);
+
+                  return EditableAppCard(
+                    appName: app.name,
+                    appDomain: app.domain,
+                    tasks:
+                        app.tasks.map<String>((task) => task.prompt).toList(),
+                    onAppNameChanged: (newName) {
+                      generateFactoryNotifier.updateAppName(appIdx, newName);
+                    },
+                    onTaskChanged: (event) {
+                      generateFactoryNotifier.updateTaskPrompt(
+                        appIdx,
+                        event.taskIndex,
+                        event.newValue,
+                      );
+                    },
+                    onTaskAdded: () {
+                      generateFactoryNotifier.addTask(appIdx);
+                    },
+                    onTaskRemoved: (taskIdx) {
+                      generateFactoryNotifier.removeTask(appIdx, taskIdx);
+                    },
+                    onAppRemoved: () {
+                      generateFactoryNotifier.removeApp(appIdx);
+                    },
+                    enabled: !generateFactory.isCreating &&
+                        !generateFactory.isCreated,
                   );
                 },
               ),
-            )
-          else
+            ),
+          // TODO: Add app button
+          /*if (!generateFactory.isCreating && !generateFactory.isCreated)
+            AddAppCard(
+              onAddApp: () {
+                ref.read(generateFactoryNotifierProvider.notifier).addApp();
+              },
+              enabled:
+                  !generateFactory.isCreating && !generateFactory.isCreated,
+            ),*/
+          if (generateFactory.apps == null || generateFactory.apps!.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Center(

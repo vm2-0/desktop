@@ -3,6 +3,7 @@ import 'package:clones_desktop/application/factory.dart';
 import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/application/transaction/provider.dart';
 import 'package:clones_desktop/domain/models/factory/factory_app.dart';
+import 'package:clones_desktop/domain/models/factory/factory_task.dart';
 import 'package:clones_desktop/ui/views/generate_factory/bloc/setters.dart';
 import 'package:clones_desktop/ui/views/generate_factory/bloc/state.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -140,6 +141,67 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
     newTasks[taskIndex] = newTasks[taskIndex].copyWith(prompt: value);
     newApps[appIndex] = appToUpdate.copyWith(tasks: newTasks.cast());
     setApps(newApps);
+  }
+
+  void addTask(int appIndex) {
+    if (state.apps == null) return;
+
+    final newApps = List<FactoryApp>.from(state.apps!);
+    final appToUpdate = newApps[appIndex];
+    final newTasks = List.from(appToUpdate.tasks)
+
+      // Add a new empty task
+      ..add(
+        const FactoryTask(
+          prompt: '',
+        ),
+      );
+
+    newApps[appIndex] = appToUpdate.copyWith(tasks: newTasks.cast());
+    setApps(newApps);
+  }
+
+  void removeTask(int appIndex, int taskIndex) {
+    if (state.apps == null) return;
+
+    final newApps = List<FactoryApp>.from(state.apps!);
+    final appToUpdate = newApps[appIndex];
+    final newTasks = List.from(appToUpdate.tasks);
+
+    if (taskIndex >= 0 && taskIndex < newTasks.length) {
+      newTasks.removeAt(taskIndex);
+      newApps[appIndex] = appToUpdate.copyWith(tasks: newTasks.cast());
+      setApps(newApps);
+    }
+  }
+
+  void addApp() {
+    final newApps = List<FactoryApp>.from(state.apps ?? [])
+
+      // Add a new empty app with one empty task
+      ..add(
+        const FactoryApp(
+          name: '',
+          domain: '',
+          description: '',
+          tasks: [
+            FactoryTask(prompt: ''),
+          ],
+        ),
+      );
+
+    setApps(newApps);
+  }
+
+  void removeApp(int appIndex) {
+    if (state.apps == null) return;
+
+    final newApps = List<FactoryApp>.from(state.apps!);
+
+    if (appIndex >= 0 && appIndex < newApps.length) {
+      newApps.removeAt(appIndex);
+      setApps(newApps);
+    }
   }
 
   void setSelectedTokenWithPrediction(String tokenSymbol) {
