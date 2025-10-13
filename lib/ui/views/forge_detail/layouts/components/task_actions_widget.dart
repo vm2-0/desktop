@@ -1,10 +1,13 @@
 import 'dart:convert';
 
+import 'package:clones_desktop/application/feature_flags.dart';
+import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/domain/app_info.dart';
 import 'package:clones_desktop/domain/models/factory/factory_app.dart';
 import 'package:clones_desktop/domain/models/factory/factory_task.dart';
 import 'package:clones_desktop/ui/components/design_widget/dialog/dialog.dart';
+import 'package:clones_desktop/ui/views/demo_detail/layouts/components/referral_required_dialog.dart';
 import 'package:clones_desktop/ui/views/demo_detail/layouts/demo_detail_view.dart';
 import 'package:clones_desktop/ui/views/forge_detail/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/manage_task/bloc/state.dart';
@@ -34,7 +37,17 @@ class TaskActionsWidget extends ConsumerWidget {
       children: [
         // Record/Training session button
         InkWell(
-          onTap: () {
+          onTap: () async {
+            // Check if farming is locked without referral code
+            if (FeatureFlags.lockFarmingWithoutReferral) {
+              final session = ref.read(sessionNotifierProvider);
+              if (session.referrerCode == null ||
+                  session.referrerCode!.isEmpty) {
+                await ReferralRequiredDialog.show(context, ref);
+                return;
+              }
+            }
+
             final appInfo = AppInfo(
               type: 'website',
               name: app.name,

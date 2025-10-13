@@ -1,6 +1,7 @@
 import 'package:clones_desktop/application/referral.dart';
 import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/domain/models/api/api_error.dart';
+import 'package:clones_desktop/domain/models/api/api_response.dart';
 import 'package:clones_desktop/domain/models/referral/referral_info.dart';
 import 'package:clones_desktop/ui/views/referral/bloc/state.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -128,7 +129,7 @@ class ReferralNotifier extends _$ReferralNotifier {
       await ref.read(sessionNotifierProvider.notifier).addReferrerInfo();
     } catch (e) {
       if (e is ApiError) {
-        setErrorMessage(e.message);
+        setErrorMessage('This referrer code does not exist.');
       } else {
         setErrorMessage(e.toString());
       }
