@@ -5,7 +5,7 @@ use serde_json::{json, Value};
 mod macos {
     use super::*;
     use core_foundation::array::{CFArray, CFArrayRef};
-    use core_foundation::base::{CFRelease, CFType, TCFType};
+    use core_foundation::base::{Boolean, CFRelease, TCFType};
     use core_foundation::dictionary::{CFDictionary, CFDictionaryRef};
     use core_foundation::number::CFNumber;
     use core_foundation::string::{CFString, CFStringRef};
@@ -13,7 +13,7 @@ mod macos {
     use core_graphics::window::{kCGNullWindowID, kCGWindowListOptionOnScreenOnly};
     use std::collections::HashMap;
     use std::ffi::c_void;
-    use std::mem;
+    // removed unused: std::mem
 
     // ----- AX / CG externs -----
     #[repr(C)]
@@ -41,17 +41,14 @@ mod macos {
             attribute: CFStringRef,
             value_out: *mut *const c_void,
         ) -> AXError;
-        fn AXUIElementCopyAttributeNames(
-            element: AXUIElementRef,
-            names: *mut *const c_void,
-        ) -> AXError;
+        // removed unused: AXUIElementCopyAttributeNames
         fn AXValueGetValue(
             value: AXValueRef,
             value_type: AXValueType,
             value_ptr: *mut c_void,
         ) -> bool;
-        fn AXIsProcessTrusted() -> bool;
-        fn AXIsProcessTrustedWithOptions(options: *const c_void) -> bool;
+        fn AXIsProcessTrusted() -> Boolean;
+        // removed unused: AXIsProcessTrustedWithOptions
     }
 
     #[link(name = "CoreGraphics", kind = "framework")]
@@ -67,7 +64,6 @@ mod macos {
 
     #[link(name = "CoreFoundation", kind = "framework")]
     extern "C" {
-        fn CFRetain(cf: *const c_void) -> *const c_void;
         fn CFDictionaryGetValue(dict: *const c_void, key: *const c_void) -> *const c_void;
     }
 
@@ -78,11 +74,11 @@ mod macos {
     // AX attribute constants
     const K_AX_CHILDREN: &str = "AXChildren";
     const K_AX_TITLE: &str = "AXTitle";
-    const K_AX_ROLE: &str = "AXRole";
+    // removed unused: K_AX_ROLE
     const K_AX_POSITION: &str = "AXPosition";
     const K_AX_SIZE: &str = "AXSize";
-    const K_AX_VALUE: &str = "AXValue";
-    const K_AX_DESCRIPTION: &str = "AXDescription";
+    // removed unused: K_AX_VALUE
+    // removed unused: K_AX_DESCRIPTION
     const K_AX_WINDOWS: &str = "AXWindows";
     const K_AX_FOCUSED_APP: &str = "AXFocusedApplication";
 
@@ -95,7 +91,7 @@ mod macos {
         info!("[AxTree Native] Starting native macOS accessibility extraction");
 
         unsafe {
-            if !AXIsProcessTrusted() {
+            if AXIsProcessTrusted() == 0 {
                 return Err("Process not trusted for accessibility. Grant permissions in System Settings → Privacy & Security → Accessibility."
                     .to_string());
             }

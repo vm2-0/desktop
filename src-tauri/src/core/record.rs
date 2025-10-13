@@ -6,8 +6,11 @@ use crate::core::input;
 use crate::tools::axtree;
 use crate::tools::cqa;
 use crate::tools::ffmpeg::{init_ffmpeg, FFmpegRecorder, FFMPEG_PATH};
+#[cfg(not(target_os = "macos"))]
 use crate::utils::keyboard_layout;
 use crate::utils::logger::Logger;
+#[cfg(target_os = "macos")]
+use crate::utils::permissions::{has_ax_perms, request_ax_perms};
 use crate::utils::settings::get_custom_app_local_data_dir;
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use chrono::Local;
@@ -39,10 +42,12 @@ impl Default for SchemaVersion {
 }
 
 impl SchemaVersion {
+    #[allow(dead_code)]
     pub fn to_string(&self) -> String {
         format!("{}.{}.{}", self.major, self.minor, self.patch)
     }
 
+    #[allow(dead_code)]
     pub fn is_compatible(&self, other: &SchemaVersion) -> bool {
         // Compatible if same major version and this minor >= other minor
         self.major == other.major && self.minor >= other.minor
@@ -307,9 +312,14 @@ impl DemonstrationState {
 }
 
 // Separate atomic storage for monitor dimensions to avoid Mutex issues
-use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::atomic::{AtomicI64, AtomicU32, Ordering};
 pub(crate) static MONITOR_WIDTH: AtomicU32 = AtomicU32::new(0);
 pub(crate) static MONITOR_HEIGHT: AtomicU32 = AtomicU32::new(0);
+
+// CRITICAL: Store recording_start_time as atomic to avoid deadlocks
+// Multiple threads need to read this value frequently (input events, ffmpeg logs)
+// Using AtomicI64 instead of Mutex eliminates contention and deadlock risk
+pub(crate) static RECORDING_START_TIME_MILLIS: AtomicI64 = AtomicI64::new(0);
 
 // Global state for recording and logging
 lazy_static::lazy_static! {
@@ -360,11 +370,24 @@ fn safe_os_locale() -> String {
     }
 }
 
+#[cfg(target_os = "macos")]
+fn safe_keyboard_layout_id() -> Option<String> {
+    // Temporary hardening: some macOS setups trigger a SIGTRAP inside low-level
+    // keyboard layout APIs. Skip layout detection to avoid startup crashes.
+    log::warn!(
+        "[record] Skipping keyboard layout detection on macOS to avoid rare startup crashes"
+    );
+    None
+}
+
+#[cfg(not(target_os = "macos"))]
 fn safe_keyboard_layout_id() -> Option<String> {
     match std::panic::catch_unwind(|| keyboard_layout::get_current_keyboard_layout()) {
         Ok(res) => res.ok().map(|info| info.layout_id),
         Err(_) => {
-            log::warn!("[record] keyboard_layout::get_current_keyboard_layout() panicked; defaulting to None");
+            log::warn!(
+                "[record] keyboard_layout::get_current_keyboard_layout() panicked; defaulting to None"
+            );
             None
         }
     }
@@ -502,19 +525,36 @@ pub async fn start_recording(
     crate::tools::ffmpeg::init_ffprobe()
         .map_err(|e| format!("Failed to initialize FFprobe: {}", e))?;
 
-    // Store demonstration data in global state if available
-    if let Some(demonstration_data) = &demonstration {
-        if let Ok(mut global_state) = DEMONSTRATION_STATE.lock() {
-            global_state.current_demonstration = Some(demonstration_data.clone());
-        }
-    }
-
     let (session_dir, timestamp) = get_session_path(&app)?;
 
-    // Store the recording ID in global state
-    if let Ok(mut global_state) = DEMONSTRATION_STATE.lock() {
+    // CRITICAL: Store ALL demonstration state in a SINGLE lock to avoid deadlocks
+    // This must happen BEFORE starting any threads that might also lock DEMONSTRATION_STATE
+    let recording_start = Local::now();
+    {
+        let mut global_state = DEMONSTRATION_STATE
+            .lock()
+            .map_err(|e| format!("Failed to lock demonstration state: {}", e))?;
+
+        if let Some(demonstration_data) = &demonstration {
+            global_state.current_demonstration = Some(demonstration_data.clone());
+        }
         global_state.current_recording_id = Some(timestamp.clone());
-    }
+        global_state.recording_start_time = Some(recording_start);
+
+        log::info!(
+            "[record] Initialized demonstration state: recording_id={}, has_demo={}",
+            timestamp,
+            demonstration.is_some()
+        );
+    } // Lock is released here before we start any threads
+
+    // Store recording start time in atomic variable (lock-free, thread-safe)
+    // This allows input/ffmpeg threads to read it without mutex contention
+    RECORDING_START_TIME_MILLIS.store(recording_start.timestamp_millis(), Ordering::Relaxed);
+    log::info!(
+        "[record] Stored recording start time: {} ms",
+        recording_start.timestamp_millis()
+    );
 
     let video_path = session_dir.join("recording.mp4");
 
@@ -586,11 +626,12 @@ pub async fn start_recording(
         primary.height
     );
 
-    // Store recording start time in global state
-    let recording_start = Local::now();
-    if let Ok(mut global_state) = DEMONSTRATION_STATE.lock() {
-        global_state.recording_start_time = Some(recording_start);
-    }
+    // Extract recording start time ONCE (already set in DEMONSTRATION_STATE above)
+    let recording_start_time = if let Ok(global_state) = DEMONSTRATION_STATE.lock() {
+        global_state.get_recording_start_time()
+    } else {
+        None
+    };
 
     set_rec_state(&app, "recording".to_string(), None)?;
 
@@ -604,16 +645,25 @@ pub async fn start_recording(
         *log_state = Some(Logger::new(session_dir.clone())?);
     }
 
-    // Start input listener - pass recording start time directly
-    let recording_start_time = if let Ok(global_state) = DEMONSTRATION_STATE.lock() {
-        global_state.get_recording_start_time()
-    } else {
-        None
-    };
-    input::start_input_listener(app.clone(), recording_start_time)?;
+    #[cfg(target_os = "macos")]
+    {
+        if !has_ax_perms() {
+            log::warn!(
+                "[Input] Accessibility permission missing; skipping input listener and AX dumps. Go to System Settings → Privacy & Security → Accessibility and enable permissions for Clones."
+            );
+            // Optionally prompt the user (no-op in headless runs)
+            request_ax_perms();
+        } else {
+            input::start_input_listener(app.clone(), recording_start_time)?;
+            axtree::set_recording_mode(true)?;
+        }
+    }
 
-    // Start event-driven UI dumps during recording
-    axtree::set_recording_mode(true)?;
+    #[cfg(not(target_os = "macos"))]
+    {
+        input::start_input_listener(app.clone(), recording_start_time)?;
+        axtree::set_recording_mode(true)?;
+    }
 
     Ok(())
 }
@@ -769,10 +819,14 @@ pub async fn stop_recording(
     // Clear the current demonstration and get recording ID from global state
     let recording_id_opt = if let Ok(mut global_state) = DEMONSTRATION_STATE.lock() {
         global_state.current_demonstration = None;
+        global_state.recording_start_time = None;
         global_state.current_recording_id.clone()
     } else {
         None
     };
+
+    // Reset atomic recording start time
+    RECORDING_START_TIME_MILLIS.store(0, Ordering::Relaxed);
 
     if let Some(recording_id) = recording_id_opt {
         set_rec_state(&app, "saved".to_string(), Some(recording_id.clone()))?;
@@ -797,19 +851,13 @@ pub fn log_input(mut event: serde_json::Value) -> Result<(), String> {
     // Check if this is an axtree_interaction event and convert timestamp to relative
     if let Some(event_type) = event.get("event").and_then(|v| v.as_str()) {
         if event_type == "axtree_interaction" {
-            // Get recording start time for relative timestamp calculation
-            let recording_start_time = if let Ok(state) = DEMONSTRATION_STATE.lock() {
-                state.get_recording_start_time()
-            } else {
-                None
-            };
+            // Get recording start time from atomic variable (lock-free, no deadlock risk)
+            let start_time_millis = RECORDING_START_TIME_MILLIS.load(Ordering::Relaxed);
 
-            // Recalculate timestamp to be relative
-            if let Some(start_time) = recording_start_time {
-                let relative_timestamp = chrono::Local::now()
-                    .signed_duration_since(start_time)
-                    .num_milliseconds()
-                    .max(0);
+            if start_time_millis > 0 {
+                // Calculate relative timestamp
+                let relative_timestamp =
+                    (chrono::Local::now().timestamp_millis() - start_time_millis).max(0);
 
                 // Update the time field in the event
                 if let Some(obj) = event.as_object_mut() {
@@ -831,7 +879,7 @@ pub fn log_input(mut event: serde_json::Value) -> Result<(), String> {
 }
 
 /// Log FFmpeg output (stdout or stderr) to the current recording session.
-/// Uses global demonstration state for timestamp calculation.
+/// Uses atomic recording start time for timestamp calculation (lock-free).
 ///
 /// # Arguments
 /// * `output` - The output string.
@@ -841,19 +889,12 @@ pub fn log_input(mut event: serde_json::Value) -> Result<(), String> {
 /// * `Ok(())` if successful.
 /// * `Err` if an error occurred.
 pub fn log_ffmpeg(output: &str, is_stderr: bool) -> Result<(), String> {
-    // Get the global demonstration state for timestamp calculation
-    let recording_start_time = if let Ok(state) = DEMONSTRATION_STATE.lock() {
-        state.get_recording_start_time()
-    } else {
-        None
-    };
+    // Get recording start time from atomic variable (lock-free, no deadlock risk)
+    let start_time_millis = RECORDING_START_TIME_MILLIS.load(Ordering::Relaxed);
 
     // Calculate relative timestamp
-    let timestamp = if let Some(start_time) = recording_start_time {
-        chrono::Local::now()
-            .signed_duration_since(start_time)
-            .num_milliseconds()
-            .max(0)
+    let timestamp = if start_time_millis > 0 {
+        (chrono::Local::now().timestamp_millis() - start_time_millis).max(0)
     } else {
         chrono::Local::now().timestamp_millis()
     };

@@ -124,6 +124,7 @@ pub struct GenerateDeepLinkPayload {
 
 #[derive(Deserialize)]
 pub struct UpdateTransactionStatusPayload {
+    #[allow(dead_code)]
     request_id: String,
     status: String,
     gas_estimate: Option<serde_json::Value>,
@@ -353,12 +354,8 @@ async fn start_recording_handler(
     State(state): State<AppState>,
     Json(payload): Json<StartRecordingPayload>,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    match record::start_recording(
-        state.app_handle.clone(),
-        payload.demonstration,
-        payload.fps,
-    )
-    .await
+    match record::start_recording(state.app_handle.clone(), payload.demonstration, payload.fps)
+        .await
     {
         Ok(_) => Ok(StatusCode::OK),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
@@ -370,12 +367,7 @@ async fn stop_recording_handler(
     State(state): State<AppState>,
     Json(payload): Json<StopRecordingPayload>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    match record::stop_recording(
-        state.app_handle.clone(),
-        Some(payload.status),
-    )
-    .await
-    {
+    match record::stop_recording(state.app_handle.clone(), Some(payload.status)).await {
         Ok(recording_id) => Ok((StatusCode::OK, recording_id)),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
