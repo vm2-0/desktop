@@ -7,7 +7,6 @@ part 'create_referral_response.g.dart';
 class CreateReferralResponse with _$CreateReferralResponse {
   const factory CreateReferralResponse({
     required String referralCode,
-    required String referralLink,
     required String walletAddress,
     required DateTime createdAt,
   }) = _CreateReferralResponse;

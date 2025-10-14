@@ -21,7 +21,6 @@ ReferralInfo _$ReferralInfoFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$ReferralInfo {
   String get referralCode => throw _privateConstructorUsedError;
-  String? get referralLink => throw _privateConstructorUsedError;
   String get walletAddress => throw _privateConstructorUsedError;
   int get totalReferrals => throw _privateConstructorUsedError;
   double get totalRewards => throw _privateConstructorUsedError;
@@ -48,7 +47,6 @@ abstract class $ReferralInfoCopyWith<$Res> {
   @useResult
   $Res call(
       {String referralCode,
-      String? referralLink,
       String walletAddress,
       int totalReferrals,
       double totalRewards,
@@ -74,7 +72,6 @@ class _$ReferralInfoCopyWithImpl<$Res, $Val extends ReferralInfo>
   @override
   $Res call({
     Object? referralCode = null,
-    Object? referralLink = freezed,
     Object? walletAddress = null,
     Object? totalReferrals = null,
     Object? totalRewards = null,
@@ -88,10 +85,6 @@ class _$ReferralInfoCopyWithImpl<$Res, $Val extends ReferralInfo>
           ? _value.referralCode
           : referralCode // ignore: cast_nullable_to_non_nullable
               as String,
-      referralLink: freezed == referralLink
-          ? _value.referralLink
-          : referralLink // ignore: cast_nullable_to_non_nullable
-              as String?,
       walletAddress: null == walletAddress
           ? _value.walletAddress
           : walletAddress // ignore: cast_nullable_to_non_nullable
@@ -134,7 +127,6 @@ abstract class _$$ReferralInfoImplCopyWith<$Res>
   @useResult
   $Res call(
       {String referralCode,
-      String? referralLink,
       String walletAddress,
       int totalReferrals,
       double totalRewards,
@@ -158,7 +150,6 @@ class __$$ReferralInfoImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? referralCode = null,
-    Object? referralLink = freezed,
     Object? walletAddress = null,
     Object? totalReferrals = null,
     Object? totalRewards = null,
@@ -172,10 +163,6 @@ class __$$ReferralInfoImplCopyWithImpl<$Res>
           ? _value.referralCode
           : referralCode // ignore: cast_nullable_to_non_nullable
               as String,
-      referralLink: freezed == referralLink
-          ? _value.referralLink
-          : referralLink // ignore: cast_nullable_to_non_nullable
-              as String?,
       walletAddress: null == walletAddress
           ? _value.walletAddress
           : walletAddress // ignore: cast_nullable_to_non_nullable
@@ -213,7 +200,6 @@ class __$$ReferralInfoImplCopyWithImpl<$Res>
 class _$ReferralInfoImpl implements _ReferralInfo {
   const _$ReferralInfoImpl(
       {required this.referralCode,
-      this.referralLink,
       required this.walletAddress,
       required this.totalReferrals,
       required this.totalRewards,
@@ -227,8 +213,6 @@ class _$ReferralInfoImpl implements _ReferralInfo {
 
   @override
   final String referralCode;
-  @override
-  final String? referralLink;
   @override
   final String walletAddress;
   @override
@@ -246,7 +230,7 @@ class _$ReferralInfoImpl implements _ReferralInfo {
 
   @override
   String toString() {
-    return 'ReferralInfo(referralCode: $referralCode, referralLink: $referralLink, walletAddress: $walletAddress, totalReferrals: $totalReferrals, totalRewards: $totalRewards, isActive: $isActive, createdAt: $createdAt, lastUpdated: $lastUpdated, expiresAt: $expiresAt)';
+    return 'ReferralInfo(referralCode: $referralCode, walletAddress: $walletAddress, totalReferrals: $totalReferrals, totalRewards: $totalRewards, isActive: $isActive, createdAt: $createdAt, lastUpdated: $lastUpdated, expiresAt: $expiresAt)';
   }
 
   @override
@@ -256,8 +240,6 @@ class _$ReferralInfoImpl implements _ReferralInfo {
             other is _$ReferralInfoImpl &&
             (identical(other.referralCode, referralCode) ||
                 other.referralCode == referralCode) &&
-            (identical(other.referralLink, referralLink) ||
-                other.referralLink == referralLink) &&
             (identical(other.walletAddress, walletAddress) ||
                 other.walletAddress == walletAddress) &&
             (identical(other.totalReferrals, totalReferrals) ||
@@ -279,7 +261,6 @@ class _$ReferralInfoImpl implements _ReferralInfo {
   int get hashCode => Object.hash(
       runtimeType,
       referralCode,
-      referralLink,
       walletAddress,
       totalReferrals,
       totalRewards,
@@ -307,7 +288,6 @@ class _$ReferralInfoImpl implements _ReferralInfo {
 abstract class _ReferralInfo implements ReferralInfo {
   const factory _ReferralInfo(
       {required final String referralCode,
-      final String? referralLink,
       required final String walletAddress,
       required final int totalReferrals,
       required final double totalRewards,
@@ -321,8 +301,6 @@ abstract class _ReferralInfo implements ReferralInfo {
 
   @override
   String get referralCode;
-  @override
-  String? get referralLink;
   @override
   String get walletAddress;
   @override

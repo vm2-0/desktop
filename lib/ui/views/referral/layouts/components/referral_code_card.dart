@@ -84,7 +84,7 @@ class ReferralCodeCard extends ConsumerWidget {
                       vertical: 12,
                     ),
                     child: SelectableText(
-                      referralState.referralInfo!.referralLink ?? '',
+                      referralState.referralInfo!.referralCode,
                       style: theme.textTheme.bodyMedium,
                     ),
                   ),
@@ -97,7 +97,7 @@ class ReferralCodeCard extends ConsumerWidget {
                 onTap: () {
                   Clipboard.setData(
                     ClipboardData(
-                      text: referralState.referralInfo!.referralLink ?? '',
+                      text: referralState.referralInfo!.referralCode,
                     ),
                   );
                   ScaffoldMessenger.of(context).showSnackBar(

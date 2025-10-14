@@ -28,14 +28,14 @@ class ReferralInstructionsCard extends StatelessWidget {
           _buildInstructionStep(
             context,
             1,
-            'Share your referral link with friends',
-            'Send your unique referral link to people you know who might be interested in Clones.',
+            'Share your referral code with friends',
+            'Send your unique referral code to people you know who might be interested in Clones.',
           ),
           _buildInstructionStep(
             context,
             2,
-            'They sign up using your link',
-            "When someone uses your referral link to sign up, they'll be automatically linked to your account.",
+            'They adding up using your code in referral desktop page',
+            "When someone adds your referral code to their account, they'll be automatically linked to your account.",
           ),
           _buildInstructionStep(
             context,

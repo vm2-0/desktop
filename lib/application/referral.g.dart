@@ -25,7 +25,7 @@ final referralRepositoryProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ReferralRepositoryRef = AutoDisposeProviderRef<ReferralRepository>;
-String _$getReferralInfoHash() => r'573414753b262420447697a673c72f2f82c3deaf';
+String _$getReferralInfoHash() => r'40143f689b19395e6e4d20cd6cfbf21af6f00932';
 
 /// Copied from Dart SDK
 class _SystemHash {

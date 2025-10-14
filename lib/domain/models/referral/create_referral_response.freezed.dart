@@ -22,7 +22,6 @@ CreateReferralResponse _$CreateReferralResponseFromJson(
 /// @nodoc
 mixin _$CreateReferralResponse {
   String get referralCode => throw _privateConstructorUsedError;
-  String get referralLink => throw _privateConstructorUsedError;
   String get walletAddress => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
 
@@ -42,11 +41,7 @@ abstract class $CreateReferralResponseCopyWith<$Res> {
           $Res Function(CreateReferralResponse) then) =
       _$CreateReferralResponseCopyWithImpl<$Res, CreateReferralResponse>;
   @useResult
-  $Res call(
-      {String referralCode,
-      String referralLink,
-      String walletAddress,
-      DateTime createdAt});
+  $Res call({String referralCode, String walletAddress, DateTime createdAt});
 }
 
 /// @nodoc
@@ -66,7 +61,6 @@ class _$CreateReferralResponseCopyWithImpl<$Res,
   @override
   $Res call({
     Object? referralCode = null,
-    Object? referralLink = null,
     Object? walletAddress = null,
     Object? createdAt = null,
   }) {
@@ -74,10 +68,6 @@ class _$CreateReferralResponseCopyWithImpl<$Res,
       referralCode: null == referralCode
           ? _value.referralCode
           : referralCode // ignore: cast_nullable_to_non_nullable
-              as String,
-      referralLink: null == referralLink
-          ? _value.referralLink
-          : referralLink // ignore: cast_nullable_to_non_nullable
               as String,
       walletAddress: null == walletAddress
           ? _value.walletAddress
@@ -100,11 +90,7 @@ abstract class _$$CreateReferralResponseImplCopyWith<$Res>
       __$$CreateReferralResponseImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {String referralCode,
-      String referralLink,
-      String walletAddress,
-      DateTime createdAt});
+  $Res call({String referralCode, String walletAddress, DateTime createdAt});
 }
 
 /// @nodoc
@@ -123,7 +109,6 @@ class __$$CreateReferralResponseImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? referralCode = null,
-    Object? referralLink = null,
     Object? walletAddress = null,
     Object? createdAt = null,
   }) {
@@ -131,10 +116,6 @@ class __$$CreateReferralResponseImplCopyWithImpl<$Res>
       referralCode: null == referralCode
           ? _value.referralCode
           : referralCode // ignore: cast_nullable_to_non_nullable
-              as String,
-      referralLink: null == referralLink
-          ? _value.referralLink
-          : referralLink // ignore: cast_nullable_to_non_nullable
               as String,
       walletAddress: null == walletAddress
           ? _value.walletAddress
@@ -153,7 +134,6 @@ class __$$CreateReferralResponseImplCopyWithImpl<$Res>
 class _$CreateReferralResponseImpl implements _CreateReferralResponse {
   const _$CreateReferralResponseImpl(
       {required this.referralCode,
-      required this.referralLink,
       required this.walletAddress,
       required this.createdAt});
 
@@ -163,15 +143,13 @@ class _$CreateReferralResponseImpl implements _CreateReferralResponse {
   @override
   final String referralCode;
   @override
-  final String referralLink;
-  @override
   final String walletAddress;
   @override
   final DateTime createdAt;
 
   @override
   String toString() {
-    return 'CreateReferralResponse(referralCode: $referralCode, referralLink: $referralLink, walletAddress: $walletAddress, createdAt: $createdAt)';
+    return 'CreateReferralResponse(referralCode: $referralCode, walletAddress: $walletAddress, createdAt: $createdAt)';
   }
 
   @override
@@ -181,8 +159,6 @@ class _$CreateReferralResponseImpl implements _CreateReferralResponse {
             other is _$CreateReferralResponseImpl &&
             (identical(other.referralCode, referralCode) ||
                 other.referralCode == referralCode) &&
-            (identical(other.referralLink, referralLink) ||
-                other.referralLink == referralLink) &&
             (identical(other.walletAddress, walletAddress) ||
                 other.walletAddress == walletAddress) &&
             (identical(other.createdAt, createdAt) ||
@@ -191,8 +167,8 @@ class _$CreateReferralResponseImpl implements _CreateReferralResponse {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType, referralCode, referralLink, walletAddress, createdAt);
+  int get hashCode =>
+      Object.hash(runtimeType, referralCode, walletAddress, createdAt);
 
   /// Create a copy of CreateReferralResponse
   /// with the given fields replaced by the non-null parameter values.
@@ -214,7 +190,6 @@ class _$CreateReferralResponseImpl implements _CreateReferralResponse {
 abstract class _CreateReferralResponse implements CreateReferralResponse {
   const factory _CreateReferralResponse(
       {required final String referralCode,
-      required final String referralLink,
       required final String walletAddress,
       required final DateTime createdAt}) = _$CreateReferralResponseImpl;
 
@@ -223,8 +198,6 @@ abstract class _CreateReferralResponse implements CreateReferralResponse {
 
   @override
   String get referralCode;
-  @override
-  String get referralLink;
   @override
   String get walletAddress;
   @override
