@@ -760,9 +760,17 @@ async fn handle_transaction_callback_handler(
 async fn check_for_update_handler(
     State(state): State<AppState>,
 ) -> Result<Json<crate::commands::updater::UpdateInfo>, (StatusCode, String)> {
+    log::info!("[Updater] Checking for updates...");
     match crate::commands::updater::check_for_update(state.app_handle.clone()).await {
-        Ok(update_info) => Ok(Json(update_info)),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e)),
+        Ok(update_info) => {
+            log::info!("[Updater] Check result: update_available={}, version={:?}",
+                update_info.update_available, update_info.version);
+            Ok(Json(update_info))
+        },
+        Err(e) => {
+            log::error!("[Updater] Failed to check for update: {}", e);
+            Err((StatusCode::INTERNAL_SERVER_ERROR, e))
+        },
     }
 }
 

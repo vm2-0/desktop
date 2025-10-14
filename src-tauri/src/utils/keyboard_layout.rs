@@ -102,24 +102,17 @@ pub fn get_current_keyboard_layout() -> Result<KeyboardLayoutInfo, LayoutError> 
 
 #[cfg(target_os = "windows")]
 fn get_windows_keyboard_layout() -> Result<KeyboardLayoutInfo, LayoutError> {
-    use windows::core::PWSTR;
-    use windows::Win32::UI::Input::KeyboardAndMouse::{GetKeyboardLayout, GetKeyboardLayoutNameW};
-
-    let hkl = unsafe { GetKeyboardLayout(0) };
-    if hkl.0 == 0 {
-        return Err(LayoutError::PlatformApiError("GetKeyboardLayout returned null".to_string()));
-    }
+    use windows::Win32::UI::Input::KeyboardAndMouse::GetKeyboardLayoutNameW;
 
     // Get the KLID (Keyboard Layout Identifier) which uniquely identifies the layout
     let mut klid_buffer = [0u16; 9]; // KLID is 8 chars + null terminator
-    let klid_pwstr = PWSTR(klid_buffer.as_mut_ptr());
 
-    let success = unsafe { GetKeyboardLayoutNameW(klid_pwstr) };
-    if !success.as_bool() {
+    let success = unsafe { GetKeyboardLayoutNameW(&mut klid_buffer) };
+    if success.is_err() {
         return Err(LayoutError::PlatformApiError("GetKeyboardLayoutNameW failed".to_string()));
     }
 
-    // Convert PWSTR to String - find null terminator to avoid garbage
+    // Convert to String - find null terminator to avoid garbage
     let len = klid_buffer
         .iter()
         .position(|&c| c == 0)
@@ -152,9 +145,8 @@ fn get_layout_info_from_registry(klid: &str) -> Option<(String, String)> {
     }
 
     use windows::core::HSTRING;
-    use windows::Win32::Foundation::{ERROR_SUCCESS, HKEY};
     use windows::Win32::System::Registry::{
-        RegCloseKey, RegOpenKeyExW, HKEY_LOCAL_MACHINE, KEY_READ, KEY_WOW64_64KEY,
+        RegCloseKey, RegOpenKeyExW, HKEY, HKEY_LOCAL_MACHINE, KEY_READ, KEY_WOW64_64KEY,
     };
 
     let registry_path = format!(
@@ -173,7 +165,7 @@ fn get_layout_info_from_registry(klid: &str) -> Option<(String, String)> {
             &mut hkey,
         );
 
-        if result != ERROR_SUCCESS {
+        if result.is_err() {
             return None;
         }
 
@@ -182,7 +174,7 @@ fn get_layout_info_from_registry(klid: &str) -> Option<(String, String)> {
             .and_then(resolve_indirect_or_expand)
             .or_else(|| read_registry_string_value(hkey, "Layout Text"));
 
-        RegCloseKey(hkey);
+        let _ = RegCloseKey(hkey);
 
         if let Some(name) = layout_name {
             let layout_id = generate_layout_id_from_klid_and_name(klid, &name);
@@ -201,17 +193,16 @@ fn get_layout_info_from_registry(klid: &str) -> Option<(String, String)> {
 }
 
 #[cfg(target_os = "windows")]
-fn read_registry_string_value(hkey: windows::Win32::Foundation::HKEY, value_name: &str) -> Option<String> {
+fn read_registry_string_value(hkey: windows::Win32::System::Registry::HKEY, value_name: &str) -> Option<String> {
     use windows::core::HSTRING;
-    use windows::Win32::Foundation::ERROR_SUCCESS;
-    use windows::Win32::System::Registry::{RegQueryValueExW, REG_SZ, REG_EXPAND_SZ};
+    use windows::Win32::System::Registry::{RegQueryValueExW, REG_SZ, REG_EXPAND_SZ, REG_VALUE_TYPE};
 
     unsafe {
         let value_name_wide = HSTRING::from(value_name);
         
         // First pass: get the required buffer size
         let mut buffer_size = 0u32;
-        let mut reg_type = 0u32;
+        let mut reg_type = REG_VALUE_TYPE::default();
         
         let result = RegQueryValueExW(
             hkey,
@@ -222,12 +213,12 @@ fn read_registry_string_value(hkey: windows::Win32::Foundation::HKEY, value_name
             Some(&mut buffer_size),
         );
 
-        if result != ERROR_SUCCESS || buffer_size == 0 {
+        if result.is_err() || buffer_size == 0 {
             return None;
         }
 
         // Check if it's a string type
-        if reg_type != REG_SZ.0 && reg_type != REG_EXPAND_SZ.0 {
+        if reg_type != REG_SZ && reg_type != REG_EXPAND_SZ {
             return None;
         }
 
@@ -244,7 +235,7 @@ fn read_registry_string_value(hkey: windows::Win32::Foundation::HKEY, value_name
             Some(&mut buffer_size),
         );
 
-        if result == ERROR_SUCCESS {
+        if result.is_ok() {
             let actual_len = (buffer_size as usize / 2).min(buffer.len());
             let len = buffer[..actual_len].iter().position(|&c| c == 0).unwrap_or(actual_len);
             
@@ -316,8 +307,7 @@ fn resolve_indirect_string(indirect: &str) -> Option<String> {
     unsafe {
         let result = SHLoadIndirectString(
             &indirect_wide,
-            windows::core::PWSTR(buffer.as_mut_ptr()),
-            buffer.len() as u32,
+            &mut buffer,
             None,
         );
         
@@ -341,7 +331,7 @@ fn expand_environment_variables(s: &str) -> Option<String> {
     
     unsafe {
         // First pass: get required buffer size
-        let needed = ExpandEnvironmentStringsW(&source, None, 0);
+        let needed = ExpandEnvironmentStringsW(&source, None);
         if needed == 0 {
             return None;
         }
@@ -350,8 +340,7 @@ fn expand_environment_variables(s: &str) -> Option<String> {
         let mut buffer = vec![0u16; needed as usize];
         let result = ExpandEnvironmentStringsW(
             &source,
-            windows::core::PWSTR(buffer.as_mut_ptr()),
-            needed,
+            Some(&mut buffer),
         );
         
         if result != 0 {

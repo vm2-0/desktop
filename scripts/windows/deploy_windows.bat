@@ -16,7 +16,7 @@ echo 🚀 Clones Desktop - Complete Build ^& Deploy
 echo ===========================================
 
 echo ℹ️ Step 1/2: Building release...
-call scripts\windows\build_release_local.ps1
+powershell -ExecutionPolicy Bypass -Command "$env:ENVIRONMENT='%ENVIRONMENT%'; & 'scripts\windows\build_release_local.ps1'"
 
 if errorlevel 1 (
     echo ❌ Build failed, aborting deployment
