@@ -111,17 +111,6 @@ pub fn run() {
             let app_handle = app.handle();
             let listen_handle = app_handle.clone();
 
-            // The IPC server must always be started in the main process to ensure proper communication
-            // between the main process and the renderer process in Tauri's architecture. Starting it
-            // elsewhere could lead to communication failures or runtime errors, as the main process
-            // is responsible for managing the application's state and handling IPC events.
-            tauri::async_runtime::spawn({
-                let app_handle = app_handle.clone();
-                async move {
-                    ipc_server::init(app_handle).await;
-                }
-            });
-
             listen_handle.clone().listen("deep-link", move |event| {
                 let url = event.payload();
                 let state = listen_handle.state::<DeepLinkState>();
@@ -134,9 +123,30 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application");
 
-    app.run(|_app_handle, event| {
-        if let tauri::RunEvent::ExitRequested { api, .. } = event {
-            api.prevent_exit();
+    // The IPC server must always be started in the main process to ensure proper communication
+    // between the main process and the renderer process in Tauri's architecture. Starting it
+    // after the window is created ensures that all window-related APIs are available.
+    // We wait a short moment to ensure the window is fully initialized.
+    let app_handle = app.handle().clone();
+    tauri::async_runtime::spawn(async move {
+        // Small delay to ensure the window is fully created
+        tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+        ipc_server::init(app_handle).await;
+    });
+
+    app.run(|app_handle, event| {
+        match event {
+            tauri::RunEvent::ExitRequested { api, code, .. } => {
+                // Only prevent exit if there's an active recording or other critical process
+                // For now, we allow the app to exit normally
+                if code.is_none() {
+                    // User requested exit (e.g., clicked X button)
+                    // Perform any cleanup here if needed
+                    log::info!("Application exit requested by user");
+                }
+                // Don't call api.prevent_exit() - let the app close normally
+            }
+            _ => {}
         }
     });
 }

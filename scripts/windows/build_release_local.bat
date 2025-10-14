@@ -5,7 +5,7 @@ REM This script builds the release version of the Windows app
 echo Building Clones Desktop for Windows Release...
 
 REM Check if we're in the right directory
-if not exist "scripts\windows\build_release_local.sh" (
+if not exist "scripts\windows\build_release_local.ps1" (
     echo Script not found. Please run this from the desktop directory.
     pause
     exit /b 1

@@ -5,7 +5,7 @@ REM This script calls the PowerShell script which handles both Flutter Web and T
 echo 🚀 Starting Flutter Web + Tauri Development (Windows)...
 
 REM Check if we're in the right directory
-if not exist "scripts\dev_web_tauri.ps1" (
+if not exist "scripts\windows\dev_web_tauri.ps1" (
     echo ❌ Script not found. Please run this from the desktop directory.
     pause
     exit /b 1

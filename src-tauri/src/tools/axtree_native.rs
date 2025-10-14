@@ -1,5 +1,5 @@
 use log::info;
-use serde_json::{json, Value};
+use serde_json::Value;
 
 #[cfg(target_os = "macos")]
 mod macos {

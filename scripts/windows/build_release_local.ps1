@@ -15,6 +15,7 @@ $ProjectRoot = Get-Location
 $BuildDate = Get-Date -Format "yyyyMMdd_HHmmss"
 $BuildDir = Join-Path $ProjectRoot "build_output_$BuildDate"
 $TauriDir = Join-Path $ProjectRoot "src-tauri"
+$LogFile = Join-Path $ProjectRoot "build_log_$BuildDate.txt"
 
 # Windows-specific temp directory setup
 $TempBuildDir = Join-Path $env:TEMP "clones-desktop-build"
@@ -22,27 +23,36 @@ $TempTargetDir = Join-Path $env:TEMP "clones-desktop-target"
 
 Write-Host "Project Root: $ProjectRoot" -ForegroundColor Cyan
 Write-Host "Build Directory: $BuildDir" -ForegroundColor Cyan
+Write-Host "Log File: $LogFile" -ForegroundColor Cyan
 Write-Host "Temporary Build Directory: $TempBuildDir" -ForegroundColor Cyan
 Write-Host "Temporary Target Directory: $TempTargetDir" -ForegroundColor Cyan
 
 function Write-LogInfo {
     param($Message)
+    $LogMessage = "[INFO] $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') - $Message"
     Write-Host "ℹ️  $Message" -ForegroundColor Blue
+    Add-Content -Path $LogFile -Value $LogMessage
 }
 
 function Write-LogSuccess {
     param($Message)
+    $LogMessage = "[SUCCESS] $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') - $Message"
     Write-Host "✅ $Message" -ForegroundColor Green
+    Add-Content -Path $LogFile -Value $LogMessage
 }
 
 function Write-LogWarning {
     param($Message)
+    $LogMessage = "[WARNING] $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') - $Message"
     Write-Host "⚠️  $Message" -ForegroundColor Yellow
+    Add-Content -Path $LogFile -Value $LogMessage
 }
 
 function Write-LogError {
     param($Message)
+    $LogMessage = "[ERROR] $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') - $Message"
     Write-Host "❌ $Message" -ForegroundColor Red
+    Add-Content -Path $LogFile -Value $LogMessage
 }
 
 # Function to clean up temporary directory
@@ -159,16 +169,39 @@ function Test-Prerequisites {
 function Initialize-Environment {
     Write-LogInfo "Setting up environment..."
 
-    # Load environment variables from .env
-    if (Test-Path ".env") {
-        Get-Content ".env" | ForEach-Object {
+    # Load environment variables from environment-specific .env file
+    # Priority: .env.{ENVIRONMENT} > .env.test > .env
+    $envFile = ".env"
+
+    if ($env:ENVIRONMENT) {
+        $envSpecificFile = ".env.$($env:ENVIRONMENT)"
+        if (Test-Path $envSpecificFile) {
+            $envFile = $envSpecificFile
+            Write-LogInfo "Loading environment variables from $envFile (from ENVIRONMENT variable)..."
+        } else {
+            Write-LogWarning "Environment file $envSpecificFile not found, checking for .env.test..."
+        }
+    }
+
+    # If no specific environment set or not found, try .env.test
+    if ($envFile -eq ".env" -and (Test-Path ".env.test")) {
+        $envFile = ".env.test"
+        Write-LogInfo "Loading environment variables from .env.test..."
+    } elseif ($envFile -eq ".env") {
+        Write-LogInfo "Loading environment variables from .env..."
+    }
+
+    if (Test-Path $envFile) {
+        Get-Content $envFile | ForEach-Object {
             if ($_ -match "^\s*([^#][^=]*)\s*=\s*(.*)\s*$") {
                 $name = $matches[1].Trim()
                 $value = $matches[2].Trim()
                 [Environment]::SetEnvironmentVariable($name, $value, [EnvironmentVariableTarget]::Process)
             }
         }
-        Write-LogInfo "Loaded environment variables from .env"
+        Write-LogSuccess "Loaded environment variables from $envFile"
+    } else {
+        Write-LogWarning "No .env file found"
     }
 
     # Create build directory
@@ -238,7 +271,7 @@ function Build-TauriTarget {
         $ConfigFile = "tauri.conf.json"
         if ($env:ENVIRONMENT) {
             $EnvConfig = "tauri.$($env:ENVIRONMENT).conf.json"
-            if (Test-Path "src-tauri\$EnvConfig") {
+            if (Test-Path $EnvConfig) {
                 $ConfigFile = $EnvConfig
                 Write-LogInfo "Using environment-specific config: $ConfigFile"
             } else {
@@ -248,16 +281,21 @@ function Build-TauriTarget {
         
         # Ensure Tauri signing variables are exported for the build process
         if ($env:TAURI_SIGNING_PRIVATE_KEY) {
-            Write-LogInfo "TAURI_SIGNING_PRIVATE_KEY exported for build"
+            Write-LogInfo "TAURI_SIGNING_PRIVATE_KEY exported for build (length: $($env:TAURI_SIGNING_PRIVATE_KEY.Length) chars)"
         }
         if ($env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD) {
-            Write-LogInfo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD exported for build"
+            Write-LogInfo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD exported for build (length: $($env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD.Length) chars)"
         } else {
             Write-LogWarning "TAURI_SIGNING_PRIVATE_KEY_PASSWORD not found - signing may require manual password input"
         }
-        
+
+        # Enable Rust debugging
+        $env:RUST_BACKTRACE = "full"
+        $env:RUST_LOG = "tauri=debug,tauri_bundler=debug"
+
         Write-LogInfo "Running: cargo tauri build --target $Target --config $ConfigFile"
         Write-LogInfo "Current working directory: $(Get-Location)"
+        Write-LogInfo "RUST_BACKTRACE=full RUST_LOG=tauri=debug,tauri_bundler=debug"
 
         # Run the build command directly without capturing output to avoid issues
         cargo tauri build --target $Target --config $ConfigFile
@@ -295,9 +333,52 @@ function Build-TauriTarget {
 }
 
 
+# Clean old builds function
+function Clean-OldBuilds {
+    Write-LogInfo "Cleaning old build artifacts..."
+
+    # Clean old build_output directories
+    $oldBuildDirs = Get-ChildItem -Path $ProjectRoot -Directory -Filter "build_output_*" |
+                    Sort-Object LastWriteTime -Descending |
+                    Select-Object -Skip 1
+
+    if ($oldBuildDirs) {
+        foreach ($dir in $oldBuildDirs) {
+            Write-LogInfo "Removing old build directory: $($dir.Name)"
+            Remove-Item -Path $dir.FullName -Recurse -Force -ErrorAction SilentlyContinue
+        }
+        Write-LogSuccess "Cleaned $($oldBuildDirs.Count) old build directories"
+    } else {
+        Write-LogInfo "No old build directories to clean"
+    }
+
+    Write-LogSuccess "Old builds cleanup completed"
+}
+
+# Clean bundle directory before build to avoid old versions
+function Clean-BundleDirectory {
+    Write-LogInfo "Cleaning bundle directory before build..."
+
+    $targetBundleDir = Join-Path $ProjectRoot "src-tauri\target\x86_64-pc-windows-msvc\release\bundle"
+    if (Test-Path $targetBundleDir) {
+        Write-LogInfo "Removing ALL files from bundle directory: $targetBundleDir"
+        try {
+            Remove-Item -Path "$targetBundleDir\*" -Recurse -Force -ErrorAction Stop
+            Write-LogSuccess "Bundle directory cleaned successfully"
+        } catch {
+            Write-LogWarning "Could not fully clean bundle directory: $_"
+        }
+    } else {
+        Write-LogInfo "Bundle directory does not exist yet, will be created during build"
+    }
+}
+
 # Main build function
 function Start-MainBuild {
     Write-LogInfo "Starting main build process..."
+
+    # Clean bundle directory BEFORE building to avoid old versions
+    Clean-BundleDirectory
 
     # Build for Windows x86_64 (Intel/AMD 64-bit)
     Write-LogInfo "Building for Windows x86_64..."
@@ -326,6 +407,9 @@ function Start-MainBuild {
         }
         Write-Host "  📦 $($_.Name) $IsSigned" -ForegroundColor Cyan
     }
+
+    # Clean old builds after successful build
+    Clean-OldBuilds
 }
 
 # Cleanup function
@@ -349,6 +433,13 @@ try {
     Write-Host "📱 Clones Desktop - Local Windows Build Script" -ForegroundColor Green
     Write-Host "==============================================" -ForegroundColor Green
 
+    # Initialize log file
+    "==============================================================" | Out-File -FilePath $LogFile
+    "Clones Desktop - Windows Build Log" | Out-File -FilePath $LogFile -Append
+    "Build Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" | Out-File -FilePath $LogFile -Append
+    "==============================================================" | Out-File -FilePath $LogFile -Append
+    "" | Out-File -FilePath $LogFile -Append
+
     Test-Prerequisites
     Initialize-Environment
     Install-Dependencies
@@ -359,6 +450,7 @@ try {
     Write-Host ""
     Write-LogSuccess "🎉 Build process completed successfully!"
     Write-LogInfo "Your Windows apps are ready for distribution"
+    Write-LogInfo "Log file saved to: $LogFile"
 
 } catch {
     Handle-Error $_

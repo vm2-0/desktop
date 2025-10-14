@@ -5,7 +5,7 @@ REM This script runs only the Tauri desktop app for testing wallet functionality
 echo Starting Tauri Desktop Development (Windows)...
 
 REM Check if we're in the right directory
-if not exist "scripts\dev_tauri_desktop.ps1" (
+if not exist "scripts\windows\dev_tauri_desktop.ps1" (
     echo Script not found. Please run this from the desktop directory.
     pause
     exit /b 1

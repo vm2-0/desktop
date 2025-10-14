@@ -1,7 +1,7 @@
 {
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDk3OUExODgyQUJEQjVFOTkKUldTWlh0dXJnaGlhbDZTWVprVHNiUHlGdHZlMUZLQnhCaWkyUlZJdzhDekJRL1hjMWpJSHlzRVoK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDc3NkM1QzQxMTBFQkE0ODEKUldTQnBPc1FRVnhzZHlFTGppSExwS2ZpaGVjRGU2U3BmSVpoRHp6OGtSVVRaSjd3Ly9NVEdZWFEK",
       "endpoints": [
         "https://releases.clones-ai.com/latest/{{target}}/latest.json"
       ]

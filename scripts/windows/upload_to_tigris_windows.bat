@@ -203,43 +203,63 @@ echo   "uploadDate": "%upload_date%", >> "%manifest_file%"
 echo   "files": { >> "%manifest_file%"
 
 set "entries_added=false"
+set "msi_found=false"
+set "exe_found=false"
 
-:: Process MSI files
+:: Process MSI files (only ONE file matching current version)
 for /d %%d in ("%build_dir%\msi_*") do (
-    for %%f in ("%%d\*.msi") do (
-        if exist "%%f" (
-            set "filename=%%~nxf"
-            for %%s in ("%%f") do set "size=%%~zs"
+    if !msi_found!==false (
+        for %%f in ("%%d\*.msi") do (
+            if exist "%%f" (
+                set "filename=%%~nxf"
+                :: Check if filename contains the current version
+                echo !filename! | findstr /C:"%version%" >nul
+                if !errorlevel! equ 0 (
+                    if !msi_found!==false (
+                        for %%s in ("%%f") do set "size=%%~zs"
 
-            if !entries_added!==true echo , >> "%manifest_file%"
-            echo     "windows_x64_msi": { >> "%manifest_file%"
-            echo       "filename": "!filename!", >> "%manifest_file%"
-            echo       "url": "%BUCKET_URL%/latest/windows/!filename!", >> "%manifest_file%"
-            echo       "size": !size!, >> "%manifest_file%"
-            echo       "arch": "x64", >> "%manifest_file%"
-            echo       "type": "msi" >> "%manifest_file%"
-            echo     } >> "%manifest_file%"
-            set "entries_added=true"
+                        if !entries_added!==true echo , >> "%manifest_file%"
+                        echo     "windows_x64_msi": { >> "%manifest_file%"
+                        echo       "filename": "!filename!", >> "%manifest_file%"
+                        echo       "url": "%BUCKET_URL%/latest/windows/!filename!", >> "%manifest_file%"
+                        echo       "size": !size!, >> "%manifest_file%"
+                        echo       "arch": "x64", >> "%manifest_file%"
+                        echo       "type": "msi" >> "%manifest_file%"
+                        echo     } >> "%manifest_file%"
+                        set "entries_added=true"
+                        set "msi_found=true"
+                    )
+                )
+            )
         )
     )
 )
 
-:: Process EXE files
+:: Process EXE files (only ONE file matching current version)
 for /d %%d in ("%build_dir%\nsis_*") do (
-    for %%f in ("%%d\*.exe") do (
-        if exist "%%f" (
-            set "filename=%%~nxf"
-            for %%s in ("%%f") do set "size=%%~zs"
+    if !exe_found!==false (
+        for %%f in ("%%d\*.exe") do (
+            if exist "%%f" (
+                set "filename=%%~nxf"
+                :: Check if filename contains the current version
+                echo !filename! | findstr /C:"%version%" >nul
+                if !errorlevel! equ 0 (
+                    if !exe_found!==false (
+                        for %%s in ("%%f") do set "size=%%~zs"
 
-            if !entries_added!==true echo , >> "%manifest_file%"
-            echo     "windows_x64_exe": { >> "%manifest_file%"
-            echo       "filename": "!filename!", >> "%manifest_file%"
-            echo       "url": "%BUCKET_URL%/latest/windows/!filename!", >> "%manifest_file%"
-            echo       "size": !size!, >> "%manifest_file%"
-            echo       "arch": "x64", >> "%manifest_file%"
-            echo       "type": "exe" >> "%manifest_file%"
-            echo     } >> "%manifest_file%"
-            set "entries_added=true"
+                        if !entries_added!==true echo , >> "%manifest_file%"
+                        echo     "windows_x64_exe": { >> "%manifest_file%"
+                        echo       "filename": "!filename!", >> "%manifest_file%"
+                        echo       "url": "%BUCKET_URL%/latest/windows/!filename!", >> "%manifest_file%"
+                        echo       "size": !size!, >> "%manifest_file%"
+                        echo       "arch": "x64", >> "%manifest_file%"
+                        echo       "type": "exe" >> "%manifest_file%"
+                        echo     } >> "%manifest_file%"
+                        set "entries_added=true"
+                        set "exe_found=true"
+                    )
+                )
+            )
         )
     )
 )
@@ -266,51 +286,72 @@ echo   "pub_date": "%upload_date%", >> "%tauri_manifest_file%"
 echo   "platforms": { >> "%tauri_manifest_file%"
 
 set "platform_added=false"
+set "updater_found=false"
 
-:: Look for .msi.zip and .nsis.zip files for Tauri updater
+:: Look for .msi.zip files for Tauri updater (prefer MSI over NSIS, only ONE platform entry)
 for /d %%d in ("%build_dir%\msi_*") do (
-    for %%f in ("%%d\*.msi.zip") do (
-        if exist "%%f" (
-            set "filename=%%~nxf"
-            set "url=%BUCKET_URL%/latest/windows/!filename!"
-            
-            :: Try to find signature file
-            set "sig_file=%%~dpnf.sig"
-            set "signature="
-            if exist "!sig_file!" (
-                for /f "usebackq delims=" %%s in ("!sig_file!") do set "signature=%%s"
+    if !updater_found!==false (
+        for %%f in ("%%d\*.msi.zip") do (
+            if exist "%%f" (
+                set "filename=%%~nxf"
+                :: Check if filename contains the current version
+                echo !filename! | findstr /C:"%version%" >nul
+                if !errorlevel! equ 0 (
+                    if !updater_found!==false (
+                        set "url=%BUCKET_URL%/latest/windows/!filename!"
+
+                        :: Try to find signature file
+                        set "sig_file=%%~dpnf.sig"
+                        set "signature="
+                        if exist "!sig_file!" (
+                            for /f "usebackq delims=" %%s in ("!sig_file!") do set "signature=%%s"
+                        )
+
+                        if !platform_added!==true echo , >> "%tauri_manifest_file%"
+                        echo     "windows-x86_64": { >> "%tauri_manifest_file%"
+                        echo       "signature": "!signature!", >> "%tauri_manifest_file%"
+                        echo       "url": "!url!" >> "%tauri_manifest_file%"
+                        echo     } >> "%tauri_manifest_file%"
+                        set "platform_added=true"
+                        set "updater_found=true"
+                    )
+                )
             )
-            
-            if !platform_added!==true echo , >> "%tauri_manifest_file%"
-            echo     "windows-x86_64": { >> "%tauri_manifest_file%"
-            echo       "signature": "!signature!", >> "%tauri_manifest_file%"
-            echo       "url": "!url!" >> "%tauri_manifest_file%"
-            echo     } >> "%tauri_manifest_file%"
-            set "platform_added=true"
         )
     )
 )
 
-:: Look for .nsis.zip files for Tauri updater
-for /d %%d in ("%build_dir%\nsis_*") do (
-    for %%f in ("%%d\*.nsis.zip") do (
-        if exist "%%f" (
-            set "filename=%%~nxf"
-            set "url=%BUCKET_URL%/latest/windows/!filename!"
-            
-            :: Try to find signature file
-            set "sig_file=%%~dpnf.sig"
-            set "signature="
-            if exist "!sig_file!" (
-                for /f "usebackq delims=" %%s in ("!sig_file!") do set "signature=%%s"
+:: If no MSI updater found, look for .nsis.zip files for Tauri updater (only ONE platform entry)
+if !updater_found!==false (
+    for /d %%d in ("%build_dir%\nsis_*") do (
+        if !updater_found!==false (
+            for %%f in ("%%d\*.nsis.zip") do (
+                if exist "%%f" (
+                    set "filename=%%~nxf"
+                    :: Check if filename contains the current version
+                    echo !filename! | findstr /C:"%version%" >nul
+                    if !errorlevel! equ 0 (
+                        if !updater_found!==false (
+                            set "url=%BUCKET_URL%/latest/windows/!filename!"
+
+                            :: Try to find signature file
+                            set "sig_file=%%~dpnf.sig"
+                            set "signature="
+                            if exist "!sig_file!" (
+                                for /f "usebackq delims=" %%s in ("!sig_file!") do set "signature=%%s"
+                            )
+
+                            if !platform_added!==true echo , >> "%tauri_manifest_file%"
+                            echo     "windows-x86_64": { >> "%tauri_manifest_file%"
+                            echo       "signature": "!signature!", >> "%tauri_manifest_file%"
+                            echo       "url": "!url!" >> "%tauri_manifest_file%"
+                            echo     } >> "%tauri_manifest_file%"
+                            set "platform_added=true"
+                            set "updater_found=true"
+                        )
+                    )
+                )
             )
-            
-            if !platform_added!==true echo , >> "%tauri_manifest_file%"
-            echo     "windows-x86_64": { >> "%tauri_manifest_file%"
-            echo       "signature": "!signature!", >> "%tauri_manifest_file%"
-            echo       "url": "!url!" >> "%tauri_manifest_file%"
-            echo     } >> "%tauri_manifest_file%"
-            set "platform_added=true"
         )
     )
 )
@@ -335,67 +376,103 @@ set "AWS_SECRET_ACCESS_KEY=%TIGRIS_SECRET_ACCESS_KEY%"
 set "AWS_ENDPOINT_URL=%TIGRIS_ENDPOINT%"
 set "AWS_REGION=auto"
 
-:: Upload MSI files
+:: Upload MSI files (only matching current version)
 for /d %%d in ("%latest_build%\msi_*") do (
     for %%f in ("%%d\*.msi") do (
         if exist "%%f" (
             set "filename=%%~nxf"
-            echo ℹ️ Found MSI file: %%f
-            call :upload_file "%%f" "versions/%app_version%/windows/!filename!" "%app_version%" "x64" "msi"
-            call :upload_file "%%f" "latest/windows/!filename!" "%app_version%" "x64" "msi"
+            :: Check if filename contains the current version
+            echo !filename! | findstr /C:"%app_version%" >nul
+            if !errorlevel! equ 0 (
+                echo ℹ️ Found MSI file: %%f
+                call :upload_file "%%f" "versions/%app_version%/windows/!filename!" "%app_version%" "x64" "msi"
+                call :upload_file "%%f" "latest/windows/!filename!" "%app_version%" "x64" "msi"
+            ) else (
+                echo ⚠️ Skipping MSI with wrong version: %%f
+            )
         )
     )
 )
 
-:: Upload EXE files
+:: Upload EXE files (only matching current version)
 for /d %%d in ("%latest_build%\nsis_*") do (
     for %%f in ("%%d\*.exe") do (
         if exist "%%f" (
             set "filename=%%~nxf"
-            echo ℹ️ Found EXE file: %%f
-            call :upload_file "%%f" "versions/%app_version%/windows/!filename!" "%app_version%" "x64" "exe"
-            call :upload_file "%%f" "latest/windows/!filename!" "%app_version%" "x64" "exe"
+            :: Check if filename contains the current version
+            echo !filename! | findstr /C:"%app_version%" >nul
+            if !errorlevel! equ 0 (
+                echo ℹ️ Found EXE file: %%f
+                call :upload_file "%%f" "versions/%app_version%/windows/!filename!" "%app_version%" "x64" "exe"
+                call :upload_file "%%f" "latest/windows/!filename!" "%app_version%" "x64" "exe"
+            ) else (
+                echo ⚠️ Skipping EXE with wrong version: %%f
+            )
         )
     )
 )
 
-:: Upload Tauri updater files (.msi.zip, .nsis.zip, .sig)
+:: Upload Tauri updater files (.msi.zip, .nsis.zip, .sig) - only matching current version
 echo ℹ️ Uploading Tauri updater files...
 for /d %%d in ("%latest_build%\msi_*") do (
     for %%f in ("%%d\*.msi.zip") do (
         if exist "%%f" (
             set "filename=%%~nxf"
-            echo ℹ️ Found updater file: %%f
-            call :upload_file "%%f" "versions/%app_version%/windows/!filename!" "%app_version%" "x64" "updater"
-            call :upload_file "%%f" "latest/windows/!filename!" "%app_version%" "x64" "updater"
+            :: Check if filename contains the current version
+            echo !filename! | findstr /C:"%app_version%" >nul
+            if !errorlevel! equ 0 (
+                echo ℹ️ Found updater file: %%f
+                call :upload_file "%%f" "versions/%app_version%/windows/!filename!" "%app_version%" "x64" "updater"
+                call :upload_file "%%f" "latest/windows/!filename!" "%app_version%" "x64" "updater"
+            ) else (
+                echo ⚠️ Skipping updater file with wrong version: %%f
+            )
         )
     )
     for %%f in ("%%d\*.sig") do (
         if exist "%%f" (
             set "filename=%%~nxf"
-            echo ℹ️ Found signature file: %%f
-            call :upload_file "%%f" "versions/%app_version%/windows/!filename!" "%app_version%" "x64" "signature"
-            call :upload_file "%%f" "latest/windows/!filename!" "%app_version%" "x64" "signature"
+            :: Check if filename contains the current version
+            echo !filename! | findstr /C:"%app_version%" >nul
+            if !errorlevel! equ 0 (
+                echo ℹ️ Found signature file: %%f
+                call :upload_file "%%f" "versions/%app_version%/windows/!filename!" "%app_version%" "x64" "signature"
+                call :upload_file "%%f" "latest/windows/!filename!" "%app_version%" "x64" "signature"
+            ) else (
+                echo ⚠️ Skipping signature file with wrong version: %%f
+            )
         )
     )
 )
 
-:: Upload NSIS updater files (.nsis.zip, .sig)
+:: Upload NSIS updater files (.nsis.zip, .sig) - only matching current version
 for /d %%d in ("%latest_build%\nsis_*") do (
     for %%f in ("%%d\*.nsis.zip") do (
         if exist "%%f" (
             set "filename=%%~nxf"
-            echo ℹ️ Found NSIS updater file: %%f
-            call :upload_file "%%f" "versions/%app_version%/windows/!filename!" "%app_version%" "x64" "updater"
-            call :upload_file "%%f" "latest/windows/!filename!" "%app_version%" "x64" "updater"
+            :: Check if filename contains the current version
+            echo !filename! | findstr /C:"%app_version%" >nul
+            if !errorlevel! equ 0 (
+                echo ℹ️ Found NSIS updater file: %%f
+                call :upload_file "%%f" "versions/%app_version%/windows/!filename!" "%app_version%" "x64" "updater"
+                call :upload_file "%%f" "latest/windows/!filename!" "%app_version%" "x64" "updater"
+            ) else (
+                echo ⚠️ Skipping NSIS updater file with wrong version: %%f
+            )
         )
     )
     for %%f in ("%%d\*.sig") do (
         if exist "%%f" (
             set "filename=%%~nxf"
-            echo ℹ️ Found NSIS signature file: %%f
-            call :upload_file "%%f" "versions/%app_version%/windows/!filename!" "%app_version%" "x64" "signature"
-            call :upload_file "%%f" "latest/windows/!filename!" "%app_version%" "x64" "signature"
+            :: Check if filename contains the current version
+            echo !filename! | findstr /C:"%app_version%" >nul
+            if !errorlevel! equ 0 (
+                echo ℹ️ Found NSIS signature file: %%f
+                call :upload_file "%%f" "versions/%app_version%/windows/!filename!" "%app_version%" "x64" "signature"
+                call :upload_file "%%f" "latest/windows/!filename!" "%app_version%" "x64" "signature"
+            ) else (
+                echo ⚠️ Skipping NSIS signature file with wrong version: %%f
+            )
         )
     )
 )

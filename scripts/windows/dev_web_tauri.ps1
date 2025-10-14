@@ -133,73 +133,10 @@ if (Test-Path $LogFile) {
 Write-Host "Starting Flutter Web development server..." -ForegroundColor Green
 Write-Host "Flutter will output to: $LogFile" -ForegroundColor Cyan
 
-# Check if web device is available
-$Devices = flutter devices 2>&1
-Write-Host "Available devices:" -ForegroundColor Cyan
-Write-Host $Devices -ForegroundColor Gray
-
-# Debug: Show the raw output
-Write-Host "Raw devices output length: $($Devices.Length)" -ForegroundColor Yellow
-Write-Host "Raw devices output:" -ForegroundColor Yellow
-$Devices | ForEach-Object { Write-Host "Line: '$_'" -ForegroundColor DarkGray }
-
-# Parse devices to find web devices - try multiple approaches
-$WebDevices = @()
-
-# Approach 1: Try to match the pattern we see
-if ($Devices -match "Chrome.*chrome.*web-javascript") {
-    Write-Host "Found Chrome device via pattern matching" -ForegroundColor Green
-    $WebDevices += @{Name = "Chrome (web)"; Id = "chrome"}
-}
-
-if ($Devices -match "Edge.*edge.*web-javascript") {
-    Write-Host "Found Edge device via pattern matching" -ForegroundColor Green
-    $WebDevices += @{Name = "Edge (web)"; Id = "edge"}
-}
-
-# Approach 2: Try splitting by lines and parsing each
-$DeviceLines = $Devices -split "`n"
-Write-Host "Number of device lines: $($DeviceLines.Count)" -ForegroundColor Yellow
-
-foreach ($Line in $DeviceLines) {
-    Write-Host "Processing line: '$Line'" -ForegroundColor DarkGray
-    if ($Line -match "•\s*([^•]+?)\s*•\s*(\w+)\s*•\s*web-javascript") {
-        $DeviceName = $matches[1].Trim()
-        $DeviceId = $matches[2].Trim()
-        $WebDevices += @{Name = $DeviceName; Id = $DeviceId}
-        Write-Host "Found web device: $DeviceName (ID: $DeviceId)" -ForegroundColor Green
-    }
-}
-
-Write-Host "Total web devices found: $($WebDevices.Count)" -ForegroundColor Cyan
-
-if ($WebDevices.Count -eq 0) {
-    Write-Host "No web devices available. Available devices:" -ForegroundColor Red
-    flutter devices
-    exit 1
-}
-
-# Determine which web device to use (prefer chrome, then edge, then any other)
-$WebDevice = $null
-foreach ($Device in $WebDevices) {
-    if ($Device.Id -eq "chrome") {
-        $WebDevice = $Device.Id
-        break
-    }
-}
-if (-not $WebDevice) {
-    foreach ($Device in $WebDevices) {
-        if ($Device.Id -eq "edge") {
-            $WebDevice = $Device.Id
-            break
-        }
-    }
-}
-if (-not $WebDevice) {
-    $WebDevice = $WebDevices[0].Id
-}
-
-Write-Host "Using web device: $WebDevice" -ForegroundColor Cyan
+# Use web-server device to avoid CORS issues (same as macOS script)
+# web-server runs a headless server without opening a browser, which bypasses CORS restrictions
+$WebDevice = "web-server"
+Write-Host "Using web-server device (no CORS issues)" -ForegroundColor Cyan
 
 # Start Flutter in background
 $FlutterJob = Start-Job -ScriptBlock {

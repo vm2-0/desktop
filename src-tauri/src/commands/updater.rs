@@ -4,19 +4,23 @@ use tauri_plugin_updater::UpdaterExt;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateInfo {
-    update_available: bool,
-    version: Option<String>,
-    date: Option<String>,
-    body: Option<String>,
+    pub update_available: bool,
+    pub version: Option<String>,
+    pub date: Option<String>,
+    pub body: Option<String>,
 }
 
 /// Check for updates using Tauri's secure updater
 #[tauri::command]
 pub async fn check_for_update(app: AppHandle) -> Result<UpdateInfo, String> {
+    log::info!("[Updater] Getting updater instance...");
     match app.updater() {
         Ok(updater) => {
+            log::info!("[Updater] Updater instance obtained, checking for updates...");
             match updater.check().await {
                 Ok(Some(update)) => {
+                    log::info!("[Updater] Update found: version={}, body={:?}",
+                        update.version, update.body);
                     Ok(UpdateInfo {
                         update_available: true,
                         version: Some(update.version.clone()),
@@ -25,6 +29,7 @@ pub async fn check_for_update(app: AppHandle) -> Result<UpdateInfo, String> {
                     })
                 }
                 Ok(None) => {
+                    log::info!("[Updater] No update available");
                     Ok(UpdateInfo {
                         update_available: false,
                         version: None,
@@ -32,10 +37,16 @@ pub async fn check_for_update(app: AppHandle) -> Result<UpdateInfo, String> {
                         body: None,
                     })
                 }
-                Err(e) => Err(format!("Failed to check for update: {}", e)),
+                Err(e) => {
+                    log::error!("[Updater] Error during update check: {:?}", e);
+                    Err(format!("Failed to check for update: {}", e))
+                }
             }
         }
-        Err(e) => Err(format!("Updater not available: {}", e)),
+        Err(e) => {
+            log::error!("[Updater] Failed to get updater instance: {:?}", e);
+            Err(format!("Updater not available: {}", e))
+        }
     }
 }
 
