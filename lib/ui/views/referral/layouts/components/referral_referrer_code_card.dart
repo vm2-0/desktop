@@ -1,3 +1,4 @@
+import 'package:clones_desktop/application/feature_flags.dart';
 import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/domain/models/referral/referral_info.dart';
@@ -91,10 +92,16 @@ class _ReferralReferrerCodeCardState
                   'Add a Referrer Code',
                   style: theme.textTheme.titleSmall,
                 ),
-                Text(
-                  'If a friend referred you, you can add their code here to thank them.',
-                  style: theme.textTheme.bodySmall,
-                ),
+                if (FeatureFlags.lockFarmingWithoutReferral)
+                  Text(
+                    'Add a referrer code to access all features.',
+                    style: theme.textTheme.bodySmall,
+                  )
+                else
+                  Text(
+                    'If a friend referred you, you can add their code here to thank them.',
+                    style: theme.textTheme.bodySmall,
+                  ),
               ],
             ),
           ],

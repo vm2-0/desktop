@@ -23,12 +23,8 @@ Future<ReferralInfo?> getReferralInfo(Ref ref, String walletAddress) async {
       return null;
     }
 
-    final referralLink =
-        '${Env.apiWebsiteUrl}/referral/${response.referralCode}';
-
     final referralInfo = ReferralInfo(
       referralCode: response.referralCode,
-      referralLink: referralLink,
       walletAddress: walletAddress,
       totalReferrals: response.totalReferrals,
       totalRewards: response.totalRewards,

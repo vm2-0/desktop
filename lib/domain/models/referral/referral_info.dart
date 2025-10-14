@@ -9,7 +9,6 @@ const int referrerCodeLength = 6;
 class ReferralInfo with _$ReferralInfo {
   const factory ReferralInfo({
     required String referralCode,
-    String? referralLink,
     required String walletAddress,
     required int totalReferrals,
     required double totalRewards,

@@ -86,12 +86,17 @@ class PopupTemplate extends StatelessWidget {
                   ),
                   if (displayCloseButton)
                     Positioned(
-                      right: 0,
+                      top: -7,
+                      right: 4,
                       child: IconButton(
                         onPressed: () {
                           Navigator.pop(context);
                         },
-                        icon: const Icon(Icons.close),
+                        icon: Icon(
+                          Icons.close_outlined,
+                          size: 16,
+                          color: ClonesColors.secondaryText,
+                        ),
                       ),
                     ),
                 ],

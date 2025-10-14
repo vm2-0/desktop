@@ -46,7 +46,6 @@ class ReferralNotifier extends _$ReferralNotifier {
 
       final referralInfo = ReferralInfo(
         referralCode: response.referralCode,
-        referralLink: response.referralLink,
         walletAddress: response.walletAddress,
         totalReferrals: 0,
         totalRewards: 0,
