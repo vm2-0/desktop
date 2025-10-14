@@ -1060,7 +1060,13 @@ pub async fn create_filtered_recording_zip(
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Stored);
 
     // Process each file with filtering if needed
-    let filenames = ["input_log.jsonl", "meta.json", "recording.mp4", "sft.json"];
+    let filenames = [
+        "input_log.jsonl",
+        "input_log_meta.json",
+        "meta.json",
+        "recording.mp4",
+        "sft.json",
+    ];
 
     for filename in filenames {
         let file_path = recordings_dir.join(filename);
