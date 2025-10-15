@@ -1,3 +1,4 @@
+import 'package:clones_desktop/domain/models/submission/claim_authorization_referrals.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'claim_authorization.freezed.dart';
@@ -39,6 +40,9 @@ class ClaimAuthorization with _$ClaimAuthorization {
 
     /// Platform fee percentage (e.g. 10.0 for 10%)
     double? feePercentage,
+
+    /// Referrals
+    List<ClaimAuthorizationReferrals>? referrals,
   }) = _ClaimAuthorization;
 
   factory ClaimAuthorization.fromJson(Map<String, dynamic> json) =>

@@ -97,50 +97,50 @@ class DemoDetailRewards extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 5),
-                  if (feePercentage != null &&
-                      feeMultiplier != null &&
-                      netMultiplier != null) ...[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Platform Fee (${feePercentage.toStringAsFixed(1)}%):',
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                        Text(
-                          '${(reward * feeMultiplier).toStringAsFixed(4)} \$$tokenSymbol',
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 5),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'You Receive:',
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                        Text(
-                          '${(reward * netMultiplier).toStringAsFixed(4)} \$$tokenSymbol',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: ClonesColors.getScoreColor(score),
+                  if (reward > 0)
+                    if (feePercentage != null &&
+                        feeMultiplier != null &&
+                        netMultiplier != null) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Platform Fee (${feePercentage.toStringAsFixed(1)}%):',
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                          Text(
+                            '${(reward * feeMultiplier).toStringAsFixed(4)} \$$tokenSymbol',
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 5),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'You Receive:',
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                          Text(
+                            '${(reward * netMultiplier).toStringAsFixed(4)} \$$tokenSymbol',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: ClonesColors.getScoreColor(score),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ] else
+                      SizedBox(
+                        width: double.infinity,
+                        child: MessageBox(
+                          messageBoxType: MessageBoxType.warning,
+                          content: Text(
+                            'Failed to calculate reward amounts. Platform fee information could not be retrieved from smart contract.',
+                            style: theme.textTheme.bodySmall,
                           ),
                         ),
-                      ],
-                    ),
-                  ] else ...[
-                    SizedBox(
-                      width: double.infinity,
-                      child: MessageBox(
-                        messageBoxType: MessageBoxType.warning,
-                        content: Text(
-                          'Failed to calculate reward amounts. Platform fee information could not be retrieved from smart contract.',
-                          style: theme.textTheme.bodySmall,
-                        ),
                       ),
-                    ),
-                  ],
                   const SizedBox(height: 5),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -259,8 +259,14 @@ class DemoDetailRewards extends ConsumerWidget {
             widthExpanded: true,
             btnPrimaryType: BtnPrimaryType.outlinePrimary,
             buttonText: 'Claim Reward',
-            onTap: () => _handleClaimReward(context, ref, claimAuth,
-                tokenSymbol, rewardAmount, submissionId),
+            onTap: () => _handleClaimReward(
+              context,
+              ref,
+              claimAuth,
+              tokenSymbol,
+              rewardAmount,
+              submissionId,
+            ),
           ),
         ),
       ],
@@ -297,6 +303,18 @@ class DemoDetailRewards extends ConsumerWidget {
 
     final netAmount = submission.onChainReward?.netAmount;
     final feeAmount = submission.onChainReward?.feeAmount;
+    final farmerReferrerAmount = submission.claimAuthorization?.referrals
+        ?.firstWhere((r) => r.type == 'farmer_referrer')
+        .amount;
+    final factoryReferrerAmount = submission.claimAuthorization?.referrals
+        ?.firstWhere((r) => r.type == 'factory_referrer')
+        .amount;
+    final farmerReferrerAddress = submission.claimAuthorization?.referrals
+        ?.firstWhere((r) => r.type == 'farmer_referrer')
+        .address;
+    final factoryReferrerAddress = submission.claimAuthorization?.referrals
+        ?.firstWhere((r) => r.type == 'factory_referrer')
+        .address;
 
     return Column(
       children: [
@@ -320,20 +338,32 @@ class DemoDetailRewards extends ConsumerWidget {
                     const SizedBox(height: 8),
                     if (netAmount != null && feeAmount != null) ...[
                       Text(
-                        'Total Reward: ${grossAmount.toStringAsFixed(2)} \$$tokenSymbol',
+                        'Total Reward: ${grossAmount.toStringAsFixed(3)} \$$tokenSymbol',
                         style: theme.textTheme.bodySmall,
                       ),
                       Text(
-                        'Platform Fee: ${feeAmount.toStringAsFixed(2)} \$$tokenSymbol',
+                        'Platform Fee: ${feeAmount.toStringAsFixed(3)} \$$tokenSymbol',
                         style: theme.textTheme.bodySmall,
                       ),
+                      if (farmerReferrerAmount != null &&
+                          farmerReferrerAddress != null)
+                        Text(
+                          'Farmer Referrer: ${farmerReferrerAmount.toStringAsFixed(3)} \$$tokenSymbol (${farmerReferrerAddress.shortAddress()})',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      if (factoryReferrerAmount != null &&
+                          factoryReferrerAddress != null)
+                        Text(
+                          'Factory Referrer: ${factoryReferrerAmount.toStringAsFixed(3)} \$$tokenSymbol (${factoryReferrerAddress.shortAddress()})',
+                          style: theme.textTheme.bodySmall,
+                        ),
                       Text(
-                        'You Received: ${netAmount.toStringAsFixed(2)} \$$tokenSymbol',
+                        'You Received: ${netAmount.toStringAsFixed(3)} \$$tokenSymbol',
                         style: theme.textTheme.bodySmall,
                       ),
                     ] else ...[
                       Text(
-                        'You claimed ${grossAmount.toStringAsFixed(2)} \$$tokenSymbol',
+                        'You claimed ${grossAmount.toStringAsFixed(3)} \$$tokenSymbol',
                         style: theme.textTheme.bodySmall,
                       ),
                       Text(

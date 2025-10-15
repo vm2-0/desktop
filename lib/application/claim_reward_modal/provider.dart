@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:clones_desktop/application/claim_reward_modal/state.dart';
+import 'package:clones_desktop/application/factory.dart';
 import 'package:clones_desktop/application/recording.dart';
 import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/application/transaction/provider.dart';
@@ -81,6 +82,15 @@ class ClaimRewardModalNotifier extends _$ClaimRewardModalNotifier {
       return;
     }
 
+    final userAddress = ref.read(sessionNotifierProvider).address;
+    if (userAddress == null) {
+      state = state.copyWith(
+        estimatedGasCost: null,
+        gasExceedsReward: false,
+      );
+      return;
+    }
+
     // Prevent concurrent requests
     final requestId =
         '${state.claimAuthorization!.poolAddress}_${state.rewardAmount}';
@@ -88,27 +98,45 @@ class ClaimRewardModalNotifier extends _$ClaimRewardModalNotifier {
     _currentEstimationRequest = requestId;
 
     try {
-      // TODO: Get ETH price from a provider to show USD value
-      const estimatedGasCostUSD = 0.15;
+      // Use dynamic gas estimation API like in factory generation
+      final gasData = await ref.read(
+        estimateFactoryGasProvider(
+          type: 'claimRewards',
+          poolAddress: state.claimAuthorization!.poolAddress,
+          creator: userAddress,
+          amount: state.rewardAmount.toString(),
+        ).future,
+      );
+
+      final isExpensive = gasData['isExpensive'] as bool;
+      final estimatedGas = '~${gasData['totalCost']} ETH';
 
       final feePercentage = state.claimAuthorization?.feePercentage;
 
-      var gasExceedsReward = false;
+      var gasExceedsReward = isExpensive;
       if (feePercentage != null) {
         final netMultiplier = 1.0 - (feePercentage / 100.0);
         final netRewardAmount = state.rewardAmount * netMultiplier;
-        gasExceedsReward = estimatedGasCostUSD > netRewardAmount;
+        
+        // Try to parse ETH cost for more precise comparison
+        final ethCostStr = gasData['totalCost'].toString();
+        final ethCost = double.tryParse(ethCostStr);
+        if (ethCost != null) {
+          // Compare ETH cost with USD reward amount (rough estimate)
+          // This is a simplified comparison - ideally we'd convert to same currency
+          gasExceedsReward = ethCost * 3000 > netRewardAmount; // Assuming ~$3000 per ETH
+        }
       }
 
       state = state.copyWith(
-        estimatedGasCost: '\$${estimatedGasCostUSD.toStringAsFixed(2)}',
+        estimatedGasCost: estimatedGas,
         gasExceedsReward: gasExceedsReward,
       );
     } catch (e) {
       // Only update if request is still current
       if (_currentEstimationRequest == requestId) {
         state = state.copyWith(
-          estimatedGasCost: null,
+          estimatedGasCost: 'Error estimating',
           gasExceedsReward: false,
         );
       }

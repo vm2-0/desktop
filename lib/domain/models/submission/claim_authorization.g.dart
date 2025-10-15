@@ -20,6 +20,10 @@ _$ClaimAuthorizationImpl _$$ClaimAuthorizationImplFromJson(
       alreadyClaimed: (json['alreadyClaimed'] as num?)?.toDouble(),
       newClaimableAmount: (json['newClaimableAmount'] as num?)?.toDouble(),
       feePercentage: (json['feePercentage'] as num?)?.toDouble(),
+      referrals: (json['referrals'] as List<dynamic>?)
+          ?.map((e) =>
+              ClaimAuthorizationReferrals.fromJson(e as Map<String, dynamic>))
+          .toList(),
     );
 
 Map<String, dynamic> _$$ClaimAuthorizationImplToJson(
@@ -36,4 +40,5 @@ Map<String, dynamic> _$$ClaimAuthorizationImplToJson(
       'alreadyClaimed': instance.alreadyClaimed,
       'newClaimableAmount': instance.newClaimableAmount,
       'feePercentage': instance.feePercentage,
+      'referrals': instance.referrals,
     };

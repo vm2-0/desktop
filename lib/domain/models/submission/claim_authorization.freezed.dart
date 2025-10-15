@@ -53,6 +53,10 @@ mixin _$ClaimAuthorization {
   /// Platform fee percentage (e.g. 10.0 for 10%)
   double? get feePercentage => throw _privateConstructorUsedError;
 
+  /// Referrals
+  List<ClaimAuthorizationReferrals>? get referrals =>
+      throw _privateConstructorUsedError;
+
   /// Serializes this ClaimAuthorization to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
@@ -80,7 +84,8 @@ abstract class $ClaimAuthorizationCopyWith<$Res> {
       String tokenAddress,
       double? alreadyClaimed,
       double? newClaimableAmount,
-      double? feePercentage});
+      double? feePercentage,
+      List<ClaimAuthorizationReferrals>? referrals});
 }
 
 /// @nodoc
@@ -109,6 +114,7 @@ class _$ClaimAuthorizationCopyWithImpl<$Res, $Val extends ClaimAuthorization>
     Object? alreadyClaimed = freezed,
     Object? newClaimableAmount = freezed,
     Object? feePercentage = freezed,
+    Object? referrals = freezed,
   }) {
     return _then(_value.copyWith(
       account: null == account
@@ -155,6 +161,10 @@ class _$ClaimAuthorizationCopyWithImpl<$Res, $Val extends ClaimAuthorization>
           ? _value.feePercentage
           : feePercentage // ignore: cast_nullable_to_non_nullable
               as double?,
+      referrals: freezed == referrals
+          ? _value.referrals
+          : referrals // ignore: cast_nullable_to_non_nullable
+              as List<ClaimAuthorizationReferrals>?,
     ) as $Val);
   }
 }
@@ -178,7 +188,8 @@ abstract class _$$ClaimAuthorizationImplCopyWith<$Res>
       String tokenAddress,
       double? alreadyClaimed,
       double? newClaimableAmount,
-      double? feePercentage});
+      double? feePercentage,
+      List<ClaimAuthorizationReferrals>? referrals});
 }
 
 /// @nodoc
@@ -205,6 +216,7 @@ class __$$ClaimAuthorizationImplCopyWithImpl<$Res>
     Object? alreadyClaimed = freezed,
     Object? newClaimableAmount = freezed,
     Object? feePercentage = freezed,
+    Object? referrals = freezed,
   }) {
     return _then(_$ClaimAuthorizationImpl(
       account: null == account
@@ -251,6 +263,10 @@ class __$$ClaimAuthorizationImplCopyWithImpl<$Res>
           ? _value.feePercentage
           : feePercentage // ignore: cast_nullable_to_non_nullable
               as double?,
+      referrals: freezed == referrals
+          ? _value._referrals
+          : referrals // ignore: cast_nullable_to_non_nullable
+              as List<ClaimAuthorizationReferrals>?,
     ));
   }
 }
@@ -269,7 +285,9 @@ class _$ClaimAuthorizationImpl implements _ClaimAuthorization {
       required this.tokenAddress,
       this.alreadyClaimed,
       this.newClaimableAmount,
-      this.feePercentage});
+      this.feePercentage,
+      final List<ClaimAuthorizationReferrals>? referrals})
+      : _referrals = referrals;
 
   factory _$ClaimAuthorizationImpl.fromJson(Map<String, dynamic> json) =>
       _$$ClaimAuthorizationImplFromJson(json);
@@ -318,9 +336,22 @@ class _$ClaimAuthorizationImpl implements _ClaimAuthorization {
   @override
   final double? feePercentage;
 
+  /// Referrals
+  final List<ClaimAuthorizationReferrals>? _referrals;
+
+  /// Referrals
+  @override
+  List<ClaimAuthorizationReferrals>? get referrals {
+    final value = _referrals;
+    if (value == null) return null;
+    if (_referrals is EqualUnmodifiableListView) return _referrals;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
   @override
   String toString() {
-    return 'ClaimAuthorization(account: $account, cumulativeAmount: $cumulativeAmount, nonce: $nonce, deadline: $deadline, signature: $signature, publisherUsed: $publisherUsed, poolAddress: $poolAddress, tokenAddress: $tokenAddress, alreadyClaimed: $alreadyClaimed, newClaimableAmount: $newClaimableAmount, feePercentage: $feePercentage)';
+    return 'ClaimAuthorization(account: $account, cumulativeAmount: $cumulativeAmount, nonce: $nonce, deadline: $deadline, signature: $signature, publisherUsed: $publisherUsed, poolAddress: $poolAddress, tokenAddress: $tokenAddress, alreadyClaimed: $alreadyClaimed, newClaimableAmount: $newClaimableAmount, feePercentage: $feePercentage, referrals: $referrals)';
   }
 
   @override
@@ -347,7 +378,9 @@ class _$ClaimAuthorizationImpl implements _ClaimAuthorization {
             (identical(other.newClaimableAmount, newClaimableAmount) ||
                 other.newClaimableAmount == newClaimableAmount) &&
             (identical(other.feePercentage, feePercentage) ||
-                other.feePercentage == feePercentage));
+                other.feePercentage == feePercentage) &&
+            const DeepCollectionEquality()
+                .equals(other._referrals, _referrals));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -364,7 +397,8 @@ class _$ClaimAuthorizationImpl implements _ClaimAuthorization {
       tokenAddress,
       alreadyClaimed,
       newClaimableAmount,
-      feePercentage);
+      feePercentage,
+      const DeepCollectionEquality().hash(_referrals));
 
   /// Create a copy of ClaimAuthorization
   /// with the given fields replaced by the non-null parameter values.
@@ -385,17 +419,19 @@ class _$ClaimAuthorizationImpl implements _ClaimAuthorization {
 
 abstract class _ClaimAuthorization implements ClaimAuthorization {
   const factory _ClaimAuthorization(
-      {required final String account,
-      required final String cumulativeAmount,
-      final int? nonce,
-      final int? deadline,
-      required final String signature,
-      required final String publisherUsed,
-      required final String poolAddress,
-      required final String tokenAddress,
-      final double? alreadyClaimed,
-      final double? newClaimableAmount,
-      final double? feePercentage}) = _$ClaimAuthorizationImpl;
+          {required final String account,
+          required final String cumulativeAmount,
+          final int? nonce,
+          final int? deadline,
+          required final String signature,
+          required final String publisherUsed,
+          required final String poolAddress,
+          required final String tokenAddress,
+          final double? alreadyClaimed,
+          final double? newClaimableAmount,
+          final double? feePercentage,
+          final List<ClaimAuthorizationReferrals>? referrals}) =
+      _$ClaimAuthorizationImpl;
 
   factory _ClaimAuthorization.fromJson(Map<String, dynamic> json) =
       _$ClaimAuthorizationImpl.fromJson;
@@ -443,6 +479,10 @@ abstract class _ClaimAuthorization implements ClaimAuthorization {
   /// Platform fee percentage (e.g. 10.0 for 10%)
   @override
   double? get feePercentage;
+
+  /// Referrals
+  @override
+  List<ClaimAuthorizationReferrals>? get referrals;
 
   /// Create a copy of ClaimAuthorization
   /// with the given fields replaced by the non-null parameter values.

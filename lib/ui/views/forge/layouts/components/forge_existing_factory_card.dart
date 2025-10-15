@@ -24,7 +24,7 @@ class ForgeExistingFactoryCard extends ConsumerWidget {
     final factoryBalanceAsync = ref.watch(
       getFactoryBalanceProvider(poolAddress: factory.poolAddress),
     );
-    
+
     return CardWidget(
       padding: CardPadding.small,
       child: InkWell(
@@ -66,11 +66,12 @@ class ForgeExistingFactoryCard extends ConsumerWidget {
     );
   }
 
-  Widget _getBalanceText(AsyncValue<double> factoryBalanceAsync, ThemeData theme) {
+  Widget _getBalanceText(
+      AsyncValue<double> factoryBalanceAsync, ThemeData theme) {
     return factoryBalanceAsync.when(
       data: (balance) {
         return Text(
-          '$balance ${factory.token.symbol}',
+          '${balance.toStringAsFixed(3)} ${factory.token.symbol}',
           style: theme.textTheme.bodyMedium?.copyWith(
             color: balance == 0 ? ClonesColors.error : ClonesColors.secondary,
           ),

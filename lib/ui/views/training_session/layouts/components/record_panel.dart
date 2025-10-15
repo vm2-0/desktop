@@ -60,7 +60,7 @@ class _RecordPanelState extends ConsumerState<RecordPanel> {
                   Row(
                     children: [
                       Text(
-                        'Up to: ${trainingSession.factory?.pricePerDemo ?? 0} ${trainingSession.factory?.token.symbol ?? ''} ',
+                        'Up to: ${trainingSession.factory?.pricePerDemo.toStringAsFixedLowValue(2, 5) ?? 0} ${trainingSession.factory?.token.symbol ?? ''} ',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: ClonesColors.secondary,
                         ),

@@ -255,7 +255,118 @@ class WalletModal extends ConsumerWidget {
                             ],
                           ),
                         ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 10),
+                      Divider(
+                        color: ClonesColors.secondary.withValues(alpha: 0.3),
+                        thickness: 0.5,
+                      ),
+                      const SizedBox(height: 6),
+                      // Tier information section
+                      if (session.tier != null) ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Commission Tier',
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: ClonesColors.tertiary
+                                    .withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                session.tier!.tierName,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: ClonesColors.tertiary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Commission Rate',
+                                  style: theme.textTheme.bodyMedium,
+                                ),
+                                Text(
+                                  session.tier!.formattedCommissionPercentage,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: ClonesColors.primary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            if (session.tier!.nextTierMinHolding != null) ...[
+                              const SizedBox(height: 10),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    session.tier!.tierName == 'Tier 0'
+                                        ? 'To reach Tier 1'
+                                        : 'Next Tier',
+                                    style: theme.textTheme.bodyMedium,
+                                  ),
+                                  Text(
+                                    session.tier!.tierName == 'Tier 0'
+                                        ? '${session.tier!.formattedNextTierMinHolding} CLONES needed'
+                                        : '+${session.tier!.formattedTokensNeededForNextTier!} CLONES',
+                                    style: theme.textTheme.bodyMedium,
+                                  ),
+                                ],
+                              ),
+                            ],
+                            const SizedBox(height: 10),
+                            InkWell(
+                              onTap: () async {
+                                await ref
+                                    .read(tauriApiClientProvider)
+                                    .openExternalUrl(
+                                      'https://clones.gitbook.io/clones.docs/the-forge/how-it-works#commission-structure',
+                                    );
+                              },
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    'More infos',
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: ClonesColors.secondaryText,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Icon(
+                                    Icons.open_in_new,
+                                    color: ClonesColors.secondaryText,
+                                    size: 16,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        Divider(
+                          color: ClonesColors.secondary.withValues(alpha: 0.3),
+                          thickness: 0.5,
+                        ),
+                        const SizedBox(height: 12),
+                      ],
                       if (session.balances != null)
                         ...session.balances!.map(
                           (tokenBalance) => Padding(

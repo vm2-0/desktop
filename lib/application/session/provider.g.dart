@@ -175,7 +175,7 @@ class _GetTokenBalanceProviderElement
 }
 
 String _$checkWalletConnectionHash() =>
-    r'5149b88e0278d7f18145d25e4c5ebb61326210ae';
+    r'435b4080570e0b780b539f082ea80549daa400dd';
 
 /// See also [checkWalletConnection].
 @ProviderFor(checkWalletConnection)
@@ -189,7 +189,8 @@ class CheckWalletConnectionFamily extends Family<
           String? address,
           String? referralCode,
           String? referrerAddress,
-          String? referrerCode
+          String? referrerCode,
+          TierInfo tier
         })>> {
   /// See also [checkWalletConnection].
   const CheckWalletConnectionFamily();
@@ -234,7 +235,8 @@ class CheckWalletConnectionProvider extends AutoDisposeFutureProvider<
       String? address,
       String? referralCode,
       String? referrerAddress,
-      String? referrerCode
+      String? referrerCode,
+      TierInfo tier
     })> {
   /// See also [checkWalletConnection].
   CheckWalletConnectionProvider(
@@ -276,7 +278,8 @@ class CheckWalletConnectionProvider extends AutoDisposeFutureProvider<
                   String? address,
                   String? referralCode,
                   String? referrerAddress,
-                  String? referrerCode
+                  String? referrerCode,
+                  TierInfo tier
                 })>
             Function(CheckWalletConnectionRef provider)
         create,
@@ -302,7 +305,8 @@ class CheckWalletConnectionProvider extends AutoDisposeFutureProvider<
         String? address,
         String? referralCode,
         String? referrerAddress,
-        String? referrerCode
+        String? referrerCode,
+        TierInfo tier
       })> createElement() {
     return _CheckWalletConnectionProviderElement(this);
   }
@@ -329,7 +333,8 @@ mixin CheckWalletConnectionRef on AutoDisposeFutureProviderRef<
       String? address,
       String? referralCode,
       String? referrerAddress,
-      String? referrerCode
+      String? referrerCode,
+      TierInfo tier
     })> {
   /// The parameter `token` of this provider.
   String get token;
@@ -342,7 +347,8 @@ class _CheckWalletConnectionProviderElement
           String? address,
           String? referralCode,
           String? referrerAddress,
-          String? referrerCode
+          String? referrerCode,
+          TierInfo tier
         })> with CheckWalletConnectionRef {
   _CheckWalletConnectionProviderElement(super.provider);
 
@@ -368,7 +374,7 @@ final walletRepositoryProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef WalletRepositoryRef = AutoDisposeProviderRef<WalletRepositoryImpl>;
-String _$sessionNotifierHash() => r'5c99ef608f05c368656f0bf8699d2373a8c25b12';
+String _$sessionNotifierHash() => r'54b041ca287af2df5711e0e1a71ff19e9aef16d2';
 
 /// See also [SessionNotifier].
 @ProviderFor(SessionNotifier)
