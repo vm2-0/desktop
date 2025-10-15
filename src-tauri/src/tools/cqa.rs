@@ -20,7 +20,7 @@ const CQA_TIMEOUT_SECS: u64 = 300; // 5 minutes
 #[cfg(target_os = "windows")]
 fn get_cqa_url() -> String {
     std::env::var("CQA_URL_WIN").unwrap_or_else(|_| {
-        "https://github.com/clones-ai/clones-quality-agent/releases/download/v2.0.11/clones-quality-agent-win-x64.exe"
+        "https://github.com/clones-ai/clones-quality-agent/releases/download/v2.0.12/clones-quality-agent-win-x64.exe"
             .to_string()
     })
 }
@@ -28,7 +28,7 @@ fn get_cqa_url() -> String {
 #[cfg(target_os = "linux")]
 fn get_cqa_url() -> String {
     std::env::var("CQA_URL_LINUX").unwrap_or_else(|_| {
-        "https://github.com/clones-ai/clones-quality-agent/releases/download/v2.0.11/clones-quality-agent-linux-x64"
+        "https://github.com/clones-ai/clones-quality-agent/releases/download/v2.0.12/clones-quality-agent-linux-x64"
             .to_string()
     })
 }
@@ -36,7 +36,7 @@ fn get_cqa_url() -> String {
 #[cfg(target_os = "macos")]
 fn get_cqa_url() -> String {
     std::env::var("CQA_URL_MACOS").unwrap_or_else(|_| {
-        "https://github.com/clones-ai/clones-quality-agent/releases/download/v2.0.11/clones-quality-agent-macos-arm64"
+        "https://github.com/clones-ai/clones-quality-agent/releases/download/v2.0.12/clones-quality-agent-macos-arm64"
             .to_string()
     })
 }

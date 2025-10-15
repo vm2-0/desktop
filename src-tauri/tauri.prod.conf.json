@@ -17,7 +17,7 @@
   "app": {
     "security": {
       "csp": {
-        "connect-src": "'self' ipc: http://ipc.localhost https://api.clones-ai.com https://www.gstatic.com https://fonts.gstatic.com https://www.google.com https://t0.gstatic.com https://t1.gstatic.com https://t2.gstatic.com https://t3.gstatic.com"
+        "connect-src": "'self' ipc: http://ipc.localhost http://127.0.0.1:* https://api.clones-ai.com https://www.gstatic.com https://fonts.gstatic.com https://www.google.com https://t0.gstatic.com https://t1.gstatic.com https://t2.gstatic.com https://t3.gstatic.com"
       }
     }
   }
