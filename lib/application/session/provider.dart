@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:clones_desktop/application/factory.dart';
 import 'package:clones_desktop/application/referral.dart';
 import 'package:clones_desktop/application/session/state.dart';
+import 'package:clones_desktop/domain/models/wallet/tier_info.dart';
 import 'package:clones_desktop/domain/models/wallet/token_balance.dart';
 import 'package:clones_desktop/infrastructure/wallet.repository.dart';
 import 'package:clones_desktop/utils/api_client.dart';
@@ -35,6 +36,7 @@ class SessionNotifier extends _$SessionNotifier {
       connectionToken: null,
       address: null,
       balances: null,
+      tier: null,
     );
   }
 
@@ -69,6 +71,7 @@ class SessionNotifier extends _$SessionNotifier {
               referralCode: checkConnectionResult.referralCode,
               referrerAddress: checkConnectionResult.referrerAddress,
               referrerCode: checkConnectionResult.referrerCode,
+              tier: checkConnectionResult.tier,
             );
             await fetchBalances();
           }
@@ -176,6 +179,7 @@ Future<
       String? referralCode,
       String? referrerAddress,
       String? referrerCode,
+      TierInfo tier,
     })> checkWalletConnection(
   Ref ref,
   String token,

@@ -1,4 +1,5 @@
 import 'package:clones_desktop/domain/models/api/request_options.dart';
+import 'package:clones_desktop/domain/models/wallet/tier_info.dart';
 import 'package:clones_desktop/utils/api_client.dart';
 
 class WalletRepositoryImpl {
@@ -28,6 +29,7 @@ class WalletRepositoryImpl {
         String? referralCode,
         String? referrerAddress,
         String? referrerCode,
+        TierInfo tier,
       })> checkConnection(
     String token,
   ) async {
@@ -36,12 +38,16 @@ class WalletRepositoryImpl {
         '/wallet/connection',
         params: {'token': token},
       );
+
+      final tier = TierInfo.fromJson(data['tier'] as Map<String, dynamic>);
+
       return (
         connected: data['connected'] as bool,
         address: data['address'] as String?,
         referralCode: data['referralCode'] as String?,
         referrerAddress: data['referrer']?['walletAddress'] as String?,
         referrerCode: data['referrer']?['referralCode'] as String?,
+        tier: tier,
       );
     } catch (e) {
       throw Exception('Failed to check connection: $e');

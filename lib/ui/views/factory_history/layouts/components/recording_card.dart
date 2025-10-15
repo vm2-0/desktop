@@ -296,7 +296,9 @@ class RecordingCard extends ConsumerWidget {
   }
 
   Widget _rewardClaimedBadge(BuildContext context) {
-    if (recording.submission?.clampedScore == null) {
+    if (recording.submission?.clampedScore == null ||
+        recording.submission?.reward == null ||
+        recording.submission?.reward! == 0) {
       return const SizedBox.shrink();
     }
     final isClaimed = _isAlreadyClaimed(recording);

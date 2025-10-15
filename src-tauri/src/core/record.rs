@@ -9,7 +9,6 @@ use crate::tools::ffmpeg::{init_ffmpeg, FFmpegRecorder, FFMPEG_PATH};
 #[cfg(not(target_os = "macos"))]
 use crate::utils::keyboard_layout;
 use crate::utils::logger::Logger;
-#[cfg(target_os = "macos")]
 use crate::utils::permissions::{has_ax_perms, request_ax_perms};
 use crate::utils::settings::get_custom_app_local_data_dir;
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
@@ -19,6 +18,8 @@ use serde::{Deserialize, Serialize};
 use std::fs::{self, create_dir_all, File};
 use std::io::{BufReader, Cursor, Read, Write};
 use std::path::PathBuf;
+#[cfg(target_os = "macos")]
+use std::process::Command;
 use std::sync::{Arc, Mutex};
 use tauri::Emitter;
 use zip::{write::FileOptions, ZipWriter};

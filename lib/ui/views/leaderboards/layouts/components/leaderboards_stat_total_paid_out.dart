@@ -32,9 +32,9 @@ class LeaderboardsStatTotalPaidOut extends ConsumerWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              stat.totalUSDPayout > 0 
-                ? '\$${formatNumberWithSeparator(stat.totalUSDPayout)}'
-                : '${formatNumberWithSeparator(stat.totalRewards)} Total',
+              stat.totalUSDPayout > 0
+                  ? '\$${stat.totalUSDPayout.toStringAsFixedLowValue(2, 5)}'
+                  : '${stat.totalRewards.toStringAsFixedLowValue(2, 5)} Total',
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),

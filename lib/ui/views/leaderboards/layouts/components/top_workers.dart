@@ -261,19 +261,19 @@ class _TopWorkersState extends ConsumerState<TopWorkers> {
 
   String _formatWorkerRewards(WorkerLeaderboard worker) {
     if (worker.totalUSD > 0) {
-      return '\$${formatNumberWithSeparator(worker.totalUSD)}';
+      return '\$${worker.totalUSD.toStringAsFixedLowValue(2, 5)}';
     }
 
     if (worker.tokens.isEmpty) {
-      return '${formatNumberWithSeparator(worker.rewards)} Tokens';
+      return '${worker.rewards.toStringAsFixedLowValue(2, 5)} Tokens';
     }
 
     if (worker.tokens.length == 1) {
       final token = worker.tokens.first.token;
-      return '${formatNumberWithSeparator(worker.rewards)} ${token.symbol}';
+      return '${worker.rewards.toStringAsFixedLowValue(2, 5)} ${token.symbol}';
     }
 
     // Multiple tokens - show total with "Mixed" indicator
-    return '${formatNumberWithSeparator(worker.rewards)} Mixed';
+    return '${worker.rewards.toStringAsFixedLowValue(2, 5)} Mixed';
   }
 }

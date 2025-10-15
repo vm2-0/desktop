@@ -216,13 +216,13 @@ class _TopForgesState extends ConsumerState<TopForges> {
 
   String _formatForgePayout(ForgeLeaderboard forge) {
     if (forge.payoutUSD > 0) {
-      return '\$${formatNumberWithSeparator(forge.payoutUSD)}';
+      return '\$${forge.payoutUSD.toStringAsFixedLowValue(2, 5)}';
     }
 
     if (forge.token != null) {
-      return '${formatNumberWithSeparator(forge.payout)} ${forge.token!.symbol}';
+      return '${forge.payout.toStringAsFixedLowValue(2, 5)} ${forge.token!.symbol}';
     }
-    return '${formatNumberWithSeparator(forge.payout)} Tokens';
+    return '${forge.payout.toStringAsFixedLowValue(2, 5)} Tokens';
   }
 }
 
