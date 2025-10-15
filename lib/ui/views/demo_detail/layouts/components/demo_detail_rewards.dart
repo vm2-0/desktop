@@ -13,6 +13,7 @@ import 'package:clones_desktop/ui/components/wallet_not_connected.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
 import 'package:clones_desktop/utils/env.dart';
 import 'package:clones_desktop/utils/format_address.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -304,17 +305,17 @@ class DemoDetailRewards extends ConsumerWidget {
     final netAmount = submission.onChainReward?.netAmount;
     final feeAmount = submission.onChainReward?.feeAmount;
     final farmerReferrerAmount = submission.claimAuthorization?.referrals
-        ?.firstWhere((r) => r.type == 'farmer_referrer')
-        .amount;
+        ?.firstWhereOrNull((r) => r.type == 'farmer_referrer')
+        ?.amount;
     final factoryReferrerAmount = submission.claimAuthorization?.referrals
-        ?.firstWhere((r) => r.type == 'factory_referrer')
-        .amount;
+        ?.firstWhereOrNull((r) => r.type == 'factory_referrer')
+        ?.amount;
     final farmerReferrerAddress = submission.claimAuthorization?.referrals
-        ?.firstWhere((r) => r.type == 'farmer_referrer')
-        .address;
+        ?.firstWhereOrNull((r) => r.type == 'farmer_referrer')
+        ?.address;
     final factoryReferrerAddress = submission.claimAuthorization?.referrals
-        ?.firstWhere((r) => r.type == 'factory_referrer')
-        .address;
+        ?.firstWhereOrNull((r) => r.type == 'factory_referrer')
+        ?.address;
 
     return Column(
       children: [
