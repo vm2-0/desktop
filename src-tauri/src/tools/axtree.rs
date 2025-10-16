@@ -159,33 +159,27 @@ pub fn trigger_ui_dump_on_interaction<R: tauri::Runtime>(
                             available_apps.len()
                         );
 
-                        if let Some(focused_name) = focused_app_name {
+                        if focused_app_name.is_some() {
+                            // We have a focused app detected
                             if !available_apps.is_empty() {
-                                // Check if focused app is in the available apps list
-                                let is_ready = available_apps.iter().any(|app_name| {
-                                    let app_lower = app_name.to_lowercase();
-                                    let focused_lower = focused_name.to_lowercase();
-                                    app_lower.contains(&focused_lower)
-                                        || focused_lower.contains(&app_lower)
-                                });
-
-                                if is_ready {
-                                    info!("[AxTree] App status: ready");
-                                    "ready"
-                                } else {
-                                    info!(
-                                        "[AxTree] App '{}' is launching - not in available apps",
-                                        focused_name
-                                    );
-                                    "launching"
-                                }
+                                info!(
+                                    "[AxTree] App status: ready (focused app: {:?})",
+                                    focused_app_name
+                                );
+                                "ready"
                             } else {
-                                info!("[AxTree] App status: unknown (no available apps)");
-                                "unknown"
+                                info!("[AxTree] App status: launching (focused but no available apps)");
+                                "launching"
                             }
                         } else {
-                            info!("[AxTree] App status: unknown (no focused app)");
-                            "unknown"
+                            // No focused app detected by native API, but we might have apps available
+                            if !available_apps.is_empty() {
+                                info!("[AxTree] No focused app detected, but {} apps available - status ready", available_apps.len());
+                                "ready"
+                            } else {
+                                info!("[AxTree] App status: unknown (no focused app and no available apps)");
+                                "unknown"
+                            }
                         }
                     } else {
                         info!("[AxTree] App status: unknown (no data object)");

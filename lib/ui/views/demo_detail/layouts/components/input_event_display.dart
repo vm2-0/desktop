@@ -540,13 +540,18 @@ class InputEventDisplay extends StatelessWidget {
     final focusedApp = eventData['focused_app'] as Map<String, dynamic>?;
     final appStatus = eventData['app_status'] as String? ?? 'unknown';
 
-    // Extract applications from the tree
+    // Extract applications from the tree and sort alphabetically
     final applications = tree
         .where(
           (item) =>
               item is Map<String, dynamic> && item['role'] == 'application',
         )
-        .toList();
+        .toList()
+      ..sort((a, b) {
+        final nameA = (a as Map<String, dynamic>)['name'] as String? ?? '';
+        final nameB = (b as Map<String, dynamic>)['name'] as String? ?? '';
+        return nameA.toLowerCase().compareTo(nameB.toLowerCase());
+      });
     final focusedAppName = focusedApp?['name'] as String? ?? 'Unknown App';
 
     return Column(
@@ -635,39 +640,22 @@ class InputEventDisplay extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    // App Status Badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
+                  ],
+                ),
+                Row(
+                  children: [
+                    Text(
+                      'Status: ',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontSize: 10,
                       ),
-                      decoration: BoxDecoration(
-                        color: statusConfig['color'].withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: statusConfig['color'].withValues(alpha: 0.5),
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            statusConfig['icon'],
-                            size: 10,
-                            color: statusConfig['color'],
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            statusConfig['label'],
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w600,
-                              color: statusConfig['color'],
-                            ),
-                          ),
-                        ],
+                    ),
+                    Text(
+                      statusConfig['label'],
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: statusConfig['color'],
                       ),
                     ),
                   ],
@@ -1103,20 +1091,17 @@ class InputEventDisplay extends StatelessWidget {
       case 'ready':
         return {
           'color': Colors.green,
-          'icon': Icons.check_circle,
           'label': 'Ready',
         };
       case 'launching':
         return {
           'color': Colors.orange,
-          'icon': Icons.hourglass_empty,
           'label': 'Launching',
         };
       case 'unknown':
       default:
         return {
           'color': Colors.grey,
-          'icon': Icons.help_outline,
           'label': 'Unknown',
         };
     }
