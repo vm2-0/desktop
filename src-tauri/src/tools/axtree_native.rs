@@ -177,28 +177,137 @@ mod macos {
         }
     }
 
-    // -------- Focused app (best-effort) --------
+    // -------- Focused app (best-effort with fallback) --------
     unsafe fn get_focused_app_info(system_element: AXUIElementRef) -> Option<Value> {
+        // First, try the native API
         let mut focused_app_value: *const c_void = std::ptr::null();
         let err = AXUIElementCopyAttributeValue(
             system_element,
             CFString::new(K_AX_FOCUSED_APP).as_concrete_TypeRef(),
             &mut focused_app_value,
         );
-        if err != K_AX_ERROR_SUCCESS || focused_app_value.is_null() {
+        
+        if err == K_AX_ERROR_SUCCESS && !focused_app_value.is_null() {
+            // Native API succeeded
+            let title = get_string_attribute(focused_app_value as AXUIElementRef, K_AX_TITLE);
+            CFRelease(focused_app_value);
+            return Some(json!({
+                "name": title.unwrap_or_else(|| "Focused Application".to_string()),
+                "bundle_id": null,
+                "path": null,
+                "pid": null
+            }));
+        }
+
+        // Native API failed - use heuristic fallback
+        info!("[AxTree Native] Native focused app API failed, using heuristic fallback");
+        get_focused_app_via_heuristics()
+    }
+
+    // -------- Heuristic focus detection fallback --------
+    unsafe fn get_focused_app_via_heuristics() -> Option<Value> {
+        // Use CGWindowList to find the frontmost window
+        let window_list = CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly, kCGNullWindowID);
+        if window_list.is_null() {
             return None;
         }
 
-        // Try a title (often empty for AXApplication)
-        let title = get_string_attribute(focused_app_value as AXUIElementRef, K_AX_TITLE);
-        CFRelease(focused_app_value);
+        let windows_array: CFArray = CFArray::wrap_under_get_rule(window_list as CFArrayRef);
+        
+        // System apps to exclude (language-independent patterns)
+        let system_app_patterns = [
+            "Window Server", "Dock", "Spotlight", "SystemUIServer", 
+            "ControlCenter", "NotificationCenter", "clones", 
+            "clones_desktop", "clones-desktop",
+        ];
+        
+        // Screenshot app patterns (language-independent detection)
+        let screenshot_patterns = [
+            "capture", "screenshot", "screen shot", "screencapture",
+            "écran", "pantalla", "schermo", "画面", "스크린", "экран"
+        ];
 
-        Some(json!({
-            "name": title.unwrap_or_else(|| "Focused Application".to_string()),
-            "bundle_id": null,
-            "path": null,
-            "pid": null
-        }))
+        // Look for the first valid app window (frontmost in the list)
+        info!("[AxTree Native] Scanning {} windows for focused app", windows_array.len());
+        
+        for i in 0..windows_array.len() {
+            if let Some(item_ptr) = windows_array.get(i) {
+                if item_ptr.is_null() {
+                    continue;
+                }
+                let window_dict = *item_ptr as CFDictionaryRef;
+                let dict: CFDictionary<*const c_void, *const c_void> =
+                    CFDictionary::wrap_under_get_rule(window_dict);
+
+                let app_name = get_dict_string_value(
+                    dict.as_concrete_TypeRef() as *const c_void,
+                    K_CG_WINDOW_OWNER_NAME,
+                ).unwrap_or_else(|| "Unknown".to_string());
+
+                info!("[AxTree Native] Window {}: app='{}', checking validity", i, app_name);
+
+                if app_name.is_empty() {
+                    info!("[AxTree Native] Skipping empty app name");
+                    continue;
+                }
+
+                // Check against system app patterns
+                let app_lower = app_name.to_lowercase();
+                let is_system_app = system_app_patterns.iter().any(|pattern| {
+                    app_lower.contains(&pattern.to_lowercase())
+                });
+                
+                // Check against screenshot app patterns
+                let is_screenshot_app = screenshot_patterns.iter().any(|pattern| {
+                    app_lower.contains(&pattern.to_lowercase())
+                });
+
+                if is_system_app {
+                    info!("[AxTree Native] Skipping '{}' - system app", app_name);
+                    continue;
+                }
+
+                if is_screenshot_app {
+                    info!("[AxTree Native] Skipping '{}' - screenshot app", app_name);
+                    continue;
+                }
+
+                // Valid user app found
+                {
+                    // Get window bounds to verify it's a substantial window
+                    let bounds_ptr = CFDictionaryGetValue(
+                        dict.as_concrete_TypeRef() as *const c_void,
+                        CFString::new(K_CG_WINDOW_BOUNDS).as_concrete_TypeRef() as *const c_void,
+                    );
+                    
+                    if !bounds_ptr.is_null() {
+                        let bounds_dict: CFDictionary<*const c_void, *const c_void> =
+                            CFDictionary::wrap_under_get_rule(bounds_ptr as CFDictionaryRef);
+                        
+                        let w = get_number_from_dict(bounds_dict.as_concrete_TypeRef() as *const c_void, "Width").unwrap_or(0);
+                        let h = get_number_from_dict(bounds_dict.as_concrete_TypeRef() as *const c_void, "Height").unwrap_or(0);
+                        
+                        // Only consider substantial windows (not tiny ones)
+                        info!("[AxTree Native] Window '{}' size: {}x{}", app_name, w, h);
+                        if w >= 200 && h >= 200 {
+                            CFRelease(window_list);
+                            info!("[AxTree Native] ✅ Heuristic detected focused app: '{}' ({}x{})", app_name, w, h);
+                            return Some(json!({
+                                "name": app_name,
+                                "bundle_id": null,
+                                "path": null,
+                                "pid": null
+                            }));
+                        } else {
+                            info!("[AxTree Native] ❌ Window '{}' too small ({}x{}), skipping", app_name, w, h);
+                        }
+                    }
+                }
+            }
+        }
+
+        CFRelease(window_list);
+        None
     }
 
     // -------- App / Window extraction via AX --------
@@ -209,19 +318,31 @@ mod macos {
         // App name (may be empty)
         let app_name = get_string_attribute(app_element, K_AX_TITLE).unwrap_or_default();
 
-        // Filter out known system-ish apps
-        let invalid_apps = [
-            "Window Server",
-            "Dock",
-            "Spotlight",
-            "SystemUIServer",
-            "ControlCenter",
-            "NotificationCenter",
-            "clones",
-            "clones_desktop",
-            "clones-desktop",
+        // Filter out known system-ish apps using language-independent patterns
+        let system_app_patterns = [
+            "Window Server", "Dock", "Spotlight", "SystemUIServer",
+            "ControlCenter", "NotificationCenter", "clones", 
+            "clones_desktop", "clones-desktop",
         ];
-        if invalid_apps.contains(&app_name.as_str()) {
+        
+        let screenshot_patterns = [
+            "capture", "screenshot", "screen shot", "screencapture",
+            "écran", "pantalla", "schermo", "画面", "스크린", "экран"
+        ];
+
+        let app_lower = app_name.to_lowercase();
+        
+        // Check for system apps
+        let is_system_app = system_app_patterns.iter().any(|pattern| {
+            app_lower.contains(&pattern.to_lowercase())
+        });
+        
+        // Check for screenshot apps
+        let is_screenshot_app = screenshot_patterns.iter().any(|pattern| {
+            app_lower.contains(&pattern.to_lowercase())
+        });
+
+        if is_system_app || is_screenshot_app {
             return None;
         }
 
@@ -328,16 +449,15 @@ mod macos {
         let displays = get_online_displays();
         let mut apps_map: HashMap<String, Vec<Value>> = HashMap::new();
 
-        let invalid_apps = [
-            "Window Server",
-            "Dock",
-            "Spotlight",
-            "SystemUIServer",
-            "ControlCenter",
-            "NotificationCenter",
-            "clones",
-            "clones_desktop",
-            "clones-desktop",
+        let system_app_patterns = [
+            "Window Server", "Dock", "Spotlight", "SystemUIServer",
+            "ControlCenter", "NotificationCenter", "clones", 
+            "clones_desktop", "clones-desktop",
+        ];
+        
+        let screenshot_patterns = [
+            "capture", "screenshot", "screen shot", "screencapture",
+            "écran", "pantalla", "schermo", "画面", "스크린", "экран"
         ];
 
         for i in 0..windows_array.len() {
@@ -358,7 +478,17 @@ mod macos {
                 K_CG_WINDOW_OWNER_NAME,
             )
             .unwrap_or_else(|| "Unknown".to_string());
-            if invalid_apps.contains(&app_name.as_str()) {
+            
+            // Language-independent filtering
+            let app_lower = app_name.to_lowercase();
+            let is_system_app = system_app_patterns.iter().any(|pattern| {
+                app_lower.contains(&pattern.to_lowercase())
+            });
+            let is_screenshot_app = screenshot_patterns.iter().any(|pattern| {
+                app_lower.contains(&pattern.to_lowercase())
+            });
+            
+            if is_system_app || is_screenshot_app {
                 continue;
             }
 
