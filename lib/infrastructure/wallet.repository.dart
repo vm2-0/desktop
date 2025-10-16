@@ -29,7 +29,7 @@ class WalletRepositoryImpl {
         String? referralCode,
         String? referrerAddress,
         String? referrerCode,
-        TierInfo tier,
+        TierInfo? tier,
       })> checkConnection(
     String token,
   ) async {
@@ -39,7 +39,9 @@ class WalletRepositoryImpl {
         params: {'token': token},
       );
 
-      final tier = TierInfo.fromJson(data['tier'] as Map<String, dynamic>);
+      final tier = data['tier'] != null && data['tier'] is Map<String, dynamic>
+          ? TierInfo.fromJson(data['tier'] as Map<String, dynamic>)
+          : null;
 
       return (
         connected: data['connected'] as bool,

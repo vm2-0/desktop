@@ -5,6 +5,7 @@ import 'package:clones_desktop/application/ui_state/provider.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/video_player/video_player_with_id.dart';
+import 'package:clones_desktop/ui/components/video_player/video_source.dart';
 import 'package:clones_desktop/ui/components/wallet_not_connected.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/demo_detail/layouts/components/demo_detail_editor.dart';
@@ -39,7 +40,7 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
   bool _videoFullscreen = false;
   Widget? _videoPlayerWidget;
   String? _currentVideoId;
-  bool _videoPlayerCreated = false;
+  VideoSource? _lastVideoSource;
   late AnimationController _animationController;
 
   @override
@@ -81,7 +82,9 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
     });
 
     // Update global UI state
-    ref.read(uiStateNotifierProvider.notifier).setVideoFullscreen(_videoFullscreen);
+    ref
+        .read(uiStateNotifierProvider.notifier)
+        .setVideoFullscreen(_videoFullscreen);
 
     if (_videoFullscreen) {
       _animationController.forward();
@@ -91,7 +94,6 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
   }
 
   Widget _buildVideoPreview({bool showExpandButton = true}) {
-    // Create video player widget once and reuse it
     final demoDetail = ref.watch(demoDetailNotifierProvider);
     final videoSource = demoDetail.videoSource;
 
@@ -101,10 +103,10 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
       );
     }
 
-    // Create or reuse the video player widget with a stable key
-    if (!_videoPlayerCreated) {
+    // Recreate video player widget when source changes
+    if (_lastVideoSource != videoSource) {
       _videoPlayerWidget = VideoPlayerWithId(
-        key: const ValueKey('main-video-player'),
+        key: ValueKey('video-player-${videoSource.hashCode}'),
         source: videoSource,
         onVideoIdAvailable: (videoId) {
           setState(() {
@@ -112,7 +114,7 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
           });
         },
       );
-      _videoPlayerCreated = true;
+      _lastVideoSource = videoSource;
     }
 
     return DemoDetailVideoPreview(

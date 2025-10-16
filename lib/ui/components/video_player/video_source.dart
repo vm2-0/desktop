@@ -1,19 +1,42 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
+@immutable
 sealed class VideoSource {
   const VideoSource();
 }
 
+@immutable
 class AssetVideoSource extends VideoSource {
   const AssetVideoSource(this.path);
   final String path;
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is AssetVideoSource && other.path == path;
+  }
+
+  @override
+  int get hashCode => path.hashCode;
 }
 
+@immutable
 class FileVideoSource extends VideoSource {
   const FileVideoSource(this.path);
   final String path;
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is FileVideoSource && other.path == path;
+  }
+
+  @override
+  int get hashCode => path.hashCode;
 }
 
+@immutable
 class Base64VideoSource extends VideoSource {
   const Base64VideoSource(this.dataUri);
   final String dataUri;
@@ -29,4 +52,13 @@ class Base64VideoSource extends VideoSource {
     final base64String = parts[1];
     return base64Decode(base64String);
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is Base64VideoSource && other.dataUri == dataUri;
+  }
+
+  @override
+  int get hashCode => dataUri.hashCode;
 }

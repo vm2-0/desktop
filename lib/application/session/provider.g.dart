@@ -175,7 +175,7 @@ class _GetTokenBalanceProviderElement
 }
 
 String _$checkWalletConnectionHash() =>
-    r'435b4080570e0b780b539f082ea80549daa400dd';
+    r'fa7a3e0986a575e4562aeaacf3a3eec07107d1ef';
 
 /// See also [checkWalletConnection].
 @ProviderFor(checkWalletConnection)
@@ -190,7 +190,7 @@ class CheckWalletConnectionFamily extends Family<
           String? referralCode,
           String? referrerAddress,
           String? referrerCode,
-          TierInfo tier
+          TierInfo? tier
         })>> {
   /// See also [checkWalletConnection].
   const CheckWalletConnectionFamily();
@@ -236,7 +236,7 @@ class CheckWalletConnectionProvider extends AutoDisposeFutureProvider<
       String? referralCode,
       String? referrerAddress,
       String? referrerCode,
-      TierInfo tier
+      TierInfo? tier
     })> {
   /// See also [checkWalletConnection].
   CheckWalletConnectionProvider(
@@ -279,7 +279,7 @@ class CheckWalletConnectionProvider extends AutoDisposeFutureProvider<
                   String? referralCode,
                   String? referrerAddress,
                   String? referrerCode,
-                  TierInfo tier
+                  TierInfo? tier
                 })>
             Function(CheckWalletConnectionRef provider)
         create,
@@ -306,7 +306,7 @@ class CheckWalletConnectionProvider extends AutoDisposeFutureProvider<
         String? referralCode,
         String? referrerAddress,
         String? referrerCode,
-        TierInfo tier
+        TierInfo? tier
       })> createElement() {
     return _CheckWalletConnectionProviderElement(this);
   }
@@ -334,7 +334,7 @@ mixin CheckWalletConnectionRef on AutoDisposeFutureProviderRef<
       String? referralCode,
       String? referrerAddress,
       String? referrerCode,
-      TierInfo tier
+      TierInfo? tier
     })> {
   /// The parameter `token` of this provider.
   String get token;
@@ -348,7 +348,7 @@ class _CheckWalletConnectionProviderElement
           String? referralCode,
           String? referrerAddress,
           String? referrerCode,
-          TierInfo tier
+          TierInfo? tier
         })> with CheckWalletConnectionRef {
   _CheckWalletConnectionProviderElement(super.provider);
 
