@@ -169,7 +169,7 @@ class DemoDetailInfos extends ConsumerWidget {
           final index = entry.key + 1;
           final objective = entry.value;
           // Remove HTML tags if present (like <app> tags in the objectives)
-          final cleanObjective = objective.replaceAll(RegExp(r'<[^>]*>'), '');
+          final cleanObjective = objective.replaceAll(RegExp('<[^>]*>'), '');
           return Padding(
             padding: const EdgeInsets.only(bottom: 4),
             child: Row(

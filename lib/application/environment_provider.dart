@@ -15,7 +15,7 @@ class EnvironmentNotifier extends StateNotifier<AppEnvironment> {
   void _detectEnvironment() {
     // Get environment from .env file
     final env = dotenv.env['ENV'] ?? 'dev';
-    
+
     switch (env.toLowerCase()) {
       case 'production':
       case 'prod':
@@ -33,7 +33,8 @@ class EnvironmentNotifier extends StateNotifier<AppEnvironment> {
   }
 }
 
-final environmentProvider = StateNotifierProvider<EnvironmentNotifier, AppEnvironment>(
+final environmentProvider =
+    StateNotifierProvider<EnvironmentNotifier, AppEnvironment>(
   (ref) => EnvironmentNotifier(),
 );
 
@@ -48,7 +49,7 @@ extension AppEnvironmentExtension on AppEnvironment {
         return '';
     }
   }
-  
+
   bool get shouldShowEnvironmentBadge {
     return this != AppEnvironment.prod;
   }

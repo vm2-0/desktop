@@ -77,21 +77,22 @@ abstract class ConsumerVideoPlayerState<T extends ConsumerStatefulWidget>
       child: LayoutBuilder(
         builder: (context, constraints) {
           // Calculate available height minus controls and spacing
-          const controlsHeight = 120; // Approximate height for timeline + transport controls + spacing
+          const controlsHeight =
+              120; // Approximate height for timeline + transport controls + spacing
           final availableVideoHeight = constraints.maxHeight - controlsHeight;
           final maxVideoWidth = constraints.maxWidth;
-          
+
           // Calculate optimal video size maintaining 16:9 aspect ratio
-          final aspectRatio = 16 / 9;
-          double videoWidth = maxVideoWidth;
-          double videoHeight = videoWidth / aspectRatio;
-          
+          const aspectRatio = 16 / 9;
+          var videoWidth = maxVideoWidth;
+          var videoHeight = videoWidth / aspectRatio;
+
           // If calculated height exceeds available space, constrain by height
           if (videoHeight > availableVideoHeight) {
             videoHeight = availableVideoHeight;
             videoWidth = videoHeight * aspectRatio;
           }
-          
+
           return Column(
             children: [
               Expanded(
