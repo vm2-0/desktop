@@ -179,7 +179,7 @@ Future<
       String? referralCode,
       String? referrerAddress,
       String? referrerCode,
-      TierInfo tier,
+      TierInfo? tier,
     })> checkWalletConnection(
   Ref ref,
   String token,

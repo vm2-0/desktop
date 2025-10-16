@@ -9,6 +9,7 @@ import 'package:clones_desktop/ui/components/video_player/timeline/timeline_prog
 import 'package:clones_desktop/ui/components/video_player/timeline/timeline_time_labels.dart';
 import 'package:clones_desktop/ui/components/video_player/video_state.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -126,58 +127,75 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
           builder: (context, constraints) {
             final timelineWidth = constraints.maxWidth;
 
-            return GestureDetector(
-              onTapUp: (details) {
-                final clickPosition = details.localPosition.dx;
-                final seekTime =
-                    (clickPosition / timelineWidth * durationMs).round();
-                final seekDuration = Duration(milliseconds: seekTime);
-                if (widget.onSeek != null) {
-                  widget.onSeek!(seekDuration);
-                } else {
-                  // Fallback - just update position state
-                  ref
-                      .read(videoStateNotifierProvider(widget.videoId).notifier)
-                      .updatePosition(seekDuration);
-                }
-                _timelineFocus.requestFocus();
+            return RawGestureDetector(
+              gestures: {
+                TapGestureRecognizer:
+                    GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
+                  TapGestureRecognizer.new,
+                  (instance) {
+                    instance.onTapUp = (details) {
+                      final clickPosition = details.localPosition.dx;
+                      final seekTime =
+                          (clickPosition / timelineWidth * durationMs).round();
+                      final seekDuration = Duration(milliseconds: seekTime);
 
-                // Left-click selects the clip under the cursor (iMovie-like) - only if editing is enabled
-                if (canEdit) {
-                  final clips = ref.read(demoDetailNotifierProvider).clips;
-                  final ms = clickPosition / timelineWidth * durationMs;
-                  final idx =
-                      clips.indexWhere((c) => ms >= c.start && ms <= c.end);
-                  if (idx != -1) {
-                    ref
-                        .read(demoDetailNotifierProvider.notifier)
-                        .selectClip(idx);
-                  }
-                }
-              },
-              onSecondaryTapDown: canEdit
-                  ? (details) {
-                      // Remember where the context menu should open
-                      final global = details.globalPosition;
-                      setState(() => _lastRightClickGlobal = global);
-
-                      // Compute playhead time at click
-                      final box = context.findRenderObject() as RenderBox?;
-                      final local = box?.globalToLocal(global);
-                      if (local != null) {
-                        _lastRightClickTimeMs =
-                            (local.dx / timelineWidth * durationMs)
-                                .clamp(0.0, durationMs);
+                      if (widget.onSeek != null) {
+                        widget.onSeek!(seekDuration);
+                      } else {
+                        ref
+                            .read(
+                              videoStateNotifierProvider(widget.videoId)
+                                  .notifier,
+                            )
+                            .updatePosition(seekDuration);
                       }
                       _timelineFocus.requestFocus();
-                      _openContextMenu(
-                        context,
-                        ref,
-                        durationMs,
-                        timelineWidth,
-                      );
-                    }
-                  : null,
+
+                      // Left-click selects the clip under the cursor (iMovie-like) - only if editing is enabled
+                      if (canEdit) {
+                        final clips =
+                            ref.read(demoDetailNotifierProvider).clips;
+                        final ms = clickPosition / timelineWidth * durationMs;
+                        final idx = clips
+                            .indexWhere((c) => ms >= c.start && ms <= c.end);
+                        if (idx != -1) {
+                          ref
+                              .read(demoDetailNotifierProvider.notifier)
+                              .selectClip(idx);
+                        }
+                      }
+                    };
+                  },
+                ),
+                if (canEdit)
+                  _CustomRightClickRecognizer:
+                      GestureRecognizerFactoryWithHandlers<
+                          _CustomRightClickRecognizer>(
+                    _CustomRightClickRecognizer.new,
+                    (instance) {
+                      instance.onRightClick = (details) {
+                        // Remember where the context menu should open
+                        final global = details.globalPosition;
+                        setState(() => _lastRightClickGlobal = global);
+
+                        // Compute playhead time at click
+                        final clickPosition = details.localPosition.dx;
+                        _lastRightClickTimeMs =
+                            (clickPosition / timelineWidth * durationMs)
+                                .clamp(0.0, durationMs);
+
+                        _timelineFocus.requestFocus();
+
+                        _openContextMenu(
+                          context,
+                          ref,
+                          durationMs,
+                          timelineWidth,
+                        );
+                      };
+                    },
+                  ),
+              },
               child: MouseRegion(
                 onEnter: (_) => _timelineFocus.requestFocus(),
                 onHover: (event) =>
@@ -388,5 +406,46 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
         notifier.clearSelection();
       }
     });
+  }
+}
+
+/// Custom gesture recognizer that handles right-click events and prevents browser context menu
+class _CustomRightClickRecognizer extends OneSequenceGestureRecognizer {
+  void Function(TapUpDetails)? onRightClick;
+
+  @override
+  String get debugDescription => 'custom right click';
+
+  @override
+  void addAllowedPointer(PointerDownEvent event) {
+    if (event.buttons == kSecondaryButton) {
+      startTrackingPointer(event.pointer, event.transform);
+      resolve(GestureDisposition.accepted);
+    } else {
+      resolve(GestureDisposition.rejected);
+    }
+  }
+
+  @override
+  void handleEvent(PointerEvent event) {
+    if (event is PointerUpEvent && event.buttons == 0) {
+      // This was a right-click release
+      final details = TapUpDetails(
+        kind: event.kind,
+        globalPosition: event.position,
+        localPosition: event.localPosition,
+      );
+
+      // Invoke the callback
+      onRightClick?.call(details);
+
+      // Stop tracking
+      stopTrackingPointer(event.pointer);
+    }
+  }
+
+  @override
+  void didStopTrackingLastPointer(int pointer) {
+    // Clean up when done tracking
   }
 }

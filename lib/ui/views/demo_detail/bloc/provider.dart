@@ -92,10 +92,15 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       videoSource: null,
     );
 
+    // Get fresh recording data to avoid stale state
+    final recordings = await ref.read(mergedRecordingsProvider.future);
+    final recording =
+        recordings.firstWhereOrNull((element) => element.id == recordingId);
+
     // Check if the recording is local or cloud
-    if (state.recording?.location == 'local') {
+    if (recording?.location == 'local') {
       await _initializeVideoFromLocal(recordingId);
-    } else if (state.recording?.location == 'cloud') {
+    } else if (recording?.location == 'cloud') {
       await _initializeVideoFromCloud();
     }
     // For other cases, keep video state null
@@ -743,7 +748,15 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
           await ref
               .read(deleteRecordingProvider(recordingId: recordingId).future);
 
-          // Reload recording to get updated submission data
+          // Wait a bit to ensure file deletion is complete
+          await Future.delayed(const Duration(milliseconds: 500));
+
+          // Force invalidation again after deletion to ensure fresh data
+          ref
+            ..invalidate(listRecordingsProvider)
+            ..invalidate(mergedRecordingsProvider);
+
+          // Reload recording to get updated submission data (this also calls initializeVideoPlayer)
           await loadRecording(recordingId);
         } else if (uploadState.uploadStatus == UploadStatus.error) {
           sub.close();

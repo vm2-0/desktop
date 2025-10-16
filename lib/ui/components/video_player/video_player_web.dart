@@ -49,6 +49,24 @@ class _VideoPlayerState extends ConsumerVideoPlayerState<VideoPlayer>
   }
 
   @override
+  void didUpdateWidget(VideoPlayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Check if the video source has changed
+    if (oldWidget.source != widget.source) {
+      // Dispose old controller
+      _controller.dispose();
+      // Create new controller with new source
+      _videoId =
+          '${widget.source.hashCode}-${DateTime.now().microsecondsSinceEpoch}';
+      _controller = WebVideoControllerImpl(widget.source, ref, _videoId);
+      // Reinitialize
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _initializeVideo();
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
