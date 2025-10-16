@@ -67,7 +67,9 @@ class ForgeExistingFactoryCard extends ConsumerWidget {
   }
 
   Widget _getBalanceText(
-      AsyncValue<double> factoryBalanceAsync, ThemeData theme) {
+    AsyncValue<double> factoryBalanceAsync,
+    ThemeData theme,
+  ) {
     return factoryBalanceAsync.when(
       data: (balance) {
         return Text(
