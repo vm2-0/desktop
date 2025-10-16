@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:clones_desktop/application/session/provider.dart';
+import 'package:clones_desktop/application/ui_state/provider.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/video_player/video_player_with_id.dart';
@@ -78,6 +79,9 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
     setState(() {
       _videoFullscreen = !_videoFullscreen;
     });
+
+    // Update global UI state
+    ref.read(uiStateNotifierProvider.notifier).setVideoFullscreen(_videoFullscreen);
 
     if (_videoFullscreen) {
       _animationController.forward();

@@ -1,4 +1,5 @@
 import 'package:clones_desktop/application/route_provider.dart';
+import 'package:clones_desktop/application/ui_state/provider.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/ui/components/global_action_rail.dart';
 import 'package:clones_desktop/ui/components/modals/modals_management.dart';
@@ -32,6 +33,7 @@ class LayoutBackground extends ConsumerWidget {
         const maxLogoSize = 400.0;
         logoSize.clamp(minLogoSize, maxLogoSize);
         final currentRoute = ref.watch(currentRouteProvider);
+        final isVideoFullscreen = ref.watch(uiStateNotifierProvider.select((s) => s.isVideoFullscreen));
 
         return Stack(
           alignment: Alignment.center,
@@ -138,14 +140,15 @@ class LayoutBackground extends ConsumerWidget {
                                 ),
                             ],
                           ),
-                          const Positioned(
-                            bottom: 10,
-                            left: 0,
-                            right: 0,
-                            child: Center(
-                              child: GlobalActionRail(),
+                          if (!isVideoFullscreen)
+                            const Positioned(
+                              bottom: 10,
+                              left: 0,
+                              right: 0,
+                              child: Center(
+                                child: GlobalActionRail(),
+                              ),
                             ),
-                          ),
                           const ModalsManagement(),
                         ],
                       ),
