@@ -170,6 +170,13 @@ impl Recorder {
         }
     }
 
+    /// Force kill underlying recording process immediately.
+    fn force_kill(&mut self) {
+        match self {
+            Recorder::FFmpeg(recorder) => recorder.force_kill(),
+        }
+    }
+
     fn new(video_path: &PathBuf, primary: &DisplayInfo, fps: u32) -> Result<Self, String> {
         log::info!("[record] Starting new recorder");
         // #[cfg(target_os = "macos")]
@@ -458,7 +465,13 @@ pub fn set_rec_state(
     state: String,
     id: Option<String>,
 ) -> Result<(), String> {
-    let mut recording_state = RECORDING_STATE.lock().map_err(|e| e.to_string())?;
+    let mut recording_state = match RECORDING_STATE.lock() {
+        Ok(state) => state,
+        Err(poisoned) => {
+            log::warn!("[record] RECORDING_STATE mutex was poisoned, recovering...");
+            poisoned.into_inner()
+        }
+    };
     *recording_state = Some(state.clone());
     if id.is_some() {
         if let Err(e) = app.emit(
@@ -489,7 +502,15 @@ pub fn set_rec_state(
 /// * `Ok(String)` with the current state.
 /// * `Err` if not initialized or on error.
 pub async fn get_recording_state() -> Result<String, String> {
-    let recording_state = RECORDING_STATE.lock().map_err(|e| e.to_string())?;
+    let recording_state = match RECORDING_STATE.lock() {
+        Ok(state) => state,
+        Err(poisoned) => {
+            log::warn!(
+                "[record] RECORDING_STATE mutex was poisoned in get_recording_state, recovering..."
+            );
+            poisoned.into_inner()
+        }
+    };
     recording_state
         .as_ref()
         .map(|s| s.clone())
@@ -512,8 +533,15 @@ pub async fn start_recording(
     demonstration: Option<Demonstration>,
     fps: u32,
 ) -> Result<(), String> {
-    // Start screen recording
-    let mut recorder_state = RECORDER_STATE.lock().map_err(|e| e.to_string())?;
+    // Start screen recording with poison recovery
+    let mut recorder_state = match RECORDER_STATE.lock() {
+        Ok(state) => state,
+        Err(poisoned) => {
+            log::warn!("[record] RECORDER_STATE mutex was poisoned, recovering...");
+            poisoned.into_inner()
+        }
+    };
+
     if recorder_state.is_some() {
         set_rec_state(&app, "recording".to_string(), None)?;
         return Err("Recording already in progress".to_string());
@@ -529,9 +557,13 @@ pub async fn start_recording(
     let (session_dir, timestamp) = get_session_path(&app)?;
 
     {
-        let mut global_state = DEMONSTRATION_STATE
-            .lock()
-            .map_err(|e| format!("Failed to lock demonstration state: {}", e))?;
+        let mut global_state = match DEMONSTRATION_STATE.lock() {
+            Ok(state) => state,
+            Err(poisoned) => {
+                log::warn!("[record] DEMONSTRATION_STATE mutex was poisoned, recovering...");
+                poisoned.into_inner()
+            }
+        };
 
         if let Some(demonstration_data) = &demonstration {
             global_state.current_demonstration = Some(demonstration_data.clone());
@@ -644,11 +676,15 @@ pub async fn start_recording(
         recording_start.to_rfc3339()
     );
 
-    // Store in DEMONSTRATION_STATE
+    // Store in DEMONSTRATION_STATE with poison recovery
     {
-        let mut global_state = DEMONSTRATION_STATE
-            .lock()
-            .map_err(|e| format!("Failed to lock demonstration state: {}", e))?;
+        let mut global_state = match DEMONSTRATION_STATE.lock() {
+            Ok(state) => state,
+            Err(poisoned) => {
+                log::warn!("[record] DEMONSTRATION_STATE mutex was poisoned during recording start, recovering...");
+                poisoned.into_inner()
+            }
+        };
         global_state.recording_start_time = Some(recording_start);
     }
 
@@ -659,8 +695,14 @@ pub async fn start_recording(
 
     log::info!("[record] Timestamp synchronized with actual video capture start");
 
-    // Start input logging and listening
-    let mut log_state = LOGGER_STATE.lock().map_err(|e| e.to_string())?;
+    // Start input logging and listening with poison recovery
+    let mut log_state = match LOGGER_STATE.lock() {
+        Ok(state) => state,
+        Err(poisoned) => {
+            log::warn!("[record] LOGGER_STATE mutex was poisoned, recovering...");
+            poisoned.into_inner()
+        }
+    };
     if log_state.is_none() {
         *log_state = Some(Logger::new(session_dir.clone())?);
     }
@@ -858,6 +900,33 @@ pub async fn stop_recording(
     }
 }
 
+/// Force kill any active recorder and teardown input/listeners without waiting.
+/// Intended for emergency shutdown paths (lifeline EOF, app exit) to avoid orphaned FFmpeg.
+pub fn force_kill_active_recorder(app: &tauri::AppHandle) {
+    // Stop UI/input listeners best-effort
+    let _ = axtree::set_recording_mode(false);
+    let _ = input::stop_input_listener();
+
+    // Kill FFmpeg child if present
+    match RECORDER_STATE.lock() {
+        Ok(mut rec_state) => {
+            if let Some(mut recorder) = rec_state.take() {
+                recorder.force_kill();
+            }
+        }
+        Err(poisoned) => {
+            let mut rec_state = poisoned.into_inner();
+            if let Some(mut recorder) = rec_state.take() {
+                recorder.force_kill();
+            }
+        }
+    }
+
+    // Reset state indicators
+    let _ = set_rec_state(app, "off".to_string(), None);
+    RECORDING_START_TIME_MILLIS.store(0, Ordering::Relaxed);
+}
+
 /// Log an input event to the current recording session.
 /// Automatically converts absolute timestamps to relative for axtree_interaction events.
 ///
@@ -890,9 +959,18 @@ pub fn log_input(mut event: serde_json::Value) -> Result<(), String> {
         }
     }
 
-    if let Ok(mut state) = LOGGER_STATE.lock() {
-        if let Some(logger) = state.as_mut() {
-            logger.log_event(event)?;
+    match LOGGER_STATE.lock() {
+        Ok(mut state) => {
+            if let Some(logger) = state.as_mut() {
+                logger.log_event(event)?;
+            }
+        }
+        Err(poisoned) => {
+            log::warn!("[record] LOGGER_STATE mutex was poisoned in log_input, recovering...");
+            let mut state = poisoned.into_inner();
+            if let Some(logger) = state.as_mut() {
+                logger.log_event(event)?;
+            }
         }
     }
     Ok(())
@@ -928,10 +1006,19 @@ pub fn log_ffmpeg(output: &str, is_stderr: bool) -> Result<(), String> {
         "time": timestamp
     });
 
-    // Log to file
-    if let Ok(mut state) = LOGGER_STATE.lock() {
-        if let Some(logger) = state.as_mut() {
-            logger.log_event(event)?;
+    // Log to file with poison recovery
+    match LOGGER_STATE.lock() {
+        Ok(mut state) => {
+            if let Some(logger) = state.as_mut() {
+                logger.log_event(event)?;
+            }
+        }
+        Err(poisoned) => {
+            log::warn!("[record] LOGGER_STATE mutex was poisoned in log_ffmpeg, recovering...");
+            let mut state = poisoned.into_inner();
+            if let Some(logger) = state.as_mut() {
+                logger.log_event(event)?;
+            }
         }
     }
     Ok(())

@@ -50,8 +50,17 @@ main() {
     
     log_success "Build completed successfully!"
     
-    log_info "Step 2/2: Uploading to Tigris ($environment)..."
-    ./scripts/macos/upload_to_tigris_macos.sh "$environment"
+    log_info "Step 2/3: Generating Sparkle appcast..."
+    # Set Sparkle generate_appcast path (same as build script)
+    if [ -z "${GENERATE_APPCAST_BIN:-}" ]; then
+        if [ -x "/opt/homebrew/Caskroom/sparkle/2.8.0/bin/generate_appcast" ]; then
+            export GENERATE_APPCAST_BIN="/opt/homebrew/Caskroom/sparkle/2.8.0/bin/generate_appcast"
+        fi
+    fi
+    ./scripts/macos/generate_appcast.sh "$environment"
+    
+    log_info "Step 3/3: Uploading to Tigris ($environment)..."
+    ./scripts/macos/upload_sparkle_macos.sh "$environment"
     
     if [ $? -ne 0 ]; then
         log_error "Upload failed"
@@ -59,14 +68,16 @@ main() {
     fi
     
     log_success "🎉 Complete deployment finished!"
-    log_info "Your app is now available for download at:"
+    log_info "Your Sparkle-enabled app is now available:"
     
     case "$environment" in
         "prod")
-            echo "  🌐 https://releases.clones-ai.com/latest/darwin/"
+            echo "  📱 Downloads: https://releases.clones-ai.com/latest/darwin/"
+            echo "  🔗 Appcast: https://releases.clones-ai.com/latest/darwin/appcast.xml"
             ;;
         "test")
-            echo "  🌐 https://releases-test.clones-ai.com/latest/darwin/"
+            echo "  📱 Downloads: https://releases-test.clones-ai.com/latest/darwin/"
+            echo "  🔗 Appcast: https://releases-test.clones-ai.com/latest/darwin/appcast.xml"
             ;;
     esac
 }

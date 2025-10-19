@@ -1,7 +1,6 @@
 import 'package:clones_desktop/application/referral.dart';
 import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/domain/models/api/api_error.dart';
-import 'package:clones_desktop/domain/models/api/api_response.dart';
 import 'package:clones_desktop/domain/models/referral/referral_info.dart';
 import 'package:clones_desktop/ui/views/referral/bloc/state.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';

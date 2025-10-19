@@ -1,10 +1,10 @@
 import 'dart:ui';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:clones_desktop/application/session/provider.dart';
-import 'package:clones_desktop/application/tauri_api.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
-import 'package:clones_desktop/ui/components/memory_image_tauri.dart';
 import 'package:clones_desktop/ui/views/home/layouts/home_view.dart';
 import 'package:clones_desktop/ui/views/referral/layouts/referral_view.dart';
 import 'package:clones_desktop/utils/env.dart';
@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class WalletModal extends ConsumerWidget {
   const WalletModal({
@@ -104,11 +105,16 @@ class WalletModal extends ConsumerWidget {
                               InkWell(
                                 onTap: () async {
                                   try {
-                                    await ref
-                                        .read(tauriApiClientProvider)
-                                        .openExternalUrl(
-                                          '${Env.baseScanBaseUrl}/address/${session.address}',
-                                        );
+                                    if (!await launchUrl(
+                                      Uri.parse(
+                                        '${Env.baseScanBaseUrl}/address/${session.address}',
+                                      ),
+                                      mode: LaunchMode.externalApplication,
+                                    )) {
+                                      throw Exception(
+                                        'Failed to launch URL: ${Env.baseScanBaseUrl}/address/${session.address}',
+                                      );
+                                    }
                                   } catch (e) {
                                     debugPrint(
                                       'Failed to open external URL: $e',
@@ -233,11 +239,16 @@ class WalletModal extends ConsumerWidget {
                                   InkWell(
                                     onTap: () async {
                                       try {
-                                        await ref
-                                            .read(tauriApiClientProvider)
-                                            .openExternalUrl(
-                                              '${Env.baseScanBaseUrl}/address/${session.referrerAddress}',
-                                            );
+                                        if (!await launchUrl(
+                                          Uri.parse(
+                                            '${Env.baseScanBaseUrl}/address/${session.referrerAddress}',
+                                          ),
+                                          mode: LaunchMode.externalApplication,
+                                        )) {
+                                          throw Exception(
+                                            'Failed to launch URL: ${Env.baseScanBaseUrl}/address/${session.referrerAddress}',
+                                          );
+                                        }
                                       } catch (e) {
                                         debugPrint(
                                           'Failed to open external URL: $e',
@@ -335,11 +346,16 @@ class WalletModal extends ConsumerWidget {
                             const SizedBox(height: 10),
                             InkWell(
                               onTap: () async {
-                                await ref
-                                    .read(tauriApiClientProvider)
-                                    .openExternalUrl(
-                                      'https://clones.gitbook.io/clones.docs/the-forge/how-it-works#commission-structure',
-                                    );
+                                if (!await launchUrl(
+                                  Uri.parse(
+                                    'https://clones.gitbook.io/clones.docs/the-forge/how-it-works#commission-structure',
+                                  ),
+                                  mode: LaunchMode.externalApplication,
+                                )) {
+                                  throw Exception(
+                                    'Failed to launch URL: https://clones.gitbook.io/clones.docs/the-forge/how-it-works#commission-structure',
+                                  );
+                                }
                               },
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
@@ -380,11 +396,13 @@ class WalletModal extends ConsumerWidget {
                                       Padding(
                                         padding:
                                             const EdgeInsets.only(right: 8),
-                                        child: MemoryImageTauri(
+                                        child: CachedNetworkImage(
                                           imageUrl: tokenBalance.logoUrl!,
                                           width: 20,
                                           height: 20,
-                                          errorBuilder: (_, __, ___) =>
+                                          placeholder: (context, url) =>
+                                              const CircularProgressIndicator(),
+                                          errorWidget: (_, __, ___) =>
                                               const SizedBox.shrink(),
                                         ),
                                       )

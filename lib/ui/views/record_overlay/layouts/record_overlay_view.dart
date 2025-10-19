@@ -17,9 +17,17 @@ class _RecordOverlayViewState extends ConsumerState<RecordOverlayView> {
   @override
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
-    if (ref.watch(recordOverlayNotifierProvider).close) {
-      Navigator.of(context).pop();
-    }
+    
+    // Listen to close state changes and schedule navigation for after build
+    ref.listen(recordOverlayNotifierProvider, (previous, next) {
+      if (next.close && (previous?.close != true)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            Navigator.of(context).pop();
+          }
+        });
+      }
+    });
 
     return Container(
       width: mediaQuery.size.width,

@@ -1,51 +1,28 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "clones-desktop",
+  "productName": "clones-agent",
   "version": "0.1.39",
-  "identifier": "ai.clones.desktop",
+  "identifier": "ai.clones.agent",
   "build": {
-    "frontendDist": "../build/web",
-    "devUrl": "http://localhost:3000"
+    "frontendDist": "../dist",
+    "devUrl": null
   },
   "plugins": {
-    "updater": {
-      "active": true,
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDlDMUNCREM0MjQ5RDMwRQpSV1FPMDBsQzNNdkJDUmI5QS9yTG5DY0VVWXhtcVZtZUZWZEttaUhsV0hKRVB0dFVub2hiWGZwNAo=",
-      "endpoints": [
-        "https://releases-test.clones-ai.com/latest/{{target}}/latest.json"
-      ],
-      "dialog": false
-    },
     "deep-link": {
       "desktop": {
         "schemes": [
-          "clones-dev"
+          "clones"
         ]
       }
     }
   },
   "app": {
-    "windows": [
-      {
-        "label": "main",
-        "title": "Clones Desktop",
-        "width": 1200,
-        "height": 800,
-        "minWidth": 800,
-        "minHeight": 600,
-        "fullscreen": false,
-        "resizable": true,
-        "visible": true,
-        "center": true
-      }
-    ],
+    "windows": [],
     "macOSPrivateApi": true,
+    "withGlobalTauri": false,
     "security": {
       "assetProtocol": {
-        "enable": true,
-        "scope": [
-          "**"
-        ]
+        "enable": false
       },
       "csp": {
         "default-src": "'self' customprotocol: asset:",
@@ -59,37 +36,16 @@
     }
   },
   "bundle": {
-    "createUpdaterArtifacts": true,
+    "createUpdaterArtifacts": false,
     "windows": {},
-    "macOS": {
-      "signingIdentity": "Developer ID Application: Sylvain Séramy (N6BFLZP5YM)",
-      "entitlements": "entitlements.plist",
-      "dmg": {
-        "appPosition": {
-          "x": 180,
-          "y": 170
-        },
-        "applicationFolderPosition": {
-          "x": 480,
-          "y": 170
-        },
-        "windowSize": {
-          "height": 400,
-          "width": 660
-        }
-      }
-    },
-    "homepage": "https://clones-ai.com/",
+    "macOS": {},
     "active": true,
     "targets": "all",
     "icon": [
       "icons/32x32.png",
       "icons/64x64.png",
       "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
+      "icons/icon.png"
     ]
   }
 }

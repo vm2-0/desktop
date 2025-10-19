@@ -1,10 +1,10 @@
 import 'package:clones_desktop/application/session/provider.dart';
-import 'package:clones_desktop/application/tauri_api.dart';
 import 'package:clones_desktop/application/upload_modal_provider.dart';
 import 'package:clones_desktop/application/wallet_modal_provider.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class WalletButton extends ConsumerStatefulWidget {
   const WalletButton({
@@ -22,9 +22,12 @@ class _WalletButtonState extends ConsumerState<WalletButton> {
     if (!mounted) return;
 
     try {
-      await ref.read(tauriApiClientProvider).openExternalUrl(
-            session.connectionUrl,
-          );
+      if (!await launchUrl(
+        Uri.parse(session.connectionUrl),
+        mode: LaunchMode.externalApplication,
+      )) {
+        throw Exception('Failed to launch URL: ${session.connectionUrl}');
+      }
     } catch (e) {
       debugPrint('Failed to open external URL: $e');
     }

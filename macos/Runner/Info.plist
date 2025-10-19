@@ -22,14 +22,16 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	<key>NSCameraUseContinuityCameraDeviceType</key>
+	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string>$(PRODUCT_COPYRIGHT)</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
-	<key>NSCameraUseContinuityCameraDeviceType</key>
-	<true/>
+	<key>SUPublicEDKey</key>
+	<string>wAFtsPUOvfOIZ3FzHgJen1GJEtqXbiIV4RNUW3IgbHo=</string>
 	<key>com.apple.security.files.downloads.read-write</key>
 	<true/>
 </dict>

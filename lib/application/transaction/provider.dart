@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:clones_desktop/application/session/provider.dart';
-import 'package:clones_desktop/application/tauri_api.dart';
 import 'package:clones_desktop/application/transaction/state.dart';
 import 'package:clones_desktop/domain/models/api/api_error.dart';
 import 'package:clones_desktop/domain/models/factory/factory_app.dart';
@@ -11,6 +10,7 @@ import 'package:clones_desktop/utils/api_client.dart';
 import 'package:clones_desktop/utils/env.dart';
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 part 'provider.g.dart';
 
@@ -57,14 +57,17 @@ class TransactionManager extends _$TransactionManager {
       );
 
       final sessionId = response['sessionId'] as String;
-      final tauriApi = ref.read(tauriApiClientProvider);
 
       // Generate website URL with session ID for transaction execution
       final url =
           '${Env.apiWebsiteUrl}/wallet/transaction?sessionId=$sessionId';
 
-      // Open URL via Tauri
-      await tauriApi.openExternalUrl(url);
+      if (!await launchUrl(
+        Uri.parse(url),
+        mode: LaunchMode.externalApplication,
+      )) {
+        throw Exception('Failed to launch URL: $url');
+      }
 
       // Start polling for transaction status
       _startTransactionPolling(sessionId);
@@ -116,14 +119,17 @@ class TransactionManager extends _$TransactionManager {
       );
 
       final sessionId = response['sessionId'] as String;
-      final tauriApi = ref.read(tauriApiClientProvider);
 
       // Generate website URL with session ID for transaction execution
       final url =
           '${Env.apiWebsiteUrl}/wallet/transaction?sessionId=$sessionId';
 
-      // Open URL via Tauri
-      await tauriApi.openExternalUrl(url);
+      if (!await launchUrl(
+        Uri.parse(url),
+        mode: LaunchMode.externalApplication,
+      )) {
+        throw Exception('Failed to launch URL: $url');
+      }
 
       // Start polling for transaction status
       _startTransactionPolling(sessionId);
@@ -177,14 +183,17 @@ class TransactionManager extends _$TransactionManager {
       );
 
       final sessionId = response['sessionId'] as String;
-      final tauriApi = ref.read(tauriApiClientProvider);
 
       // Generate website URL with session ID for transaction execution
       final url =
           '${Env.apiWebsiteUrl}/wallet/transaction?sessionId=$sessionId';
 
-      // Open URL via Tauri
-      await tauriApi.openExternalUrl(url);
+      if (!await launchUrl(
+        Uri.parse(url),
+        mode: LaunchMode.externalApplication,
+      )) {
+        throw Exception('Failed to launch URL: $url');
+      }
 
       // Start polling for transaction status
       _startTransactionPolling(sessionId);
@@ -238,14 +247,17 @@ class TransactionManager extends _$TransactionManager {
       );
 
       final sessionId = response['sessionId'] as String;
-      final tauriApi = ref.read(tauriApiClientProvider);
 
       // Generate website URL with session ID for transaction execution
       final url =
           '${Env.apiWebsiteUrl}/wallet/transaction?sessionId=$sessionId';
 
-      // Open URL via Tauri
-      await tauriApi.openExternalUrl(url);
+      if (!await launchUrl(
+        Uri.parse(url),
+        mode: LaunchMode.externalApplication,
+      )) {
+        throw Exception('Failed to launch URL: $url');
+      }
 
       // Start polling for transaction status
       _startTransactionPolling(sessionId);
@@ -298,14 +310,17 @@ class TransactionManager extends _$TransactionManager {
       );
 
       final sessionId = response['sessionId'] as String;
-      final tauriApi = ref.read(tauriApiClientProvider);
 
       // Generate website URL with session ID for transaction execution
       final url =
           '${Env.apiWebsiteUrl}/wallet/transaction?sessionId=$sessionId';
 
-      // Open URL via Tauri
-      await tauriApi.openExternalUrl(url);
+      if (!await launchUrl(
+        Uri.parse(url),
+        mode: LaunchMode.externalApplication,
+      )) {
+        throw Exception('Failed to launch URL: $url');
+      }
 
       // Start polling for transaction status
       _startTransactionPolling(sessionId);
@@ -418,7 +433,6 @@ class TransactionManager extends _$TransactionManager {
   }
 
   Future<void> _showSuccessDialog(BuildContext context, String txHash) async {
-    final tauriApi = ref.read(tauriApiClientProvider);
     await showDialog(
       context: context,
       useRootNavigator: false,
@@ -458,10 +472,11 @@ class TransactionManager extends _$TransactionManager {
             TextButton.icon(
               onPressed: () async {
                 final url = '${Env.baseScanBaseUrl}/tx/$txHash';
-                try {
-                  await tauriApi.openExternalUrl(url);
-                } catch (e) {
-                  debugPrint('Failed to open BaseScan URL: $e');
+                if (!await launchUrl(
+                  Uri.parse(url),
+                  mode: LaunchMode.externalApplication,
+                )) {
+                  throw Exception('Failed to launch URL: $url');
                 }
               },
               icon: const Icon(

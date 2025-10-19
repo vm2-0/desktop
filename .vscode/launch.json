@@ -5,17 +5,35 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "[clones-native] Run IPC Server",
+      "name": "[Agent] Tauri Backend - Dev",
       "type": "node-terminal",
       "request": "launch",
       "command": "cd ${workspaceFolder}/src-tauri && PRIMARY_LOGGER=true RUST_LOG=debug cargo run",
       "cwd": "${workspaceFolder}/src-tauri"
     },
     {
-      "name": "clones-flutter",
+      "name": "[Agent] Tauri Backend - Test",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "cd ${workspaceFolder}/src-tauri && PRIMARY_LOGGER=true RUST_LOG=debug TAURI_CONFIG_PATH=tauri.conf.test.json cargo run",
+      "cwd": "${workspaceFolder}/src-tauri"
+    },
+    {
+      "name": "[Agent] Tauri Backend - Prod",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "cd ${workspaceFolder}/src-tauri && PRIMARY_LOGGER=true RUST_LOG=debug TAURI_CONFIG_PATH=tauri.conf.prod.json cargo run",
+      "cwd": "${workspaceFolder}/src-tauri"
+    },
+    {
+      "name": "[UI] Flutter macOS",
       "request": "launch",
       "type": "dart",
-      "program": "lib/main.dart"
+      "program": "lib/main.dart",
+      "args": [
+        "-d",
+        "macos"
+      ]
     },
     {
       "name": "Flutter Web (Development)",
@@ -39,10 +57,18 @@
   ],
   "compounds": [
     {
-      "name": "[COMPOUND] Flutter with IPC",
+      "name": "[COMPOUND] Dev: Flutter UI + Tauri Agent",
       "configurations": [
-        "[clones-native] Run IPC Server",
-        "clones-flutter"
+        "[Agent] Tauri Backend - Dev",
+        "[UI] Flutter macOS"
+      ],
+      "stopAll": true
+    },
+    {
+      "name": "[COMPOUND] Test: Flutter UI + Tauri Agent",
+      "configurations": [
+        "[Agent] Tauri Backend - Test",
+        "[UI] Flutter macOS"
       ],
       "stopAll": true
     },

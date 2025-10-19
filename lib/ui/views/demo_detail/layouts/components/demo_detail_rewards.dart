@@ -1,7 +1,6 @@
 import 'package:clones_desktop/application/claim_reward_modal/provider.dart';
 import 'package:clones_desktop/application/factory.dart';
 import 'package:clones_desktop/application/session/provider.dart';
-import 'package:clones_desktop/application/tauri_api.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/domain/models/submission/claim_authorization.dart';
 import 'package:clones_desktop/domain/models/submission/grade_result.dart';
@@ -16,6 +15,7 @@ import 'package:clones_desktop/utils/format_address.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Check if the submission has already been claimed on-chain
 /// Ignore CLAIMING_ markers (temporary locks)
@@ -226,9 +226,16 @@ class DemoDetailRewards extends ConsumerWidget {
             InkWell(
               onTap: () async {
                 try {
-                  await ref.read(tauriApiClientProvider).openExternalUrl(
-                        '${Env.baseScanBaseUrl}/address/${claimAuth.poolAddress}',
-                      );
+                  if (!await launchUrl(
+                    Uri.parse(
+                      '${Env.baseScanBaseUrl}/address/${claimAuth.poolAddress}',
+                    ),
+                    mode: LaunchMode.externalApplication,
+                  )) {
+                    throw Exception(
+                      'Failed to launch URL: ${Env.baseScanBaseUrl}/address/${claimAuth.poolAddress}',
+                    );
+                  }
                 } catch (e) {
                   debugPrint('Failed to open external URL: $e');
                 }
@@ -379,11 +386,16 @@ class DemoDetailRewards extends ConsumerWidget {
                       InkWell(
                         onTap: () async {
                           try {
-                            await ref
-                                .read(tauriApiClientProvider)
-                                .openExternalUrl(
-                                  '${Env.baseScanBaseUrl}/tx/$txHash',
-                                );
+                            if (!await launchUrl(
+                              Uri.parse(
+                                '${Env.baseScanBaseUrl}/tx/$txHash',
+                              ),
+                              mode: LaunchMode.externalApplication,
+                            )) {
+                              throw Exception(
+                                'Failed to launch URL: ${Env.baseScanBaseUrl}/tx/$txHash',
+                              );
+                            }
                           } catch (e) {
                             debugPrint('Failed to open external URL: $e');
                           }

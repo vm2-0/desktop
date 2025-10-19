@@ -1,13 +1,11 @@
-import 'package:clones_desktop/application/tauri_api.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:clones_desktop/ui/components/design_widget/dialog/popup_template.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ReferralRequiredDialog {
   static Future<void> show(BuildContext context, WidgetRef ref) async {
-    final tauriApi = ref.read(tauriApiClientProvider);
-
     await showDialog(
       context: context,
       useRootNavigator: false,
@@ -61,7 +59,12 @@ class ReferralRequiredDialog {
               onPressed: () async {
                 const telegramUrl = 'https://t.me/clonesonbase';
                 try {
-                  await tauriApi.openExternalUrl(telegramUrl);
+                  if (!await launchUrl(
+                    Uri.parse(telegramUrl),
+                    mode: LaunchMode.externalApplication,
+                  )) {
+                    throw Exception('Failed to launch URL: $telegramUrl');
+                  }
                 } catch (e) {
                   debugPrint('Failed to open Telegram URL: $e');
                 }

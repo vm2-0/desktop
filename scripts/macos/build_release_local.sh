@@ -147,102 +147,42 @@ install_dependencies() {
     fi
 }
 
-# Build Flutter Web
-build_flutter() {
-    log_info "Building Flutter Web..."
-    flutter build web --base-href="/"
-    log_success "Flutter Web build completed"
-}
-
-# Build for specific target
-build_tauri_target() {
-    local target=$1
-    local arch=$2
+build_flutter_native() {
+    log_info "Building Flutter Native macOS app..."
     
-    log_info "Building Tauri app for $arch ($target)..."
+    local native_script="./scripts/macos/build_flutter_native.sh"
+    if [ ! -f "$native_script" ]; then
+        log_error "Flutter native build script not found: $native_script"
+        exit 1
+    fi
     
-    cd "$ROOT_DIR/src-tauri"
+    export BUILD_DIR="$BUILD_DIR"
+    export ENVIRONMENT="${ENVIRONMENT:-}"
+    export APPLE_SIGNING_IDENTITY="${APPLE_SIGNING_IDENTITY:-Developer ID Application: Your Name (TEAMID)}"
     
-    # Add target if not already added
-    rustup target add $target 2>/dev/null || true
-    
-    # Build without notarization (signing only)
-    # Use environment-specific config if provided, otherwise use base config
-    local config_file="tauri.conf.json"
-    if [ -n "${ENVIRONMENT:-}" ]; then
-        local env_config="tauri.${ENVIRONMENT}.conf.json"
-        if [ -f "$env_config" ]; then
-            config_file="$env_config"
-            log_info "Using environment-specific config: $config_file"
+    # Set Sparkle generate_appcast path for the generate_appcast.sh script
+    if [ -z "${GENERATE_APPCAST_BIN:-}" ]; then
+        if [ -x "/opt/homebrew/Caskroom/sparkle/2.8.0/bin/generate_appcast" ]; then
+            export GENERATE_APPCAST_BIN="/opt/homebrew/Caskroom/sparkle/2.8.0/bin/generate_appcast"
         else
-            log_warning "Environment config $env_config not found, using base config"
+            log_warning "generate_appcast not found, appcast generation may fail"
         fi
     fi
     
-    # Ensure Tauri signing variables are exported for the build process
-    if [ -n "${TAURI_SIGNING_PRIVATE_KEY:-}" ]; then
-        export TAURI_SIGNING_PRIVATE_KEY
-        log_info "TAURI_SIGNING_PRIVATE_KEY exported for build"
-    fi
-    if [ -n "${TAURI_SIGNING_PRIVATE_KEY_PASSWORD:-}" ]; then
-        export TAURI_SIGNING_PRIVATE_KEY_PASSWORD
-        log_info "TAURI_SIGNING_PRIVATE_KEY_PASSWORD exported for build"
-    else
-        log_warning "TAURI_SIGNING_PRIVATE_KEY_PASSWORD not found - signing may require manual password input"
-    fi
+    "$native_script"
     
-    cargo tauri build --target $target --config "$config_file"
-    
-    local target_dir="$ROOT_DIR/src-tauri/target/$target/release/bundle"
-    
-    if [ -d "$target_dir/macos" ]; then
-        mkdir -p "$BUILD_DIR/macos_$arch"
-        # Copy only .app bundles, exclude temporary DMG files with rw.* prefix
-        find "$target_dir/macos" -name "*.app" -exec cp -r {} "$BUILD_DIR/macos_$arch/" \;
-        log_success "macOS app copied to build directory: macos_$arch"
-    fi
-    
-    if [ -d "$target_dir/dmg" ]; then
-        cp -r "$target_dir/dmg" "$BUILD_DIR/dmg_$arch"
-        log_success "DMG copied to build directory: dmg_$arch"
-    fi
-    
-    # Copy Tauri updater files (.app.tar.gz and .sig)
-    local updater_files_dir="$BUILD_DIR/updater_$arch"
-    mkdir -p "$updater_files_dir"
-    
-    # Copy .app.tar.gz file
-    local app_targz="$target_dir/macos/clones-desktop.app.tar.gz"
-    if [ -f "$app_targz" ]; then
-        cp "$app_targz" "$updater_files_dir/"
-        log_success "Updater .app.tar.gz copied to build directory: updater_$arch"
-    fi
-    
-    # Copy .sig file
-    local sig_file="$target_dir/macos/clones-desktop.app.tar.gz.sig"
-    if [ -f "$sig_file" ]; then
-        cp "$sig_file" "$updater_files_dir/"
-        log_success "Updater .sig copied to build directory: updater_$arch"
-    fi
-    
-    cd "$ROOT_DIR"
+    log_success "Flutter Native build completed"
 }
 
-# Main build function
+
 main_build() {
     log_info "Starting main build process..."
     
-    # Build for both architectures
-    log_info "Building for Apple Silicon (ARM64)..."
-    build_tauri_target "aarch64-apple-darwin" "arm64"
-    
-    log_info "Building for Intel (x86_64)..."
-    build_tauri_target "x86_64-apple-darwin" "intel"
+    build_flutter_native
     
     log_success "Build completed!"
     log_info "Build artifacts located in: $BUILD_DIR"
     
-    # List built artifacts
     echo ""
     log_info "Built artifacts:"
     find "$BUILD_DIR" -name "*.app" -o -name "*.dmg" | while read -r file; do
@@ -354,7 +294,6 @@ main() {
     check_prerequisites
     setup_environment
     install_dependencies
-    build_flutter
     main_build
     notarize_artifacts
     cleanup

@@ -8,4 +8,3 @@ pub mod record;
 pub mod settings;
 pub mod tools;
 pub mod transaction;
-pub mod updater;

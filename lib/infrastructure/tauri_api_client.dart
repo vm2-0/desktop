@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'package:clones_desktop/domain/app_info.dart';
 import 'package:clones_desktop/domain/models/demonstration/demonstration.dart';
 import 'package:clones_desktop/domain/models/recording/recording_meta.dart';
-import 'package:clones_desktop/utils/window_alignment.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
@@ -259,18 +258,6 @@ class TauriApiClient {
     }
   }
 
-  Future<void> openExternalUrl(String url) async {
-    final response = await _client.post(
-      Uri.parse('$_baseUrl/open-url'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({'url': url}),
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception('Failed to open external URL: ${response.body}');
-    }
-  }
-
   Future<String> getPlatform() async {
     final response = await _client.get(Uri.parse('$_baseUrl/platform'));
     if (response.statusCode == 200) {
@@ -280,17 +267,7 @@ class TauriApiClient {
     }
   }
 
-  Future<String> getAppVersion() async {
-    final response = await _client.get(Uri.parse('$_baseUrl/app/version'));
-
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> data = json.decode(response.body);
-      return data['version'] as String;
-    } else {
-      throw Exception('Failed to get app version: ${response.body}');
-    }
-  }
-
+  // TODO:Replace with Flutter method image loader with cache
   Future<Uint8List> fetchImageViaProxy(String imageUrl) async {
     final response = await _client.get(
       Uri.parse('$_baseUrl/proxy-image?url=$imageUrl'),
@@ -302,102 +279,6 @@ class TauriApiClient {
       throw Exception(
         'Failed to proxy image ${'$_baseUrl/proxy-image?url=$imageUrl'}: ${response.body}',
       );
-    }
-  }
-
-  Future<void> resizeWindow(
-    double width,
-    double height,
-  ) async {
-    await _client.post(
-      Uri.parse('$_baseUrl/window/resize'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'width': width,
-        'height': height,
-      }),
-    );
-  }
-
-  Future<void> setWindowPosition(WindowAlignment alignment) async {
-    await _client.post(
-      Uri.parse('$_baseUrl/window/position'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({'alignment': alignment.name}),
-    );
-  }
-
-  Future<({double width, double height})> getWindowSize() async {
-    final response = await _client.get(Uri.parse('$_baseUrl/window/size'));
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> data = json.decode(response.body);
-      return (
-        width: (data['width'] as num).toDouble(),
-        height: (data['height'] as num).toDouble(),
-      );
-    } else {
-      throw Exception('Failed to get window size: ${response.body}');
-    }
-  }
-
-  Future<void> setWindowResizable(bool resizable) async {
-    final response = await _client.post(
-      Uri.parse('$_baseUrl/window/resizable'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({'resizable': resizable}),
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception('Failed to set window resizable: ${response.body}');
-    }
-  }
-
-  Future<List<({double width, double height})>> getDisplaysSize() async {
-    final response = await _client.get(Uri.parse('$_baseUrl/displays/size'));
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      return data
-          .map(
-            (json) => (
-              width: (json['width'] as num).toDouble(),
-              height: (json['height'] as num).toDouble(),
-            ),
-          )
-          .toList();
-    } else {
-      throw Exception('Failed to get displays size: ${response.body}');
-    }
-  }
-
-  // --- Secure Tauri Updater ---
-
-  /// Check for updates using Tauri's secure updater
-  Future<Map<String, dynamic>?> checkForUpdate() async {
-    final response = await _client.get(Uri.parse('$_baseUrl/updater/check'));
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      // Check if update is available and return proper format
-      if (data['update_available'] == true) {
-        return {
-          'version': data['version'],
-          'date': data['date'] ?? DateTime.now().toIso8601String(),
-          'body': data['body'],
-        };
-      }
-      return null; // No update available
-    } else {
-      throw Exception('Failed to check for update: ${response.body}');
-    }
-  }
-
-  /// Download and install update using Tauri's secure updater
-  Future<void> installUpdate() async {
-    final response = await _client.post(Uri.parse('$_baseUrl/updater/install'));
-    if (response.statusCode == 200) {
-      // Update installation initiated successfully
-      return;
-    } else {
-      throw Exception('Failed to install update: ${response.body}');
     }
   }
 }

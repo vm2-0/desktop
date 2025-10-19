@@ -1,7 +1,7 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/domain/models/factory/factory_app.dart';
 import 'package:clones_desktop/ui/components/design_widget/dialog/dialog.dart';
-import 'package:clones_desktop/ui/components/memory_image_tauri.dart';
 import 'package:clones_desktop/ui/views/forge_detail/bloc/provider.dart';
 import 'package:clones_desktop/utils/fav_tools.dart';
 import 'package:flutter/material.dart';
@@ -39,11 +39,12 @@ class _AppHeaderWidgetState extends ConsumerState<AppHeaderWidget> {
               color: ClonesColors.containerIcon5.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: MemoryImageTauri(
+            child: CachedNetworkImage(
               imageUrl: getFaviconUrl(widget.app.domain),
               width: 24,
               height: 24,
-              errorBuilder: (_, __, ___) => const Icon(
+              placeholder: (context, url) => const CircularProgressIndicator(),
+              errorWidget: (_, __, ___) => const Icon(
                 Icons.apps,
                 color: ClonesColors.primaryText,
                 size: 24,
