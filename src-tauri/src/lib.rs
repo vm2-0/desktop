@@ -10,11 +10,10 @@ mod tools;
 pub mod utils;
 use std::sync::{Arc, Mutex};
 use tauri::Listener;
-use tokio::io::AsyncReadExt;
-use tokio::net::TcpStream;
-use tokio::time::{sleep, Duration};
 
 use utils::permissions::{has_ax_perms, has_record_perms, request_ax_perms, request_record_perms};
+use utils::heartbeat;
+use utils::pid_monitor;
 
 use crate::commands::general::{greet, list_apps, take_screenshot};
 use crate::commands::record::{
@@ -33,73 +32,7 @@ use crate::core::record::force_kill_active_recorder;
 // State to hold the latest deep link URL
 pub struct DeepLinkState(pub Arc<Mutex<Option<String>>>);
 
-/// Monitors a parent process (explicit PID if provided, else getppid) and exits if it dies
-async fn monitor_parent_process(app: tauri::AppHandle) {
-    let explicit = std::env::var("AGENT_PARENT_PID")
-        .ok()
-        .and_then(|s| s.parse::<i32>().ok());
-    let parent_pid = explicit.unwrap_or_else(|| unsafe { libc::getppid() });
-    log::info!("Starting parent process monitor for PID: {}", parent_pid);
 
-    loop {
-        sleep(Duration::from_secs(2)).await;
-
-        // Check if parent process is still alive
-        let parent_exists = unsafe { libc::kill(parent_pid, 0) == 0 };
-
-        if !parent_exists {
-            log::info!(
-                "Parent process {} died, stopping active capture and exiting agent",
-                parent_pid
-            );
-            force_kill_active_recorder(&app);
-            app.exit(0);
-        }
-    }
-}
-
-/// Connects to a TCP lifeline provided by the Flutter parent and exits when it closes
-async fn monitor_lifeline(port: u16, app: tauri::AppHandle) {
-    log::info!("Starting lifeline monitor on 127.0.0.1:{}", port);
-
-    // Retry for a bounded time, then keep a slower background retry just in case
-    let mut attempts: u32 = 0;
-    let max_attempts: u32 = 100; // ~20s with 200ms sleep
-    loop {
-        match TcpStream::connect(("127.0.0.1", port)).await {
-            Ok(mut stream) => {
-                log::info!("Lifeline connected; waiting for EOF to exit");
-                let mut buf = [0u8; 1];
-                let _ = stream.read(&mut buf).await; // EOF or error => return
-                log::info!("Lifeline closed; stopping active capture and exiting agent");
-                // Kill any active recorder, then exit cleanly through Tauri runtime
-                force_kill_active_recorder(&app);
-                app.exit(0);
-            }
-            Err(e) => {
-                attempts += 1;
-                if attempts >= max_attempts {
-                    log::warn!("Failed to connect lifeline on port {} after {} attempts: {}. Will keep retrying slowly.", port, attempts, e);
-                    // Slow background retry every 2s
-                    loop {
-                        if let Ok(mut stream) = TcpStream::connect(("127.0.0.1", port)).await {
-                            log::info!("Lifeline connected (late); waiting for EOF to exit");
-                            let mut buf = [0u8; 1];
-                            let _ = stream.read(&mut buf).await;
-                            log::info!(
-                                "Lifeline closed; stopping active capture and exiting agent"
-                            );
-                            force_kill_active_recorder(&app);
-                            app.exit(0);
-                        }
-                        sleep(Duration::from_secs(2)).await;
-                    }
-                }
-                sleep(Duration::from_millis(200)).await;
-            }
-        }
-    }
-}
 
 /// Creates a Tauri builder with all plugins, state, and command handlers.
 pub fn setup_builder() -> tauri::Builder<tauri::Wry> {
@@ -181,6 +114,41 @@ pub fn run() {
                 app.set_activation_policy(tauri::ActivationPolicy::Accessory);
             }
 
+            // Single instance check - exit if another agent is running
+            if let Ok(_) = std::net::TcpStream::connect("127.0.0.1:19847") {
+                log::error!("Another agent instance is already running on port 19847");
+                std::process::exit(1);
+            }
+
+            // Start hybrid monitoring system in background
+            let app_for_monitoring = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                // Try to get Flutter PID for OS-level monitoring
+                if let Ok(ppid_str) = std::env::var("FLUTTER_PARENT_PID") {
+                    if let Ok(flutter_pid) = ppid_str.parse::<u32>() {
+                        log::info!("[Monitor] Starting hybrid monitoring for Flutter PID: {}", flutter_pid);
+                        
+                        // Start OS-level PID monitor (primary)
+                        let app_for_pid = app_for_monitoring.clone();
+                        tauri::async_runtime::spawn(async move {
+                            pid_monitor::start_parent_process_monitor(flutter_pid, app_for_pid).await;
+                        });
+                        
+                        // Start heartbeat monitor (fallback)
+                        let app_for_heartbeat = app_for_monitoring.clone();
+                        tauri::async_runtime::spawn(async move {
+                            heartbeat::start_flutter_heartbeat_monitor(flutter_pid, app_for_heartbeat).await;
+                        });
+                        
+                        return;
+                    }
+                }
+                
+                // Fallback to heartbeat-only monitoring
+                log::info!("[Monitor] No Flutter PID provided - using heartbeat-only monitoring");
+                heartbeat::auto_detect_and_monitor_flutter(app_for_monitoring).await;
+            });
+
             let app_handle = app.handle();
             let listen_handle = app_handle.clone();
 
@@ -213,27 +181,12 @@ pub fn run() {
         ipc_server::init(app_handle).await;
     });
 
-    // Start parent process monitoring to auto-exit if parent dies
-    let app_for_parent = app.handle().clone();
-    tauri::async_runtime::spawn(async move {
-        monitor_parent_process(app_for_parent).await;
-    });
 
-    // Start lifeline monitor if Flutter provided a port
-    if let Ok(port_str) = std::env::var("AGENT_LIFELINE_PORT") {
-        if let Ok(port) = port_str.parse::<u16>() {
-            let app_for_lifeline = app.handle().clone();
-            tauri::async_runtime::spawn(async move {
-                monitor_lifeline(port, app_for_lifeline).await;
-            });
-        } else {
-            log::warn!("Invalid AGENT_LIFELINE_PORT value: {}", port_str);
-        }
-    }
+    log::info!("Agent started with heartbeat-based lifecycle management");
 
     app.run(|app_handle, event| {
         match event {
-            tauri::RunEvent::ExitRequested { api, code, .. } => {
+            tauri::RunEvent::ExitRequested { code, .. } => {
                 // Only prevent exit if there's an active recording or other critical process
                 // For now, we allow the app to exit normally
                 if code.is_none() {
@@ -242,7 +195,6 @@ pub fn run() {
                     log::info!(
                         "Application exit requested by user - attempting graceful recorder stop"
                     );
-                    // Best-effort stop; if something is recording, ensure it is killed
                     force_kill_active_recorder(&app_handle);
                 }
                 // Don't call api.prevent_exit() - let the app close normally

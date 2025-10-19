@@ -1,35 +1,29 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:math';
 
+import 'package:clones_desktop/application/agent/heartbeat_monitor.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:process/process.dart';
 
 class AgentLauncher {
   factory AgentLauncher() => _instance;
   AgentLauncher._internal();
   static final AgentLauncher _instance = AgentLauncher._internal();
 
-  Process? _agentProcess; // Keep reference to kill on exit
+  Process? _agentProcess;
   bool _starting = false;
-  String? _authToken;
-  ServerSocket? _lifelineServer;
-  Socket? _lifelineAcceptedSocket;
+  final ProcessManager _processManager = const LocalProcessManager();
 
   /// Ensures the Tauri agent is running. If not, attempts to start it.
   Future<void> ensureStarted() async {
     if (kIsWeb) return;
 
-    // Brief pre-wait to avoid race with compound launch (Flutter + Tauri started separately)
-    // If another process already started the agent, this prevents a bind race on port 19847.
-    for (var i = 0; i < 5; i++) {
-      if (await _isAgentAlive()) return;
-      await Future.delayed(const Duration(milliseconds: 120));
-    }
-
-    // Check if agent is already running (e.g., launched manually in dev mode)
+    // Quick check if agent already running (e.g., launched via VSCode)
     if (await _isAgentAlive()) {
-      debugPrint('Agent already running, skipping launch');
+      debugPrint('Agent already running - starting heartbeat for existing agent');
+      // CRUCIAL: Always start heartbeat even if agent already exists
+      await HeartbeatMonitor().startFlutterHeartbeat();
       return;
     }
 
@@ -42,61 +36,45 @@ class AgentLauncher {
         throw Exception('Tauri agent executable not found');
       }
 
-      // Generate ephemeral auth token for this session
-      _authToken = _generateToken();
-
-      // Create lifeline server socket before launching the agent
-      // Agent will connect to this port; when Flutter dies, socket closes => agent exits
-      final lifelineServer =
-          await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
-      _lifelineServer = lifelineServer;
-
+      final flutterPid = pid;
+      debugPrint('Flutter PID: $flutterPid');
       final env = <String, String>{
         'PRIMARY_LOGGER': 'true',
         'RUST_LOG': 'info',
-        'AGENT_LIFELINE_PORT': lifelineServer.port.toString(),
-        'AGENT_PARENT_PID': pid.toString(),
-        // Don't pass AGENT_AUTH_TOKEN for now - causes issues
+        'FLUTTER_PARENT_PID': flutterPid.toString(),
       };
 
       debugPrint('Starting Tauri agent: $executable');
       debugPrint('Working directory: ${Directory(executable).parent.path}');
       debugPrint('Environment variables: $env');
 
-      // Start in normal mode to avoid macOS EPERM restrictions.
-      // Use repo root as working directory instead of executable directory
       final repoRoot = _findRepoRoot();
       final workingDir = repoRoot ?? Directory.current.path;
 
-      debugPrint('Using working directory: $workingDir');
+      debugPrint('Starting agent with process manager: $executable');
+      debugPrint('Working directory: $workingDir');
 
-      // Prefer direct launch with lifeline; keep supervisor only as optional fallback
-      _agentProcess = await Process.start(
-        executable,
-        const <String>[],
+      _agentProcess = await _processManager.start(
+        [executable],
         workingDirectory: workingDir,
         environment: env,
       );
 
-      // Properly drain streams to prevent blocking the child process.
-      // Don't await - keep pipes drained in background.
+      final agentPid = _agentProcess!.pid;
+      debugPrint('Agent started with PID: $agentPid');
+
+      // Start Flutter heartbeat writer (agent will monitor this)
+      await HeartbeatMonitor().startFlutterHeartbeat();
+
+      final flutterHeartbeatPath =
+          await HeartbeatMonitor.getFlutterHeartbeatPathForPid(flutterPid);
+      debugPrint(
+          'Flutter heartbeat file for agent to monitor: $flutterHeartbeatPath');
+
+      // Drain streams to prevent blocking
       _agentProcess!.stdout.listen((_) {}, onError: (_) {});
       _agentProcess!.stderr.listen((_) {}, onError: (_) {});
 
-      // Accept a single lifeline connection from the agent and keep it open
-      // Do not await: keep the accepted socket stored to prevent GC/close
-      unawaited(
-        _lifelineServer!.first.then((client) {
-          _lifelineAcceptedSocket = client;
-          debugPrint(
-            'Agent lifeline connected from ${client.remoteAddress.address}:${client.remotePort}',
-          );
-        }).catchError((e) {
-          debugPrint('Lifeline accept error: $e');
-        }),
-      );
-
-      // Wait for readiness by polling the health endpoint.
       await _waitUntilAlive(timeout: const Duration(seconds: 8));
     } finally {
       _starting = false;
@@ -257,61 +235,39 @@ class AgentLauncher {
     return null;
   }
 
-  String _generateToken() {
-    final random = Random.secure();
-    final bytes = List<int>.generate(32, (_) => random.nextInt(256));
-    return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
-  }
-
-  String? get authToken => _authToken;
-
-  // Supervisor script path lookup removed; lifeline TCP replaces it.
-
-  /// Stops the Tauri agent process if it was started by this launcher
+  /// Stops the Tauri agent process
   Future<void> stop() async {
+    debugPrint('Stopping agent...');
+
+    // Stop Flutter heartbeat writer (agent will detect and exit)
+    await HeartbeatMonitor().stopFlutterHeartbeat();
+
     if (_agentProcess != null) {
-      debugPrint('Stopping Tauri agent...');
-
       try {
-        // 1) Close lifeline sockets to signal agent to exit and cleanup FFmpeg
-        try {
-          await _lifelineAcceptedSocket?.close();
-        } catch (_) {}
-        _lifelineAcceptedSocket = null;
-        try {
-          await _lifelineServer?.close();
-        } catch (_) {}
-        _lifelineServer = null;
-
-        // 2) Wait a bit for agent to exit by itself
+        // Wait briefly for agent to detect heartbeat stop and exit gracefully
         try {
           final exitCode =
-              await _agentProcess!.exitCode.timeout(const Duration(seconds: 5));
-          debugPrint('Agent stopped via lifeline with exit code: $exitCode');
+              await _agentProcess!.exitCode.timeout(const Duration(seconds: 3));
+          debugPrint('Agent exited gracefully with code: $exitCode');
         } on TimeoutException {
-          // 3) Fallback: terminate, then force kill if needed
-          debugPrint(
-            'Agent did not exit after lifeline close - sending terminate',
-          );
+          // If agent doesn't exit gracefully, force kill
+          debugPrint('Agent timeout - force killing');
           _agentProcess!.kill();
+
           try {
             final exitCode = await _agentProcess!.exitCode
                 .timeout(const Duration(seconds: 2));
-            debugPrint(
-              'Agent stopped after terminate with exit code: $exitCode',
-            );
+            debugPrint('Agent force killed with code: $exitCode');
           } on TimeoutException {
-            debugPrint('Terminate timeout - force killing agent');
+            debugPrint('Agent unresponsive - using SIGKILL');
             _agentProcess!.kill(ProcessSignal.sigkill);
           }
         }
       } catch (e) {
-        // If graceful termination fails, force kill
-        debugPrint('Graceful shutdown failed, force killing agent: $e');
+        debugPrint('Error stopping agent: $e');
         _agentProcess!.kill(ProcessSignal.sigkill);
       } finally {
         _agentProcess = null;
-        _authToken = null;
       }
     }
   }

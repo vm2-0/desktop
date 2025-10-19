@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:clones_desktop/application/agent/agent_launcher.dart';
+import 'package:clones_desktop/application/agent/heartbeat_monitor.dart';
 import 'package:clones_desktop/application/deeplink_provider.dart';
 import 'package:clones_desktop/application/route_provider.dart';
 import 'package:clones_desktop/assets.dart';
@@ -24,7 +25,6 @@ import 'package:clones_desktop/utils/env.dart';
 import 'package:clones_desktop/utils/window_alignment.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:window_manager/window_manager.dart';
@@ -179,15 +179,11 @@ Future<void> main(List<String> args) async {
   if (!kIsWeb) {
     ProcessSignal.sigint.watch().listen((_) => _shutdown());
     ProcessSignal.sigterm.watch().listen((_) => _shutdown());
-    // macOS dock quit path: listen to native willTerminate
-    const lifecycleChannel = MethodChannel('app.lifecycle');
-    lifecycleChannel.setMethodCallHandler((call) async {
-      if (call.method == 'willTerminate') {
-        await _shutdown();
-      }
-    });
   }
 
+  // Initialize app lifecycle management for cleanup
+  AppLifecycleManager.initialize();
+  
   runApp(const ProviderScope(child: ClonesApp()));
 }
 
@@ -195,10 +191,16 @@ Future<void> main(List<String> args) async {
 Future<void> _shutdown() async {
   debugPrint('Shutting down application...');
   try {
+    // Stop agent and cleanup heartbeat
     await AgentLauncher().stop();
+    debugPrint('Agent shutdown completed');
   } catch (e) {
     debugPrint('Error during agent shutdown: $e');
   }
+  
+  // Force cleanup if not already done
+  AppLifecycleManager._forceCleanup();
+  
   exit(0);
 }
 
@@ -408,8 +410,41 @@ class _ClonesAppState extends ConsumerState<ClonesApp>
 class CloseListener with WindowListener {
   @override
   Future<void> onWindowClose() async {
+    debugPrint('Window close requested - starting cleanup');
     if (await windowManager.isPreventClose()) {
       await _shutdown();
+    }
+  }
+}
+
+/// Lifecycle listener for additional cleanup scenarios
+class AppLifecycleManager with WidgetsBindingObserver {
+  static bool _cleanupCalled = false;
+
+  static void initialize() {
+    WidgetsBinding.instance.addObserver(AppLifecycleManager());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    debugPrint('App lifecycle state changed: $state');
+    if (state == AppLifecycleState.detached && !_cleanupCalled) {
+      debugPrint('App detached - forcing cleanup');
+      _forceCleanup();
+    }
+  }
+
+  static void _forceCleanup() {
+    if (_cleanupCalled) return;
+    _cleanupCalled = true;
+    
+    debugPrint('Force cleanup: stopping heartbeat');
+    
+    // Force cleanup heartbeat synchronously
+    try {
+      HeartbeatMonitor().stopFlutterHeartbeat();
+    } catch (e) {
+      debugPrint('Error during force cleanup: $e');
     }
   }
 }

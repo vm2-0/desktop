@@ -127,20 +127,15 @@ pub struct MonitorInfo {
 }
 
 enum Recorder {
-    // #[cfg(not(target_os = "macos"))]
     FFmpeg(FFmpegRecorder),
-    // #[cfg(target_os = "macos")]
-    // MacOS(MacOSScreenRecorder),
 }
 
 impl Recorder {
     fn start(&mut self) -> Result<(), String> {
         match self {
-            // #[cfg(not(target_os = "macos"))]
             Recorder::FFmpeg(recorder) => {
                 #[cfg(target_os = "linux")]
                 {
-                    // On veut détecter l'échec pipewire/ffmpeg et logger un avertissement
                     let input_format = recorder.input_format().map(|s| s.as_str()).unwrap_or("");
                     if input_format == "pipewire" {
                         let result = recorder.start();
@@ -156,17 +151,13 @@ impl Recorder {
                     }
                 }
                 recorder.start()
-            } // #[cfg(target_os = "macos")]
-              // Recorder::MacOS(recorder) => recorder.start(),
+            }
         }
     }
 
     fn stop(&mut self) -> Result<(), String> {
         match self {
-            // #[cfg(not(target_os = "macos"))]
             Recorder::FFmpeg(recorder) => recorder.stop(),
-            // #[cfg(target_os = "macos")]
-            // Recorder::MacOS(recorder) => recorder.stop(),
         }
     }
 
@@ -179,15 +170,6 @@ impl Recorder {
 
     fn new(video_path: &PathBuf, primary: &DisplayInfo, fps: u32) -> Result<Self, String> {
         log::info!("[record] Starting new recorder");
-        // #[cfg(target_os = "macos")]
-        // {
-        //     return Ok(Recorder::MacOS(MacOSScreenRecorder::new(
-        //         video_path.to_path_buf(),
-        //         primary,
-        //     )));
-        // }
-
-        // #[cfg(not(target_os = "macos"))]
         {
             let (input_format, input_device) = {
                 #[cfg(target_os = "windows")]

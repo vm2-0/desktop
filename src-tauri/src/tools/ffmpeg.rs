@@ -765,7 +765,7 @@ impl FFmpegRecorder {
             log::info!("[FFmpeg] Waiting for process to finish with timeout");
 
             // Give FFmpeg a chance to exit gracefully
-            let timeout = Duration::from_secs(5);
+            let timeout = Duration::from_secs(15);
             let start_time = std::time::Instant::now();
 
             // Try waiting with a timeout
@@ -780,9 +780,10 @@ impl FFmpegRecorder {
                         // Process still running
                         if start_time.elapsed() >= timeout {
                             // Timeout reached, kill the process
-                            log::info!("[FFmpeg] Timeout reached, killing process");
+                            log::warn!("[FFmpeg] Timeout reached after 15s, killing process");
                             if let Err(e) = process.kill() {
-                                log::info!("[FFmpeg] Warning: Failed to kill process: {}", e);
+                                log::error!("[FFmpeg] Failed to kill process: {}", e);
+                                return Err(format!("Failed to kill FFmpeg process: {}", e));
                             }
                             break;
                         }
@@ -790,9 +791,11 @@ impl FFmpegRecorder {
                         thread::sleep(Duration::from_millis(100));
                     }
                     Err(e) => {
-                        log::info!("[FFmpeg] Warning: Failed to check process status: {}", e);
-                        // Try to kill the process anyway
-                        let _ = process.kill();
+                        log::error!("[FFmpeg] Failed to check process status: {}", e);
+                        if let Err(kill_err) = process.kill() {
+                            log::error!("[FFmpeg] Failed to kill process after status check error: {}", kill_err);
+                            return Err(format!("Failed to kill FFmpeg process: {}", kill_err));
+                        }
                         break;
                     }
                 }
@@ -800,16 +803,21 @@ impl FFmpegRecorder {
 
             // Wait for any remaining cleanup
             match process.wait() {
-                Ok(_) => {}
+                Ok(status) => {
+                    if !status.success() {
+                        log::warn!("[FFmpeg] Process exited with non-zero status: {}", status);
+                    }
+                }
                 Err(e) => {
-                    log::info!("[FFmpeg] Warning: Error waiting for process: {}", e);
+                    log::error!("[FFmpeg] Error waiting for process: {}", e);
+                    return Err(format!("Error waiting for FFmpeg process: {}", e));
                 }
             }
 
             // Check if output file exists and has size
             if !self.output_path.exists() {
-                log::info!(
-                    "[FFmpeg] Error: Failed to create output file at {}",
+                log::error!(
+                    "[FFmpeg] Failed to create output file at {}",
                     self.output_path.display()
                 );
                 return Err("FFmpeg failed to create output file".to_string());
@@ -817,14 +825,14 @@ impl FFmpegRecorder {
 
             let file_size = fs::metadata(&self.output_path)
                 .map_err(|e| {
-                    log::info!("[FFmpeg] Error: Failed to get output file metadata: {}", e);
+                    log::error!("[FFmpeg] Failed to get output file metadata: {}", e);
                     format!("Failed to get output file metadata: {}", e)
                 })?
                 .len();
 
             if file_size == 0 {
-                log::info!(
-                    "[FFmpeg] Error: Created empty output file at {}",
+                log::error!(
+                    "[FFmpeg] Created empty output file at {}",
                     self.output_path.display()
                 );
                 return Err("FFmpeg created empty output file".to_string());
@@ -845,8 +853,12 @@ impl FFmpegRecorder {
     /// Use for emergency shutdown paths (app crash, parent death, lifeline EOF).
     pub fn force_kill(&mut self) {
         if let Some(mut process) = self.process.take() {
-            let _ = process.kill();
-            let _ = process.wait();
+            if let Err(e) = process.kill() {
+                log::error!("[FFmpeg] Failed to force kill process: {}", e);
+            }
+            if let Err(e) = process.wait() {
+                log::error!("[FFmpeg] Failed to wait for killed process: {}", e);
+            }
         }
     }
 }

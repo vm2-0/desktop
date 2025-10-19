@@ -192,7 +192,9 @@ pub fn process_recording(app: &AppHandle, recording_id: &str) -> Result<(), Stri
         }
         None => {
             // Timeout: kill the process
-            child.kill().ok();
+            if let Err(e) = child.kill() {
+                log::error!("[CQA] Failed to kill timed out process: {}", e);
+            }
             return Err(format!(
                 "Clones Quality Agent process timed out after {} seconds",
                 CQA_TIMEOUT_SECS
