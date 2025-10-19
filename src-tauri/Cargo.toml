@@ -25,6 +25,7 @@ core-graphics = "0.25.0"
 core-foundation = "0.10.1"
 macos-accessibility-client = "0.0.1"
 window-vibrancy = "0.6.0"
+nix = { version = "0.29", features = ["event"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.52", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging", "Win32_UI_Input_KeyboardAndMouse", "Win32_System_Registry", "Win32_System_Environment", "Win32_UI_Shell", "Win32_UI_TextServices"] }
@@ -81,6 +82,7 @@ tokio = { version = "1", features = ["full"] }
 axum = "0.7"
 tower-http = { version = "0.5.0", features = ["cors", "fs"] }
 urlencoding = "2.1.3"
+
 
 [dev-dependencies]
 tempfile = "3.10.1"
