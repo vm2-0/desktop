@@ -13,8 +13,16 @@ class EnvironmentNotifier extends StateNotifier<AppEnvironment> {
   }
 
   void _detectEnvironment() {
-    // Get environment from .env file
-    final env = dotenv.env['ENV'] ?? 'dev';
+    // First try to get environment from build-time dart-define
+    const buildEnv = String.fromEnvironment('ENVIRONMENT');
+
+    String env;
+    if (buildEnv.isNotEmpty) {
+      env = buildEnv;
+    } else {
+      // Fallback to .env file
+      env = dotenv.env['ENV'] ?? 'dev';
+    }
 
     switch (env.toLowerCase()) {
       case 'production':

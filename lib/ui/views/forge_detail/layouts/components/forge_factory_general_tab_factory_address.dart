@@ -1,4 +1,3 @@
-import 'package:clones_desktop/application/tauri_api.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
@@ -7,6 +6,7 @@ import 'package:clones_desktop/utils/env.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ForgeFactoryGeneralTabFactoryAddress extends ConsumerWidget {
   const ForgeFactoryGeneralTabFactoryAddress({super.key});
@@ -97,9 +97,16 @@ class ForgeFactoryGeneralTabFactoryAddress extends ConsumerWidget {
                   buttonText: 'Open in Explorer',
                   btnPrimaryType: BtnPrimaryType.outlinePrimary,
                   onTap: () async {
-                    await ref.read(tauriApiClientProvider).openExternalUrl(
-                          '${Env.baseScanBaseUrl}/address/${forgeDetail.factory!.poolAddress}',
-                        );
+                    if (!await launchUrl(
+                      Uri.parse(
+                        '${Env.baseScanBaseUrl}/address/${forgeDetail.factory!.poolAddress}',
+                      ),
+                      mode: LaunchMode.externalApplication,
+                    )) {
+                      throw Exception(
+                        'Failed to launch URL: ${Env.baseScanBaseUrl}/address/${forgeDetail.factory!.poolAddress}',
+                      );
+                    }
                   },
                 ),
               ],

@@ -223,8 +223,6 @@ pub async fn init(app_handle: AppHandle) {
         .route("/open-url", post(open_external_url_handler))
         // GET /platform: Get the platform of the current system.
         .route("/platform", get(get_platform_handler))
-        // GET /app/version: Get the application version from tauri.conf.json
-        .route("/app/version", get(get_app_version_handler))
         // GET /proxy-image: Proxy an image from the internet.
         .route("/proxy-image", get(proxy_image_handler))
         // POST /resize-window: Resize the window.
@@ -269,10 +267,6 @@ pub async fn init(app_handle: AppHandle) {
             "/transaction/callback",
             post(handle_transaction_callback_handler),
         )
-        // GET /updater/check: Check for updates using Tauri's secure updater
-        .route("/updater/check", get(check_for_update_handler))
-        // POST /updater/install: Install update using Tauri's secure updater
-        .route("/updater/install", post(install_update_handler))
         .with_state(state)
         .layer(cors);
 
@@ -395,11 +389,11 @@ async fn create_recording_zip_handler(
             let mut headers = axum::http::HeaderMap::new();
             headers.insert(
                 axum::http::header::CONTENT_TYPE,
-                "application/zip".parse().unwrap(),
+                "application/zip".parse().unwrap_or_else(|_| "application/octet-stream".parse().unwrap()),
             );
             headers.insert(
                 axum::http::header::CONTENT_DISPOSITION,
-                filename.parse().unwrap(),
+                filename.parse().unwrap_or_else(|_| "download.zip".parse().unwrap()),
             );
             Ok((headers, zip_data))
         }
@@ -512,7 +506,13 @@ async fn get_deeplink_handler(
     State(state): State<AppState>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     let deeplink_state = state.app_handle.state::<DeepLinkState>();
-    let mut url = deeplink_state.0.lock().unwrap();
+    let mut url = match deeplink_state.0.lock() {
+        Ok(url) => url,
+        Err(poisoned) => {
+            log::warn!("[IPC Server] DeepLinkState mutex was poisoned, recovering...");
+            poisoned.into_inner()
+        }
+    };
 
     // Take the URL from the state, leaving `None` in its place.
     if let Some(url_str) = url.take() {
@@ -536,17 +536,6 @@ pub async fn open_external_url_handler(
 // Get the platform of the current system
 pub async fn get_platform_handler(State(_state): State<AppState>) -> String {
     get_platform()
-}
-
-// Handler to get app version
-async fn get_app_version_handler(
-    State(state): State<AppState>,
-) -> Result<impl IntoResponse, (StatusCode, String)> {
-    let version = state.app_handle.package_info().version.to_string();
-    Ok((
-        StatusCode::OK,
-        Json(serde_json::json!({ "version": version })),
-    ))
 }
 
 // Handler to proxy an image from the internet
@@ -755,34 +744,6 @@ async fn handle_transaction_callback_handler(
     }
 }
 
-// --- Secure Updater Handlers ---
-
-async fn check_for_update_handler(
-    State(state): State<AppState>,
-) -> Result<Json<crate::commands::updater::UpdateInfo>, (StatusCode, String)> {
-    log::info!("[Updater] Checking for updates...");
-    match crate::commands::updater::check_for_update(state.app_handle.clone()).await {
-        Ok(update_info) => {
-            log::info!("[Updater] Check result: update_available={}, version={:?}",
-                update_info.update_available, update_info.version);
-            Ok(Json(update_info))
-        },
-        Err(e) => {
-            log::error!("[Updater] Failed to check for update: {}", e);
-            Err((StatusCode::INTERNAL_SERVER_ERROR, e))
-        },
-    }
-}
-
-async fn install_update_handler(
-    State(state): State<AppState>,
-) -> Result<StatusCode, (StatusCode, String)> {
-    match crate::commands::updater::install_update(state.app_handle.clone()).await {
-        Ok(_) => Ok(StatusCode::OK),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e)),
-    }
-}
-
 // Handler to create a filtered recording zip
 async fn create_filtered_recording_zip_handler(
     State(state): State<AppState>,
@@ -808,11 +769,11 @@ async fn create_filtered_recording_zip_handler(
             let mut headers = axum::http::HeaderMap::new();
             headers.insert(
                 axum::http::header::CONTENT_TYPE,
-                "application/zip".parse().unwrap(),
+                "application/zip".parse().unwrap_or_else(|_| "application/octet-stream".parse().unwrap()),
             );
             headers.insert(
                 axum::http::header::CONTENT_DISPOSITION,
-                filename.parse().unwrap(),
+                filename.parse().unwrap_or_else(|_| "download.zip".parse().unwrap()),
             );
             Ok((headers, zip_data))
         }

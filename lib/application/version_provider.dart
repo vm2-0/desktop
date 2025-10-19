@@ -1,11 +1,11 @@
-import 'package:clones_desktop/application/tauri_api.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'version_provider.g.dart';
 
 @riverpod
 Future<String> appVersion(Ref ref) async {
-  final apiClient = ref.watch(tauriApiClientProvider);
-  return apiClient.getAppVersion();
+  final packageInfo = await PackageInfo.fromPlatform();
+  return packageInfo.version;
 }

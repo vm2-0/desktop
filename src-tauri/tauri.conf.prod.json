@@ -1,11 +1,5 @@
 {
   "plugins": {
-    "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDc3NkM1QzQxMTBFQkE0ODEKUldTQnBPc1FRVnhzZHlFTGppSExwS2ZpaGVjRGU2U3BmSVpoRHp6OGtSVVRaSjd3Ly9NVEdZWFEK",
-      "endpoints": [
-        "https://releases.clones-ai.com/latest/{{target}}/latest.json"
-      ]
-    },
     "deep-link": {
       "desktop": {
         "schemes": [
@@ -16,6 +10,12 @@
   },
   "app": {
     "security": {
+      "dangerousRemoteDomainIpcAccess": [
+        {
+          "domain": "localhost",
+          "enableTauriAPI": false
+        }
+      ],
       "csp": {
         "connect-src": "'self' ipc: http://ipc.localhost http://127.0.0.1:* https://api.clones-ai.com https://www.gstatic.com https://fonts.gstatic.com https://www.google.com https://t0.gstatic.com https://t1.gstatic.com https://t2.gstatic.com https://t3.gstatic.com"
       }

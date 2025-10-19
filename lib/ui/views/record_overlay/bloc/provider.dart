@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:clones_desktop/application/tauri_api.dart';
+import 'package:clones_desktop/infrastructure/flutter_window_manager.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/state.dart';
 import 'package:clones_desktop/ui/views/record_overlay/bloc/state.dart';
 import 'package:clones_desktop/ui/views/training_session/bloc/provider.dart';
@@ -60,15 +60,15 @@ class RecordOverlayNotifier extends _$RecordOverlayNotifier {
   Future<void> toggleCollapsed() async {
     state = state.copyWith(isCollapsed: !state.isCollapsed);
     if (state.isCollapsed) {
-      await ref.read(tauriApiClientProvider).resizeWindow(
-            kRecordOverlayCollapsedSize.width,
-            kRecordOverlayCollapsedSize.height,
-          );
+      await FlutterWindowManager.resizeWindow(
+        kRecordOverlayCollapsedSize.width,
+        kRecordOverlayCollapsedSize.height,
+      );
     } else {
-      await ref.read(tauriApiClientProvider).resizeWindow(
-            kRecordOverlaySize.width,
-            kRecordOverlaySize.height,
-          );
+      await FlutterWindowManager.resizeWindow(
+        kRecordOverlaySize.width,
+        kRecordOverlaySize.height,
+      );
     }
   }
 

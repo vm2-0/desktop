@@ -34,7 +34,12 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
   @override
   void initState() {
     super.initState();
-    _initializeTools();
+    // Delay tool initialization to ensure agent is fully ready
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        _initializeTools();
+      }
+    });
     // Initialize onboarding after widget is mounted
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(onboardingProvider);
@@ -45,6 +50,13 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     final tauriApiClient = ref.read(tauriApiClientProvider);
     const maxRetries = 10;
     const retryDelay = Duration(seconds: 2);
+
+    // First check if agent is reachable
+    try {
+      await tauriApiClient.checkTools();
+    } catch (e) {
+      debugPrint('Agent not yet reachable, will retry tool initialization: $e');
+    }
 
     for (var i = 0; i < maxRetries; i++) {
       try {

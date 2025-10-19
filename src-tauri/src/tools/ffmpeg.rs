@@ -291,7 +291,9 @@ pub fn init_ffmpeg() -> Result<(), String> {
             "[FFmpeg] Using existing FFmpeg binary at {}",
             ffmpeg_path.display()
         );
-        FFMPEG_PATH.set(ffmpeg_path).unwrap();
+        if let Err(_) = FFMPEG_PATH.set(ffmpeg_path.clone()) {
+            log::warn!("[FFmpeg] FFMPEG_PATH already set, skipping");
+        }
         return Ok(());
     }
 
@@ -349,7 +351,9 @@ pub fn init_ffmpeg() -> Result<(), String> {
         "[FFmpeg] FFmpeg successfully initialized in {:?}",
         ffmpeg_path
     );
-    FFMPEG_PATH.set(ffmpeg_path).unwrap();
+    if let Err(_) = FFMPEG_PATH.set(ffmpeg_path.clone()) {
+        log::warn!("[FFmpeg] FFMPEG_PATH already set during download, skipping");
+    }
     Ok(())
 }
 
@@ -375,7 +379,9 @@ pub fn init_ffprobe() -> Result<(), String> {
             "[FFmpeg] Using existing FFprobe binary at {}",
             ffprobe_path.display()
         );
-        FFPROBE_PATH.set(ffprobe_path).unwrap();
+        if let Err(_) = FFPROBE_PATH.set(ffprobe_path.clone()) {
+            log::warn!("[FFmpeg] FFPROBE_PATH already set, skipping");
+        }
         return Ok(());
     }
 
@@ -438,7 +444,9 @@ pub fn init_ffprobe() -> Result<(), String> {
         "[FFmpeg] FFprobe successfully initialized in {:?}",
         ffprobe_path
     );
-    FFPROBE_PATH.set(ffprobe_path).unwrap();
+    if let Err(_) = FFPROBE_PATH.set(ffprobe_path.clone()) {
+        log::warn!("[FFmpeg] FFPROBE_PATH already set during download, skipping");
+    }
     Ok(())
 }
 
@@ -831,6 +839,15 @@ impl FFmpegRecorder {
             log::info!("[FFmpeg] No active process to stop");
         }
         Ok(())
+    }
+
+    /// Force kill the recording process immediately (no grace period).
+    /// Use for emergency shutdown paths (app crash, parent death, lifeline EOF).
+    pub fn force_kill(&mut self) {
+        if let Some(mut process) = self.process.take() {
+            let _ = process.kill();
+            let _ = process.wait();
+        }
     }
 }
 

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:clones_desktop/application/recording.dart';
 import 'package:clones_desktop/application/tauri_api.dart';
 import 'package:clones_desktop/application/upload/provider.dart';
@@ -7,7 +8,6 @@ import 'package:clones_desktop/domain/models/recording/api_recording.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:clones_desktop/ui/components/design_widget/dialog/dialog.dart';
-import 'package:clones_desktop/ui/components/memory_image_tauri.dart';
 import 'package:clones_desktop/ui/components/score_indicator.dart';
 import 'package:clones_desktop/ui/views/demo_detail/layouts/demo_detail_view.dart';
 import 'package:clones_desktop/utils/format_time.dart';
@@ -75,11 +75,12 @@ class RecordingCard extends ConsumerWidget {
       width: 32,
       height: 32,
       child: iconUrl != null
-          ? MemoryImageTauri(
+          ? CachedNetworkImage(
               imageUrl: iconUrl,
               width: 32,
               height: 32,
-              errorBuilder: (_, __, ___) => const Icon(
+              placeholder: (context, url) => CircularProgressIndicator(),
+              errorWidget: (_, __, ___) => const Icon(
                 Icons.apps,
                 color: ClonesColors.primaryText,
                 size: 24,

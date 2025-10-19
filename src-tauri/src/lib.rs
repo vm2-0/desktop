@@ -10,6 +10,9 @@ mod tools;
 pub mod utils;
 use std::sync::{Arc, Mutex};
 use tauri::Listener;
+use tokio::io::AsyncReadExt;
+use tokio::net::TcpStream;
+use tokio::time::{sleep, Duration};
 
 use utils::permissions::{has_ax_perms, has_record_perms, request_ax_perms, request_record_perms};
 
@@ -26,15 +29,81 @@ use crate::commands::transaction::{
     get_transaction_request, handle_transaction_callback, list_pending_transactions,
     prepare_transaction_request, update_transaction_status,
 };
-use crate::commands::updater::{check_for_update, install_update};
+use crate::core::record::force_kill_active_recorder;
 // State to hold the latest deep link URL
 pub struct DeepLinkState(pub Arc<Mutex<Option<String>>>);
 
+/// Monitors a parent process (explicit PID if provided, else getppid) and exits if it dies
+async fn monitor_parent_process(app: tauri::AppHandle) {
+    let explicit = std::env::var("AGENT_PARENT_PID")
+        .ok()
+        .and_then(|s| s.parse::<i32>().ok());
+    let parent_pid = explicit.unwrap_or_else(|| unsafe { libc::getppid() });
+    log::info!("Starting parent process monitor for PID: {}", parent_pid);
+
+    loop {
+        sleep(Duration::from_secs(2)).await;
+
+        // Check if parent process is still alive
+        let parent_exists = unsafe { libc::kill(parent_pid, 0) == 0 };
+
+        if !parent_exists {
+            log::info!(
+                "Parent process {} died, stopping active capture and exiting agent",
+                parent_pid
+            );
+            force_kill_active_recorder(&app);
+            app.exit(0);
+        }
+    }
+}
+
+/// Connects to a TCP lifeline provided by the Flutter parent and exits when it closes
+async fn monitor_lifeline(port: u16, app: tauri::AppHandle) {
+    log::info!("Starting lifeline monitor on 127.0.0.1:{}", port);
+
+    // Retry for a bounded time, then keep a slower background retry just in case
+    let mut attempts: u32 = 0;
+    let max_attempts: u32 = 100; // ~20s with 200ms sleep
+    loop {
+        match TcpStream::connect(("127.0.0.1", port)).await {
+            Ok(mut stream) => {
+                log::info!("Lifeline connected; waiting for EOF to exit");
+                let mut buf = [0u8; 1];
+                let _ = stream.read(&mut buf).await; // EOF or error => return
+                log::info!("Lifeline closed; stopping active capture and exiting agent");
+                // Kill any active recorder, then exit cleanly through Tauri runtime
+                force_kill_active_recorder(&app);
+                app.exit(0);
+            }
+            Err(e) => {
+                attempts += 1;
+                if attempts >= max_attempts {
+                    log::warn!("Failed to connect lifeline on port {} after {} attempts: {}. Will keep retrying slowly.", port, attempts, e);
+                    // Slow background retry every 2s
+                    loop {
+                        if let Ok(mut stream) = TcpStream::connect(("127.0.0.1", port)).await {
+                            log::info!("Lifeline connected (late); waiting for EOF to exit");
+                            let mut buf = [0u8; 1];
+                            let _ = stream.read(&mut buf).await;
+                            log::info!(
+                                "Lifeline closed; stopping active capture and exiting agent"
+                            );
+                            force_kill_active_recorder(&app);
+                            app.exit(0);
+                        }
+                        sleep(Duration::from_secs(2)).await;
+                    }
+                }
+                sleep(Duration::from_millis(200)).await;
+            }
+        }
+    }
+}
+
 /// Creates a Tauri builder with all plugins, state, and command handlers.
 pub fn setup_builder() -> tauri::Builder<tauri::Wry> {
-    let builder = tauri::Builder::default()
-        .plugin(tauri_plugin_updater::Builder::new().build())
-        .plugin(tauri_plugin_deep_link::init());
+    let builder = tauri::Builder::default().plugin(tauri_plugin_deep_link::init());
 
     let builder = if std::env::var("PRIMARY_LOGGER").unwrap_or_default() == "true" {
         builder.plugin(
@@ -96,8 +165,6 @@ pub fn setup_builder() -> tauri::Builder<tauri::Wry> {
             list_pending_transactions,
             cleanup_old_transactions,
             handle_transaction_callback,
-            check_for_update,
-            install_update,
         ])
 }
 
@@ -108,13 +175,25 @@ pub fn setup_builder() -> tauri::Builder<tauri::Wry> {
 pub fn run() {
     let app = setup_builder()
         .setup(|app| {
+            #[cfg(target_os = "macos")]
+            {
+                // Hide the app icon from the Dock - this is a background agent
+                app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+            }
+
             let app_handle = app.handle();
             let listen_handle = app_handle.clone();
 
             listen_handle.clone().listen("deep-link", move |event| {
                 let url = event.payload();
                 let state = listen_handle.state::<DeepLinkState>();
-                let mut lock = state.0.lock().unwrap();
+                let mut lock = match state.0.lock() {
+                    Ok(lock) => lock,
+                    Err(poisoned) => {
+                        log::warn!("[Deep Link] DeepLinkState mutex was poisoned, recovering...");
+                        poisoned.into_inner()
+                    }
+                };
                 *lock = Some(url.to_string().trim_matches('"').to_string());
             });
 
@@ -134,6 +213,24 @@ pub fn run() {
         ipc_server::init(app_handle).await;
     });
 
+    // Start parent process monitoring to auto-exit if parent dies
+    let app_for_parent = app.handle().clone();
+    tauri::async_runtime::spawn(async move {
+        monitor_parent_process(app_for_parent).await;
+    });
+
+    // Start lifeline monitor if Flutter provided a port
+    if let Ok(port_str) = std::env::var("AGENT_LIFELINE_PORT") {
+        if let Ok(port) = port_str.parse::<u16>() {
+            let app_for_lifeline = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                monitor_lifeline(port, app_for_lifeline).await;
+            });
+        } else {
+            log::warn!("Invalid AGENT_LIFELINE_PORT value: {}", port_str);
+        }
+    }
+
     app.run(|app_handle, event| {
         match event {
             tauri::RunEvent::ExitRequested { api, code, .. } => {
@@ -142,7 +239,11 @@ pub fn run() {
                 if code.is_none() {
                     // User requested exit (e.g., clicked X button)
                     // Perform any cleanup here if needed
-                    log::info!("Application exit requested by user");
+                    log::info!(
+                        "Application exit requested by user - attempting graceful recorder stop"
+                    );
+                    // Best-effort stop; if something is recording, ensure it is killed
+                    force_kill_active_recorder(&app_handle);
                 }
                 // Don't call api.prevent_exit() - let the app close normally
             }

@@ -1,0 +1,21 @@
+{
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": [
+          "clones-dev"
+        ]
+      }
+    }
+  },
+  "app": {
+    "security": {
+      "dangerousRemoteDomainIpcAccess": [
+        {
+          "domain": "localhost",
+          "enableTauriAPI": false
+        }
+      ]
+    }
+  }
+}

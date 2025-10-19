@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:clones_desktop/application/factory.dart';
 import 'package:clones_desktop/application/feature_flags.dart';
 import 'package:clones_desktop/application/session/provider.dart';
@@ -10,7 +11,6 @@ import 'package:clones_desktop/domain/models/factory/factory_app.dart';
 import 'package:clones_desktop/domain/models/factory/factory_task.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
-import 'package:clones_desktop/ui/components/memory_image_tauri.dart';
 import 'package:clones_desktop/ui/views/demo_detail/layouts/components/referral_required_dialog.dart';
 import 'package:clones_desktop/ui/views/demo_detail/layouts/demo_detail_view.dart';
 import 'package:clones_desktop/utils/fav_tools.dart';
@@ -91,12 +91,13 @@ class TaskCard extends ConsumerWidget {
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     child: Row(
                       children: [
-                        MemoryImageTauri(
+                        CachedNetworkImage(
                           imageUrl: getFaviconUrl(app.domain),
                           width: 20,
                           height: 20,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(
+                          placeholder: (context, url) =>
+                              const CircularProgressIndicator(),
+                          errorWidget: (_, __, ___) => const Icon(
                             Icons.web,
                             size: 20,
                             color: ClonesColors.primaryText,

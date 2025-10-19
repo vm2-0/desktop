@@ -1,8 +1,12 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:clones_desktop/application/agent/agent_launcher.dart';
 import 'package:clones_desktop/application/deeplink_provider.dart';
 import 'package:clones_desktop/application/route_provider.dart';
-import 'package:clones_desktop/application/tauri_api.dart';
-import 'package:clones_desktop/application/update_modal_provider.dart';
 import 'package:clones_desktop/assets.dart';
+import 'package:clones_desktop/infrastructure/flutter_window_manager.dart';
+import 'package:clones_desktop/infrastructure/sparkle_updater.dart';
 import 'package:clones_desktop/ui/main_layout.dart';
 import 'package:clones_desktop/ui/views/demo_detail/layouts/demo_detail_view.dart';
 import 'package:clones_desktop/ui/views/factory/layouts/factory_view.dart';
@@ -16,12 +20,14 @@ import 'package:clones_desktop/ui/views/home/layouts/home_view.dart';
 import 'package:clones_desktop/ui/views/leaderboards/layouts/leaderboards_view.dart';
 import 'package:clones_desktop/ui/views/record_overlay/layouts/record_overlay_view.dart';
 import 'package:clones_desktop/ui/views/referral/layouts/referral_view.dart';
+import 'package:clones_desktop/utils/env.dart';
 import 'package:clones_desktop/utils/window_alignment.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:window_manager/window_manager.dart';
 
 final _router = GoRouter(
   initialLocation: '/', // We'll handle initial routing in the app
@@ -137,9 +143,63 @@ final _router = GoRouter(
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load();
+
+  // Initialize window manager for desktop platforms
+  if (!kIsWeb && (Platform.isMacOS || Platform.isWindows || Platform.isLinux)) {
+    await windowManager.ensureInitialized();
+    await windowManager.setPreventClose(true);
+    windowManager.addListener(CloseListener());
+    const windowOptions = WindowOptions(
+      size: Size(1200, 800),
+      center: true,
+      backgroundColor: Colors.transparent,
+      skipTaskbar: false,
+      titleBarStyle: TitleBarStyle.normal,
+    );
+
+    windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.show();
+      await windowManager.focus();
+    });
+  }
+
+  // Load environment-specific .env file
+  await Env.loadEnvironmentFile();
+
+  // Ensure the Rust agent is running before UI starts interacting with IPC.
+  // Wait for agent startup to avoid race conditions with tool initialization.
+  try {
+    await AgentLauncher().ensureStarted();
+  } catch (e) {
+    debugPrint('Failed to start agent: $e');
+    // Continue anyway - failures will be handled by individual API calls
+  }
+
+  // Register shutdown handlers to clean up the agent
+  if (!kIsWeb) {
+    ProcessSignal.sigint.watch().listen((_) => _shutdown());
+    ProcessSignal.sigterm.watch().listen((_) => _shutdown());
+    // macOS dock quit path: listen to native willTerminate
+    const lifecycleChannel = MethodChannel('app.lifecycle');
+    lifecycleChannel.setMethodCallHandler((call) async {
+      if (call.method == 'willTerminate') {
+        await _shutdown();
+      }
+    });
+  }
 
   runApp(const ProviderScope(child: ClonesApp()));
+}
+
+/// Graceful shutdown handler
+Future<void> _shutdown() async {
+  debugPrint('Shutting down application...');
+  try {
+    await AgentLauncher().stop();
+  } catch (e) {
+    debugPrint('Error during agent shutdown: $e');
+  }
+  exit(0);
 }
 
 class ClonesApp extends ConsumerStatefulWidget {
@@ -149,10 +209,12 @@ class ClonesApp extends ConsumerStatefulWidget {
   ConsumerState<ClonesApp> createState() => _ClonesAppState();
 }
 
-class _ClonesAppState extends ConsumerState<ClonesApp> {
+class _ClonesAppState extends ConsumerState<ClonesApp>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _router.routeInformationProvider.addListener(_updateRoute);
     // Set initial route
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -168,25 +230,60 @@ class _ClonesAppState extends ConsumerState<ClonesApp> {
     // Delay to ensure app is fully initialized
     await Future.delayed(const Duration(seconds: 2));
     if (mounted) {
-      await ref.read(updateModalProvider.notifier).checkForUpdate();
+      if (Platform.isMacOS) {
+        // Use native Sparkle updater on macOS for better performance and UX
+        await _initializeSparkleUpdater();
+      } else {
+        debugPrint('Native updaters for Windows/Linux not yet implemented');
+      }
+    }
+  }
+
+  Future<void> _initializeSparkleUpdater() async {
+    try {
+      final sparkle = SparkleUpdater();
+
+      // Determine appcast URL based on environment
+      String appcastUrl;
+      if (const String.fromEnvironment('ENVIRONMENT') == 'prod') {
+        appcastUrl = 'https://releases.clones-ai.com/latest/darwin/appcast.xml';
+      } else {
+        appcastUrl =
+            'https://releases-test.clones-ai.com/latest/darwin/appcast.xml';
+      }
+
+      await sparkle.initialize(
+        appcastUrl: appcastUrl,
+        automaticallyChecksForUpdates: true,
+        automaticallyDownloadsUpdates: false, // Let user choose
+      );
+
+      // Check for updates in background
+      await sparkle.checkForUpdatesInBackground();
+
+      debugPrint('Sparkle updater initialized and checking for updates');
+    } catch (e) {
+      debugPrint('Failed to initialize Sparkle updater: $e');
     }
   }
 
   Future<void> _initializeWindow() async {
-    final displays = await ref.read(tauriApiClientProvider).getDisplaysSize();
+    final displays = await FlutterWindowManager.getDisplaysSize();
     final smallestDisplay = displays.reduce((a, b) {
       final areaA = a.width * a.height;
       final areaB = b.width * b.height;
       return areaA < areaB ? a : b;
     });
-    await ref.read(tauriApiClientProvider).resizeWindow(
-          smallestDisplay.width,
-          smallestDisplay.height,
-        );
-    await ref.read(tauriApiClientProvider).setWindowPosition(
-          WindowAlignment.topCenter,
-        );
-    await ref.read(tauriApiClientProvider).setWindowResizable(true);
+    await FlutterWindowManager.resizeWindow(
+      smallestDisplay.width,
+      smallestDisplay.height,
+    );
+
+    await FlutterWindowManager.setWindowPosition(
+      WindowAlignment.topCenter,
+    );
+
+    await FlutterWindowManager.setWindowResizable(true);
   }
 
   void _updateRoute() {
@@ -202,8 +299,22 @@ class _ClonesAppState extends ConsumerState<ClonesApp> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _router.routeInformationProvider.removeListener(_updateRoute);
+    // Stop the agent when the app is disposed
+    AgentLauncher().stop();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    if (state == AppLifecycleState.detached) {
+      // App is being terminated - kill the agent
+      debugPrint('App lifecycle: detached - stopping agent');
+      AgentLauncher().stop();
+    }
   }
 
   @override
@@ -291,5 +402,14 @@ class _ClonesAppState extends ConsumerState<ClonesApp> {
       debugShowCheckedModeBanner: false,
       routerConfig: _router,
     );
+  }
+}
+
+class CloseListener with WindowListener {
+  @override
+  Future<void> onWindowClose() async {
+    if (await windowManager.isPreventClose()) {
+      await _shutdown();
+    }
   }
 }

@@ -191,7 +191,7 @@ mod tests {
     fn test_lock_with_timeout_timeout() {
         let m = Arc::new(Mutex::new(42));
         let m2 = m.clone();
-        let _guard = m.lock().unwrap();
+        let _guard = m.lock().expect("Test mutex should not be poisoned");
         // Lock is held, so lock_with_timeout should time out
         let handle = thread::spawn(move || {
             let result = lock_with_timeout(&m2, Duration::from_millis(100));

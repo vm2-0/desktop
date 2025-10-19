@@ -34,6 +34,7 @@ class _DemoDetailVideoPreviewState
     return CardWidget(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -101,11 +102,12 @@ class _DemoDetailVideoPreviewState
               ),
             )
           else
-            Expanded(
+            Flexible(
               child: widget.videoWidget == null
                   ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
                             demoDetail.recording?.location == 'cloud'

@@ -9,7 +9,7 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::sync::OnceLock;
 use std::time::Duration;
-use tauri::{AppHandle, Url};
+use tauri::AppHandle;
 use wait_timeout::ChildExt;
 
 /// Path to the Clones Quality Agent binary, initialized once per session.
@@ -20,24 +20,21 @@ const CQA_TIMEOUT_SECS: u64 = 300; // 5 minutes
 #[cfg(target_os = "windows")]
 fn get_cqa_url() -> String {
     std::env::var("CQA_URL_WIN").unwrap_or_else(|_| {
-        "https://github.com/clones-ai/clones-quality-agent/releases/download/v2.0.12/clones-quality-agent-win-x64.exe"
-            .to_string()
+        "https://releases.clones-ai.com/cqa/clones-quality-agent-win-x64-v2.0.15.exe".to_string()
     })
 }
 
 #[cfg(target_os = "linux")]
 fn get_cqa_url() -> String {
     std::env::var("CQA_URL_LINUX").unwrap_or_else(|_| {
-        "https://github.com/clones-ai/clones-quality-agent/releases/download/v2.0.12/clones-quality-agent-linux-x64"
-            .to_string()
+        "https://releases.clones-ai.com/cqa/clones-quality-agent-linux-x64-v2.0.15".to_string()
     })
 }
 
 #[cfg(target_os = "macos")]
 fn get_cqa_url() -> String {
     std::env::var("CQA_URL_MACOS").unwrap_or_else(|_| {
-        "https://github.com/clones-ai/clones-quality-agent/releases/download/v2.0.12/clones-quality-agent-macos-arm64"
-            .to_string()
+        "https://releases.clones-ai.com/cqa/clones-quality-agent-macos-arm64-v2.0.15".to_string()
     })
 }
 
@@ -60,65 +57,60 @@ pub fn init_cqa() -> Result<(), String> {
 
     info!("[Clones Quality Agent] Initializing Clones Quality Agent");
 
-    // Extract repo owner and name from the URL
-    let url_parser =
-        Url::parse(&get_cqa_url()).map_err(|e| format!("Failed to parse URL: {}", e))?;
-    let path_segments: Vec<&str> = url_parser.path_segments().unwrap().collect();
-    let repo_owner = path_segments[0];
-    let repo_name = path_segments[1];
     let temp_dir = get_temp_dir();
     let asset_url = get_cqa_url();
     let asset_split: Vec<&str> = asset_url.split('/').collect();
     let asset_filename = asset_split[asset_url.split('/').count() - 1];
     let asset_path = temp_dir.join(asset_filename);
-    let metadata_path = temp_dir.join(format!("{}.metadata.json", asset_filename));
 
-    // Try to load local metadata
-    let local_metadata = crate::utils::github_release::load_metadata(&metadata_path)?;
-    // Fetch latest metadata from GitHub
-    let latest_metadata =
-        crate::utils::github_release::fetch_latest_release_metadata(repo_owner, repo_name)?;
+    info!(
+        "[Clones Quality Agent] Checking for CQA at {}",
+        asset_path.display()
+    );
 
-    let needs_download = match &local_metadata {
-        Some(meta) => {
-            if meta.version != latest_metadata.version {
-                info!(
-                    "[Clones Quality Agent] Local version {} is outdated (latest: {}), will update",
-                    meta.version, latest_metadata.version
-                );
-                true
-            } else {
-                info!(
-                    "[Clones Quality Agent] Local version {} is up to date",
-                    meta.version
-                );
-                false
-            }
-        }
-        None => {
-            info!("[Clones Quality Agent] No local Clones Quality Agent binary or metadata, will download");
-            true
-        }
-    };
+    // Create temp directory if it doesn't exist
+    std::fs::create_dir_all(&temp_dir)
+        .map_err(|e| format!("Failed to create temp directory: {}", e))?;
 
-    if needs_download || !asset_path.exists() {
-        // Use the github_release module to get the latest release
-        let cqa_path = crate::utils::github_release::get_latest_release(
-            repo_owner, repo_name, &asset_url, &temp_dir,
-            true, // Make executable on Linux/macOS
-        )?;
+    // For Tigris-hosted binaries, we always download if file doesn't exist
+    // Since we don't have version metadata from Tigris, we rely on file presence
+    if !asset_path.exists() {
         info!(
-            "[Clones Quality Agent] Downloaded and using Clones Quality Agent at {}",
-            cqa_path.display()
+            "[Clones Quality Agent] Binary not found, downloading from {}",
+            asset_url
         );
-        CQA_PATH.set(cqa_path).unwrap();
-    } else {
+        
+        // Download the file directly
+        crate::utils::downloader::download_file(&asset_url, &asset_path)?;
+
+        // Set executable permissions on Linux/macOS
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&asset_path, std::fs::Permissions::from_mode(0o755))
+                .map_err(|e| format!("Failed to set executable permissions: {}", e))?;
+            info!(
+                "[Clones Quality Agent] Set executable permissions for {}",
+                asset_path.display()
+            );
+        }
+
         info!(
-            "[Clones Quality Agent] Using cached Clones Quality Agent at {}",
+            "[Clones Quality Agent] Downloaded CQA to {}",
             asset_path.display()
         );
-        CQA_PATH.set(asset_path).unwrap();
+    } else {
+        info!(
+            "[Clones Quality Agent] Using existing CQA at {}",
+            asset_path.display()
+        );
     }
+
+    // Set the global path
+    if let Err(_) = CQA_PATH.set(asset_path.clone()) {
+        log::warn!("[CQA] CQA_PATH already set, skipping");
+    }
+
     Ok(())
 }
 

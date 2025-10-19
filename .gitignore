@@ -54,3 +54,6 @@ node_modules
 src-tauri/target/
 vendor/
 .dev_lock
+sparkle_prod_private.pem
+sparkle_test_private.pem
+releases/
