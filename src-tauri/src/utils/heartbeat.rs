@@ -11,7 +11,14 @@ use tokio::time::{interval, sleep};
 
 
 /// Get the Flutter heartbeat file path that we should monitor
+/// Returns the path specified by environment variable or default path
 pub fn get_flutter_heartbeat_path(flutter_pid: u32) -> PathBuf {
+    // Check if Flutter provided a specific heartbeat path
+    if let Ok(heartbeat_path) = std::env::var("FLUTTER_HEARTBEAT_PATH") {
+        log::info!("[Heartbeat] Using Flutter-provided heartbeat path: {}", heartbeat_path);
+        return PathBuf::from(heartbeat_path);
+    }
+    
     #[cfg(target_os = "windows")]
     {
         let temp_dir = std::env::temp_dir();
@@ -20,7 +27,20 @@ pub fn get_flutter_heartbeat_path(flutter_pid: u32) -> PathBuf {
     
     #[cfg(not(target_os = "windows"))]
     {
-        PathBuf::from(format!("/tmp/clones-flutter-{}.heartbeat", flutter_pid))
+        let tmp_path = PathBuf::from(format!("/tmp/clones-flutter-{}.heartbeat", flutter_pid));
+        if tmp_path.exists() {
+            return tmp_path;
+        }
+        
+        // Fallback to system temp dir (for debug sandbox mode)
+        let temp_dir = std::env::temp_dir();
+        let temp_path = temp_dir.join(format!("clones-flutter-{}.heartbeat", flutter_pid));
+        if temp_path.exists() {
+            return temp_path;
+        }
+        
+        // Default to /tmp path (will be created there in production)
+        tmp_path
     }
 }
 
@@ -113,8 +133,10 @@ pub async fn auto_detect_and_monitor_flutter(app: tauri::AppHandle) {
         loop {
             check_interval.tick().await;
             
-            // Scan for flutter heartbeat files
+            // Scan for flutter heartbeat files in both /tmp and system temp dir
             let mut found_active_flutter = false;
+            
+            // Check /tmp first
             if let Ok(entries) = fs::read_dir("/tmp") {
                 for entry in entries.flatten() {
                     if let Some(filename) = entry.file_name().to_str() {
@@ -126,6 +148,27 @@ pub async fn auto_detect_and_monitor_flutter(app: tauri::AppHandle) {
                                 break; // Found one active, that's enough
                             } else {
                                 log::warn!("[Heartbeat] Found stale Flutter heartbeat: {}", path.display());
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Check system temp dir if not found in /tmp (for debug sandbox mode)
+            if !found_active_flutter {
+                let temp_dir = std::env::temp_dir();
+                if let Ok(entries) = fs::read_dir(&temp_dir) {
+                    for entry in entries.flatten() {
+                        if let Some(filename) = entry.file_name().to_str() {
+                            if filename.starts_with("clones-flutter-") && filename.ends_with(".heartbeat") {
+                                let path = entry.path();
+                                if check_flutter_heartbeat(&path) {
+                                    log::debug!("[Heartbeat] Found active Flutter heartbeat in temp dir: {}", path.display());
+                                    found_active_flutter = true;
+                                    break; // Found one active, that's enough
+                                } else {
+                                    log::warn!("[Heartbeat] Found stale Flutter heartbeat in temp dir: {}", path.display());
+                                }
                             }
                         }
                     }

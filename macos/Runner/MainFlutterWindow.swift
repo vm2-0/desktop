@@ -9,6 +9,9 @@ class MainFlutterWindow: NSWindow {
     self.setFrame(windowFrame, display: true)
 
     RegisterGeneratedPlugins(registry: flutterViewController)
+    
+    // Register custom Sparkle plugin
+    SparklePlugin.register(with: flutterViewController.engine.registrar(forPlugin: "SparklePlugin"))
 
     super.awakeFromNib()
   }

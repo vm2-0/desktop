@@ -6,6 +6,7 @@ use tauri::Manager;
 mod commands;
 mod core;
 pub mod ipc_server;
+mod services;
 mod tools;
 pub mod utils;
 use std::sync::{Arc, Mutex};
@@ -120,34 +121,43 @@ pub fn run() {
                 std::process::exit(1);
             }
 
-            // Start hybrid monitoring system in background
-            let app_for_monitoring = app.handle().clone();
-            tauri::async_runtime::spawn(async move {
-                // Try to get Flutter PID for OS-level monitoring
-                if let Ok(ppid_str) = std::env::var("FLUTTER_PARENT_PID") {
-                    if let Ok(flutter_pid) = ppid_str.parse::<u32>() {
-                        log::info!("[Monitor] Starting hybrid monitoring for Flutter PID: {}", flutter_pid);
-                        
-                        // Start OS-level PID monitor (primary)
-                        let app_for_pid = app_for_monitoring.clone();
-                        tauri::async_runtime::spawn(async move {
-                            pid_monitor::start_parent_process_monitor(flutter_pid, app_for_pid).await;
-                        });
-                        
-                        // Start heartbeat monitor (fallback)
-                        let app_for_heartbeat = app_for_monitoring.clone();
-                        tauri::async_runtime::spawn(async move {
-                            heartbeat::start_flutter_heartbeat_monitor(flutter_pid, app_for_heartbeat).await;
-                        });
-                        
-                        return;
+            // Check if agent is launched in development mode (via cargo run)
+            let is_dev_mode = std::env::var("CARGO_PKG_NAME").is_ok() || 
+                              std::env::var("RUST_LOG").unwrap_or_default().contains("debug");
+            
+            if is_dev_mode {
+                log::info!("[Monitor] Development mode detected - skipping Flutter lifecycle monitoring");
+                log::info!("[Monitor] Agent will run independently until manually stopped");
+            } else {
+                // Start hybrid monitoring system in background (production mode only)
+                let app_for_monitoring = app.handle().clone();
+                tauri::async_runtime::spawn(async move {
+                    // Try to get Flutter PID for OS-level monitoring
+                    if let Ok(ppid_str) = std::env::var("FLUTTER_PARENT_PID") {
+                        if let Ok(flutter_pid) = ppid_str.parse::<u32>() {
+                            log::info!("[Monitor] Starting hybrid monitoring for Flutter PID: {}", flutter_pid);
+                            
+                            // Start OS-level PID monitor (primary)
+                            let app_for_pid = app_for_monitoring.clone();
+                            tauri::async_runtime::spawn(async move {
+                                pid_monitor::start_parent_process_monitor(flutter_pid, app_for_pid).await;
+                            });
+                            
+                            // Start heartbeat monitor (fallback)
+                            let app_for_heartbeat = app_for_monitoring.clone();
+                            tauri::async_runtime::spawn(async move {
+                                heartbeat::start_flutter_heartbeat_monitor(flutter_pid, app_for_heartbeat).await;
+                            });
+                            
+                            return;
+                        }
                     }
-                }
-                
-                // Fallback to heartbeat-only monitoring
-                log::info!("[Monitor] No Flutter PID provided - using heartbeat-only monitoring");
-                heartbeat::auto_detect_and_monitor_flutter(app_for_monitoring).await;
-            });
+                    
+                    // Fallback to heartbeat-only monitoring
+                    log::info!("[Monitor] No Flutter PID provided - using heartbeat-only monitoring");
+                    heartbeat::auto_detect_and_monitor_flutter(app_for_monitoring).await;
+                });
+            }
 
             let app_handle = app.handle();
             let listen_handle = app_handle.clone();

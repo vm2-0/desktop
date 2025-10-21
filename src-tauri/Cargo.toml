@@ -48,7 +48,7 @@ tauri-plugin-opener = "2.4.0"
 rdev = { git = "https://github.com/rustdesk-org/rdev" }
 chrono = "0.4"
 once_cell = "1.21.3"
-reqwest = { version = "0.12.22", features = ["blocking", "json"] }
+reqwest = { version = "0.12.22", features = ["blocking", "json", "multipart"] }
 zip = "0.6"
 tar = "0.4"
 xz2 = { version = "0.1", features = ["static"] }

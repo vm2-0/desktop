@@ -212,9 +212,16 @@ class TauriApiClient {
 
   // --- Recording Actions ---
 
-  Future<void> processRecording(String recordingId) async {
-    final response = await _client
-        .post(Uri.parse('$_baseUrl/recordings/$recordingId/process'));
+  Future<void> processRecording(String recordingId, {String? connectToken}) async {
+    final headers = <String, String>{'Content-Type': 'application/json'};
+    if (connectToken != null) {
+      headers['x-connect-token'] = connectToken;
+    }
+    
+    final response = await _client.post(
+      Uri.parse('$_baseUrl/recordings/$recordingId/process'),
+      headers: headers,
+    );
     if (response.statusCode != 200) {
       throw Exception('Failed to process recording: ${response.body}');
     }

@@ -5,10 +5,6 @@ import FlutterMacOS
 class AppDelegate: FlutterAppDelegate {
   override func applicationDidFinishLaunching(_ notification: Notification) {
     super.applicationDidFinishLaunching(notification)
-    
-    // Register Sparkle plugin
-    let controller: FlutterViewController = mainFlutterWindow?.contentViewController as! FlutterViewController
-    SparklePlugin.register(with: controller.engine.registrar(forPlugin: "SparklePlugin"))
   }
   
   override func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

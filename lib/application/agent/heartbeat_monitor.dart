@@ -57,7 +57,18 @@ class HeartbeatMonitor {
       final tempDir = await getTemporaryDirectory();
       return '${tempDir.path}\\clones-flutter-$pid.heartbeat';
     } else {
-      return '/tmp/clones-flutter-$pid.heartbeat';
+      // Try /tmp first (works in production), fallback to app temp dir (works in debug sandbox)
+      final tmpPath = '/tmp/clones-flutter-$pid.heartbeat';
+      try {
+        final tmpFile = File(tmpPath);
+        await tmpFile.writeAsString('test');
+        await tmpFile.delete();
+        return tmpPath;
+      } catch (e) {
+        // Fall back to app temp directory for sandboxed debug mode
+        final tempDir = await getTemporaryDirectory();
+        return '${tempDir.path}/clones-flutter-$pid.heartbeat';
+      }
     }
   }
 
@@ -81,7 +92,18 @@ class HeartbeatMonitor {
       final tempDir = await getTemporaryDirectory();
       return '${tempDir.path}\\clones-flutter-$pid.heartbeat';
     } else {
-      return '/tmp/clones-flutter-$pid.heartbeat';
+      // Try /tmp first (works in production), fallback to app temp dir (works in debug sandbox)
+      final tmpPath = '/tmp/clones-flutter-$pid.heartbeat';
+      try {
+        final tmpFile = File(tmpPath);
+        await tmpFile.writeAsString('test');
+        await tmpFile.delete();
+        return tmpPath;
+      } catch (e) {
+        // Fall back to app temp directory for sandboxed debug mode
+        final tempDir = await getTemporaryDirectory();
+        return '${tempDir.path}/clones-flutter-$pid.heartbeat';
+      }
     }
   }
 }

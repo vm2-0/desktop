@@ -25,6 +25,9 @@ class DemoDetailFooter extends ConsumerWidget {
             BtnPrimary(
               onTap: demoDetailNotifier.processRecording,
               isLoading: demoDetail.isProcessing,
+              isLocked: demoDetail.isProcessing ||
+                  demoDetail.isUploading ||
+                  walletAddress == null,
               buttonText: 'Analyse demo',
             )
           else
