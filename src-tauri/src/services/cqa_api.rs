@@ -126,6 +126,9 @@ impl CQAApiClient {
         recording_dir: &Path,
         connect_token: Option<String>,
     ) -> Result<CQAResponse, String> {
+        // Validate recording ID to prevent injection attacks in URL
+        validate_id(recording_id)?;
+        
         let url = format!(
             "{}/api/v1/forge/recordings/{}/process",
             self.base_url, recording_id
@@ -259,8 +262,22 @@ impl CQAApiClient {
     }
 }
 
+/// Validates that an ID is safe for file operations (no path traversal)
+fn validate_id(id: &str) -> Result<(), String> {
+    if id.trim().is_empty() {
+        return Err("Recording ID cannot be empty".to_string());
+    }
+    if id.contains("..") || id.contains('/') || id.contains('\\') {
+        return Err("Invalid recording ID (path traversal detected)".to_string());
+    }
+    Ok(())
+}
+
 /// Process a recording using the backend CQA API
 pub async fn process_recording(app: &AppHandle, recording_id: &str, connect_token: Option<String>) -> Result<(), String> {
+    // Validate recording ID to prevent path traversal attacks
+    validate_id(recording_id)?;
+    
     // Get the backend URL from environment or use default
     let backend_url = std::env::var("API_BACKEND_URL")
         .unwrap_or_else(|_| "http://localhost:8001".to_string());
