@@ -121,9 +121,13 @@ pub fn run() {
                 std::process::exit(1);
             }
 
-            // Check if agent is launched in development mode (via cargo run)
-            let is_dev_mode = std::env::var("CARGO_PKG_NAME").is_ok() || 
-                              std::env::var("RUST_LOG").unwrap_or_default().contains("debug");
+            // Check if agent is launched in development mode
+            // Use explicit environment variable for reliable detection
+            // Set CLONES_DEV_MODE=true or CLONES_DEV_MODE=1 to enable development mode
+            // This disables Flutter lifecycle monitoring for standalone testing
+            let is_dev_mode = std::env::var("CLONES_DEV_MODE")
+                .map(|v| v == "true" || v == "1")
+                .unwrap_or(false);
             
             if is_dev_mode {
                 log::info!("[Monitor] Development mode detected - skipping Flutter lifecycle monitoring");

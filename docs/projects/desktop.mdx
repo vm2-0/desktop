@@ -115,6 +115,34 @@ cd src-tauri
 cargo tauri dev
 ```
 
+##### Option 4: Standalone Agent Development
+
+For developing and testing the Rust agent independently (without Flutter):
+
+```bash
+cd src-tauri
+
+# Development mode with full logging
+CLONES_DEV_MODE=true PRIMARY_LOGGER=true RUST_LOG=debug cargo run
+
+# Production mode with logging (requires Flutter)
+PRIMARY_LOGGER=true RUST_LOG=debug cargo run
+
+# Simple development mode
+CLONES_DEV_MODE=true cargo run
+```
+
+**When to use `CLONES_DEV_MODE=true`:**
+- Testing agent functionality independently
+- Debugging agent-only features
+- Development without Flutter dependency
+- Disables Flutter lifecycle monitoring
+
+**When to use production mode:**
+- Testing full Flutter + Agent integration
+- End-to-end workflow testing
+- Production-like testing scenarios
+
 ### Architecture Overview
 
 The application now uses a unified architecture:

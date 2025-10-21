@@ -16,8 +16,8 @@ class AgentLauncher {
   final ProcessManager _processManager = const LocalProcessManager();
   String? _cachedRepoRoot;
   
-  // File permission bits: owner execute (0x40) + group execute (0x8) + other execute (0x1)
-  static const int _executePermissionMask = 0x49;
+  // File permission bits: owner execute (0x40) is what we care about for the current user
+  static const int _ownerExecutePermission = 0x40;
 
   /// Ensures the Tauri agent is running. If not, attempts to start it.
   Future<void> ensureStarted() async {
@@ -40,10 +40,10 @@ class AgentLauncher {
         throw Exception('Tauri agent executable not found');
       }
 
-      // Ensure the agent binary is executable
+      // Ensure the agent binary is executable by the current user (owner)
       final executableFile = File(executable);
       final stat = executableFile.statSync();
-      if ((stat.mode & _executePermissionMask) == 0) {
+      if ((stat.mode & _ownerExecutePermission) == 0) {
         debugPrint('Making agent executable: $executable');
         await Process.run('chmod', ['+x', executable]);
       }
@@ -88,13 +88,16 @@ class AgentLauncher {
             environment: env,
           );
         } catch (e2) {
-          // Final fallback: try launching via shell for debug mode
-          debugPrint('Process.start also failed ($e2), trying shell execution');
-          final envVars = env.entries.map((e) => '${e.key}="${e.value}"').join(' ');
+          // Final fallback: try launching with explicit environment
+          debugPrint('Process.start also failed ($e2), trying with explicit environment');
           _agentProcess = await Process.start(
-            'sh',
-            ['-c', '$envVars exec "$executable"'],
+            executable,
+            [],
             workingDirectory: workingDir,
+            environment: {
+              ...Platform.environment, // Preserve existing environment
+              ...env, // Add our custom variables
+            },
           );
         }
       }

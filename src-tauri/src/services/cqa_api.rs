@@ -120,6 +120,18 @@ impl CQAApiClient {
     }
 
     /// Process a recording by uploading files to the backend CQA service
+    /// 
+    /// # Arguments
+    /// * `recording_id` - Validated recording identifier
+    /// * `recording_dir` - Directory containing recording files
+    /// * `connect_token` - Authentication token (required for API access)
+    /// 
+    /// # Errors
+    /// Returns error if:
+    /// - `connect_token` is None (authentication required)
+    /// - Recording directory doesn't exist or is empty
+    /// - Network request fails
+    /// - Backend returns non-success status
     pub async fn process_recording(
         &self,
         recording_id: &str,
@@ -168,7 +180,9 @@ impl CQAApiClient {
         info!("[CQA API] Uploading to: {}", url);
 
         // Send request with wallet authentication (same as other desktop API calls)
-        let token = connect_token.ok_or_else(|| "No connect token provided".to_string())?;
+        let token = connect_token.ok_or_else(|| {
+            "Authentication required: missing x-connect-token header. Please ensure you're authenticated with a valid connect token.".to_string()
+        })?;
             
         let response = self
             .client
@@ -262,18 +276,54 @@ impl CQAApiClient {
     }
 }
 
-/// Validates that an ID is safe for file operations (no path traversal)
+/// Validates that an ID is safe for file operations using whitelist approach
 fn validate_id(id: &str) -> Result<(), String> {
-    if id.trim().is_empty() {
+    let trimmed = id.trim();
+    
+    if trimmed.is_empty() {
         return Err("Recording ID cannot be empty".to_string());
     }
-    if id.contains("..") || id.contains('/') || id.contains('\\') {
-        return Err("Invalid recording ID (path traversal detected)".to_string());
+    
+    // Enforce reasonable length limits
+    if trimmed.len() > 100 {
+        return Err("Recording ID too long (max 100 characters)".to_string());
     }
+    
+    // Whitelist approach: only allow safe characters
+    // Allow: alphanumeric, hyphens, underscores, and periods (but not consecutive periods)
+    for c in trimmed.chars() {
+        if !c.is_ascii_alphanumeric() && c != '-' && c != '_' && c != '.' {
+            return Err(format!("Recording ID contains invalid character: '{}'", c));
+        }
+    }
+    
+    // Prevent consecutive periods (could be used for path traversal)
+    if trimmed.contains("..") {
+        return Err("Recording ID cannot contain consecutive periods".to_string());
+    }
+    
+    // Prevent starting or ending with periods (potential filesystem issues)
+    if trimmed.starts_with('.') || trimmed.ends_with('.') {
+        return Err("Recording ID cannot start or end with a period".to_string());
+    }
+    
     Ok(())
 }
 
 /// Process a recording using the backend CQA API
+/// 
+/// # Arguments
+/// * `app` - Tauri application handle
+/// * `recording_id` - Recording identifier (will be validated for security)
+/// * `connect_token` - Authentication token from x-connect-token header (required)
+/// 
+/// # Errors
+/// Returns error if:
+/// - `recording_id` contains invalid characters (security validation)
+/// - `connect_token` is None (authentication required)
+/// - CQA service health check fails
+/// - Recording directory not found
+/// - Network or processing errors occur
 pub async fn process_recording(app: &AppHandle, recording_id: &str, connect_token: Option<String>) -> Result<(), String> {
     // Validate recording ID to prevent path traversal attacks
     validate_id(recording_id)?;
