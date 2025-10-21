@@ -15,6 +15,9 @@ class AgentLauncher {
   bool _starting = false;
   final ProcessManager _processManager = const LocalProcessManager();
   String? _cachedRepoRoot;
+  
+  // File permission bits: owner execute (0x40) + group execute (0x8) + other execute (0x1)
+  static const int _executePermissionMask = 0x49;
 
   /// Ensures the Tauri agent is running. If not, attempts to start it.
   Future<void> ensureStarted() async {
@@ -40,7 +43,7 @@ class AgentLauncher {
       // Ensure the agent binary is executable
       final executableFile = File(executable);
       final stat = executableFile.statSync();
-      if ((stat.mode & 0x49) == 0) { // Check execute permissions (owner + group + other)
+      if ((stat.mode & _executePermissionMask) == 0) {
         debugPrint('Making agent executable: $executable');
         await Process.run('chmod', ['+x', executable]);
       }

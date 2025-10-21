@@ -12,6 +12,7 @@ class HeartbeatMonitor {
 
   Timer? _flutterHeartbeatTimer;
   String? _flutterHeartbeatPath;
+  static String? _cachedHeartbeatBasePath;
 
   /// Start Flutter heartbeat writer for agent to monitor
   /// Agent will monitor this file and exit if it gets stale
@@ -57,16 +58,23 @@ class HeartbeatMonitor {
       final tempDir = await getTemporaryDirectory();
       return '${tempDir.path}\\clones-flutter-$pid.heartbeat';
     } else {
+      // Use cached path if available
+      if (_cachedHeartbeatBasePath != null) {
+        return '$_cachedHeartbeatBasePath/clones-flutter-$pid.heartbeat';
+      }
+
       // Try /tmp first (works in production), fallback to app temp dir (works in debug sandbox)
-      final tmpPath = '/tmp/clones-flutter-$pid.heartbeat';
+      const tmpPath = '/tmp';
       try {
-        final tmpFile = File(tmpPath);
+        final tmpFile = File('$tmpPath/clones-flutter-test-$pid');
         await tmpFile.writeAsString('test');
         await tmpFile.delete();
-        return tmpPath;
+        _cachedHeartbeatBasePath = tmpPath;
+        return '$tmpPath/clones-flutter-$pid.heartbeat';
       } catch (e) {
         // Fall back to app temp directory for sandboxed debug mode
         final tempDir = await getTemporaryDirectory();
+        _cachedHeartbeatBasePath = tempDir.path;
         return '${tempDir.path}/clones-flutter-$pid.heartbeat';
       }
     }
@@ -92,16 +100,23 @@ class HeartbeatMonitor {
       final tempDir = await getTemporaryDirectory();
       return '${tempDir.path}\\clones-flutter-$pid.heartbeat';
     } else {
+      // Use cached path if available
+      if (_cachedHeartbeatBasePath != null) {
+        return '$_cachedHeartbeatBasePath/clones-flutter-$pid.heartbeat';
+      }
+
       // Try /tmp first (works in production), fallback to app temp dir (works in debug sandbox)
-      final tmpPath = '/tmp/clones-flutter-$pid.heartbeat';
+      const tmpPath = '/tmp';
       try {
-        final tmpFile = File(tmpPath);
+        final tmpFile = File('$tmpPath/clones-flutter-test-$pid');
         await tmpFile.writeAsString('test');
         await tmpFile.delete();
-        return tmpPath;
+        _cachedHeartbeatBasePath = tmpPath;
+        return '$tmpPath/clones-flutter-$pid.heartbeat';
       } catch (e) {
         // Fall back to app temp directory for sandboxed debug mode
         final tempDir = await getTemporaryDirectory();
+        _cachedHeartbeatBasePath = tempDir.path;
         return '${tempDir.path}/clones-flutter-$pid.heartbeat';
       }
     }
