@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
@@ -66,9 +67,21 @@ class HeartbeatMonitor {
       // Try /tmp first (works in production), fallback to app temp dir (works in debug sandbox)
       const tmpPath = '/tmp';
       try {
-        final tmpFile = File('$tmpPath/clones-flutter-test-$pid');
+        // Use random suffix to avoid conflicts and cleanup issues
+        final random = Random().nextInt(1000000);
+        final testFileName = 'clones-flutter-test-$random';
+        final tmpFile = File('$tmpPath/$testFileName');
+        
         await tmpFile.writeAsString('test');
-        await tmpFile.delete();
+        
+        // Ensure cleanup even if deletion fails
+        try {
+          await tmpFile.delete();
+        } catch (deleteError) {
+          debugPrint('Warning: Failed to delete test file $testFileName: $deleteError');
+          // Continue anyway - the important test (write access) succeeded
+        }
+        
         _cachedHeartbeatBasePath = tmpPath;
         return '$tmpPath/clones-flutter-$pid.heartbeat';
       } catch (e) {
@@ -108,9 +121,21 @@ class HeartbeatMonitor {
       // Try /tmp first (works in production), fallback to app temp dir (works in debug sandbox)
       const tmpPath = '/tmp';
       try {
-        final tmpFile = File('$tmpPath/clones-flutter-test-$pid');
+        // Use random suffix to avoid conflicts and cleanup issues
+        final random = Random().nextInt(1000000);
+        final testFileName = 'clones-flutter-test-$random';
+        final tmpFile = File('$tmpPath/$testFileName');
+        
         await tmpFile.writeAsString('test');
-        await tmpFile.delete();
+        
+        // Ensure cleanup even if deletion fails
+        try {
+          await tmpFile.delete();
+        } catch (deleteError) {
+          debugPrint('Warning: Failed to delete test file $testFileName: $deleteError');
+          // Continue anyway - the important test (write access) succeeded
+        }
+        
         _cachedHeartbeatBasePath = tmpPath;
         return '$tmpPath/clones-flutter-$pid.heartbeat';
       } catch (e) {
