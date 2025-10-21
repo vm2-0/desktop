@@ -103,9 +103,9 @@ pub async fn get_recording_file(
 /// * `Ok(())` if processing succeeded.
 /// * `Err` if processing failed.
 #[tauri::command]
-pub async fn process_recording(app: AppHandle, recording_id: String, connect_token: Option<String>) -> Result<(), String> {
+pub async fn process_recording(app: AppHandle, recording_id: String, connect_token: Option<String>, backend_url: String) -> Result<(), String> {
     validate_id(&recording_id)?;
-    record::process_recording(app, recording_id, connect_token).await
+    record::process_recording(app, recording_id, connect_token, backend_url).await
 }
 
 /// Writes content to a file at the given path.

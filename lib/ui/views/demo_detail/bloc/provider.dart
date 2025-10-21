@@ -13,6 +13,7 @@ import 'package:clones_desktop/domain/models/recording/recording_event.dart';
 import 'package:clones_desktop/domain/models/video_clip.dart';
 import 'package:clones_desktop/ui/components/video_player/video_source.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/state.dart';
+import 'package:clones_desktop/utils/env.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -587,6 +588,7 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       await ref.read(tauriApiClientProvider).processRecording(
             recordingId,
             connectToken: connectToken,
+            backendUrl: Env.apiBackendUrl,
           );
       debugPrint('[DemoDetail] Backend API processRecording completed');
 

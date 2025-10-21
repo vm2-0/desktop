@@ -144,6 +144,12 @@ pub struct SetWindowResizablePayload {
     resizable: bool,
 }
 
+// Structure for the process_recording query parameters
+#[derive(Deserialize)]
+pub struct ProcessRecordingQuery {
+    backend_url: String,
+}
+
 // Main function to start the server
 pub async fn init(app_handle: AppHandle) {
     let state = AppState { app_handle };
@@ -494,6 +500,7 @@ async fn check_tools_handler() -> Result<impl IntoResponse, (StatusCode, String)
 async fn process_recording_handler(
     State(state): State<AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
+    Query(query): Query<ProcessRecordingQuery>,
     headers: axum::http::HeaderMap,
 ) -> Result<StatusCode, (StatusCode, String)> {
     // Extract connect token from headers
@@ -502,7 +509,7 @@ async fn process_recording_handler(
         .and_then(|v| v.to_str().ok())
         .map(|s| s.to_string());
     
-    match process_recording(state.app_handle, id, connect_token).await {
+    match process_recording(state.app_handle, id, connect_token, query.backend_url).await {
         Ok(_) => Ok(StatusCode::OK),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }

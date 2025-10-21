@@ -77,8 +77,9 @@ pub struct CQAData {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CQAHealthResponse {
     pub success: bool,
-    pub data: Option<HashMap<String, String>>,
-    pub error: Option<String>,
+    pub data: Option<serde_json::Value>,
+    pub error: Option<serde_json::Value>,
+    pub timestamp: Option<String>,
 }
 
 /// CQA API client
@@ -95,14 +96,19 @@ impl CQAApiClient {
     }
 
     /// Check if the CQA service is healthy
-    pub async fn health_check(&self) -> Result<CQAHealthResponse, String> {
+    pub async fn health_check(&self, connect_token: Option<String>) -> Result<CQAHealthResponse, String> {
         let url = format!("{}/api/v1/forge/recordings/health", self.base_url);
         
         info!("[CQA API] Checking health at: {}", url);
         
-        let response = self
-            .client
-            .get(&url)
+        let mut request = self.client.get(&url);
+        
+        // Add authentication header if available
+        if let Some(token) = connect_token {
+            request = request.header("x-connect-token", token);
+        }
+        
+        let response = request
             .send()
             .await
             .map_err(|e| format!("Failed to connect to CQA service: {}", e))?;
@@ -115,7 +121,13 @@ impl CQAApiClient {
 
         info!("[CQA API] Health check response ({}): {}", status, body);
 
-        serde_json::from_str(&body)
+        // Try to parse the response first to see the actual structure
+        let parsed: serde_json::Value = serde_json::from_str(&body)
+            .map_err(|e| format!("Failed to parse JSON response: {}", e))?;
+            
+        info!("[CQA API] Parsed health response structure: {:#}", parsed);
+
+        serde_json::from_value(parsed)
             .map_err(|e| format!("Failed to parse health response: {}", e))
     }
 
@@ -316,6 +328,7 @@ fn validate_id(id: &str) -> Result<(), String> {
 /// * `app` - Tauri application handle
 /// * `recording_id` - Recording identifier (will be validated for security)
 /// * `connect_token` - Authentication token from x-connect-token header (required)
+/// * `backend_url` - Backend API URL (passed from Flutter to avoid exposing env vars)
 /// 
 /// # Errors
 /// Returns error if:
@@ -324,13 +337,9 @@ fn validate_id(id: &str) -> Result<(), String> {
 /// - CQA service health check fails
 /// - Recording directory not found
 /// - Network or processing errors occur
-pub async fn process_recording(app: &AppHandle, recording_id: &str, connect_token: Option<String>) -> Result<(), String> {
+pub async fn process_recording(app: &AppHandle, recording_id: &str, connect_token: Option<String>, backend_url: String) -> Result<(), String> {
     // Validate recording ID to prevent path traversal attacks
     validate_id(recording_id)?;
-    
-    // Get the backend URL from environment or use default
-    let backend_url = std::env::var("API_BACKEND_URL")
-        .unwrap_or_else(|_| "http://localhost:8001".to_string());
 
     info!("[CQA API] Using backend URL: {}", backend_url);
     
@@ -338,11 +347,13 @@ pub async fn process_recording(app: &AppHandle, recording_id: &str, connect_toke
     let client = CQAApiClient::new(backend_url);
     
     // Check service health first
-    match client.health_check().await {
+    match client.health_check(connect_token.clone()).await {
         Ok(health) => {
             if !health.success {
-                return Err(format!("CQA service is not healthy: {}", 
-                    health.error.unwrap_or_else(|| "Unknown error".to_string())));
+                let error_msg = health.error
+                    .map(|e| e.to_string())
+                    .unwrap_or_else(|| "Unknown error".to_string());
+                return Err(format!("CQA service is not healthy: {}", error_msg));
             }
             info!("[CQA API] Service health check passed");
         }

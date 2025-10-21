@@ -1041,8 +1041,8 @@ pub async fn get_recording_file(
     }
 }
 
-pub async fn process_recording(app: tauri::AppHandle, recording_id: String, connect_token: Option<String>) -> Result<(), String> {
-    crate::services::cqa_api::process_recording(&app, &recording_id, connect_token).await
+pub async fn process_recording(app: tauri::AppHandle, recording_id: String, connect_token: Option<String>, backend_url: String) -> Result<(), String> {
+    crate::services::cqa_api::process_recording(&app, &recording_id, connect_token, backend_url).await
 }
 
 pub async fn write_file(
