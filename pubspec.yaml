@@ -2,7 +2,7 @@ name: clones_desktop
 description: "A desktop application for contributing to the world's largest dataset for multimodal computer-use agents."
 publish_to: 'none'
 
-version: 0.2.33+1
+version: 0.2.35+1
 
 environment:
   sdk: ">=3.6.0 <4.0.0"
@@ -38,6 +38,7 @@ dependencies:
   riverpod_annotation: ^2.6.1
   screen_retriever: ^0.2.0
   shared_preferences: ^2.2.2
+  synchronized: ^3.4.0
   url_launcher: ^6.3.2
   video_player: ^2.10.0
   window_manager: ^0.5.1

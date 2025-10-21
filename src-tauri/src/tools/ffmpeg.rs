@@ -4,6 +4,7 @@
 
 use crate::core::archive;
 use crate::utils::downloader::download_file;
+use crate::utils::heartbeat;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -461,6 +462,8 @@ pub struct FFmpegRecorder {
     input_device: Option<String>,
     /// Signal that FFmpeg is ready and capturing frames
     pub ready_signal: Arc<AtomicBool>,
+    /// Heartbeat monitor with proper lifecycle
+    heartbeat_monitor: Option<heartbeat::ThreadHeartbeatMonitor>,
 }
 
 // #[cfg(not(target_os = "macos"))]
@@ -503,6 +506,7 @@ impl FFmpegRecorder {
             input_format: Some(input_format),
             input_device: Some(input_device),
             ready_signal: Arc::new(AtomicBool::new(false)),
+            heartbeat_monitor: None,
         }
     }
 
@@ -737,6 +741,10 @@ impl FFmpegRecorder {
                 }
 
                 self.process = Some(process);
+                
+                // Start heartbeat monitor for FFmpeg
+                self.heartbeat_monitor = Some(heartbeat::ThreadHeartbeatMonitor::new("FFmpeg"));
+                
                 Ok(())
             }
             Err(e) => {
@@ -752,6 +760,10 @@ impl FFmpegRecorder {
     /// * `Ok(())` if recording stopped successfully.
     /// * `Err` if the process could not be stopped.
     pub fn stop(&mut self) -> Result<(), String> {
+        // Stop heartbeat monitor first to prevent self-kill during shutdown
+        if let Some(mut monitor) = self.heartbeat_monitor.take() {
+            monitor.stop();
+        }
         log::info!("[FFmpeg] Stopping recording");
         if let Some(mut process) = self.process.take() {
             // Send 'q' to FFmpeg to stop recording gracefully
@@ -852,6 +864,11 @@ impl FFmpegRecorder {
     /// Force kill the recording process immediately (no grace period).
     /// Use for emergency shutdown paths (app crash, parent death, lifeline EOF).
     pub fn force_kill(&mut self) {
+        // Stop heartbeat monitor first
+        if let Some(mut monitor) = self.heartbeat_monitor.take() {
+            monitor.stop();
+        }
+        
         if let Some(mut process) = self.process.take() {
             if let Err(e) = process.kill() {
                 log::error!("[FFmpeg] Failed to force kill process: {}", e);

@@ -14,7 +14,6 @@ use tauri::Listener;
 
 use utils::permissions::{has_ax_perms, has_record_perms, request_ax_perms, request_record_perms};
 use utils::heartbeat;
-use utils::pid_monitor;
 
 use crate::commands::general::{greet, list_apps, take_screenshot};
 use crate::commands::record::{
@@ -133,33 +132,11 @@ pub fn run() {
                 log::info!("[Monitor] Development mode detected - skipping Flutter lifecycle monitoring");
                 log::info!("[Monitor] Agent will run independently until manually stopped");
             } else {
-                // Start hybrid monitoring system in background (production mode only)
+                // Start simple heartbeat monitoring (production mode only)
                 let app_for_monitoring = app.handle().clone();
                 tauri::async_runtime::spawn(async move {
-                    // Try to get Flutter PID for OS-level monitoring
-                    if let Ok(ppid_str) = std::env::var("FLUTTER_PARENT_PID") {
-                        if let Ok(flutter_pid) = ppid_str.parse::<u32>() {
-                            log::info!("[Monitor] Starting hybrid monitoring for Flutter PID: {}", flutter_pid);
-                            
-                            // Start OS-level PID monitor (primary)
-                            let app_for_pid = app_for_monitoring.clone();
-                            tauri::async_runtime::spawn(async move {
-                                pid_monitor::start_parent_process_monitor(flutter_pid, app_for_pid).await;
-                            });
-                            
-                            // Start heartbeat monitor (fallback)
-                            let app_for_heartbeat = app_for_monitoring.clone();
-                            tauri::async_runtime::spawn(async move {
-                                heartbeat::start_flutter_heartbeat_monitor(flutter_pid, app_for_heartbeat).await;
-                            });
-                            
-                            return;
-                        }
-                    }
-                    
-                    // Fallback to heartbeat-only monitoring
-                    log::info!("[Monitor] No Flutter PID provided - using heartbeat-only monitoring");
-                    heartbeat::auto_detect_and_monitor_flutter(app_for_monitoring).await;
+                    log::info!("[Monitor] Starting simple heartbeat monitoring");
+                    heartbeat::start_heartbeat_monitor(app_for_monitoring).await;
                 });
             }
 

@@ -1,190 +1,179 @@
-//! Heartbeat file management for process lifecycle monitoring.
+//! Robust heartbeat monitoring for process lifecycle.
 //!
-//! This module monitors Flutter's heartbeat file. If Flutter stops writing
-//! its heartbeat (because it died or was closed), the agent detects this
-//! and shuts down gracefully.
+//! Monitors a single shared heartbeat file. If Flutter stops writing,
+//! all processes (agent, ffmpeg) auto-kill within 5 seconds.
 
 use std::fs;
 use std::path::PathBuf;
-use std::time::{Duration, SystemTime};
-use tokio::time::{interval, sleep};
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
+use std::thread::{self, JoinHandle};
+use std::time::Duration;
+use tokio::time::interval;
 
+const HEARTBEAT_FILE: &str = "clones-desktop-heartbeat";
+const HEARTBEAT_TIMEOUT_SECS: u64 = 5;
+const MONITOR_INTERVAL_SECS: u64 = 2; // Check every 2s for deterministic timing
 
-/// Get the Flutter heartbeat file path that we should monitor
-/// Returns the path specified by environment variable or default path
-pub fn get_flutter_heartbeat_path(flutter_pid: u32) -> PathBuf {
-    // Check if Flutter provided a specific heartbeat path
-    if let Ok(heartbeat_path) = std::env::var("FLUTTER_HEARTBEAT_PATH") {
-        log::info!("[Heartbeat] Using Flutter-provided heartbeat path: {}", heartbeat_path);
-        return PathBuf::from(heartbeat_path);
+/// Shared heartbeat checker with proper error handling
+pub struct HeartbeatChecker;
+
+impl HeartbeatChecker {
+    pub fn new() -> Self {
+        Self
     }
-    
+
+    /// Check if heartbeat file is fresh (< 5 seconds old)
+    /// Uses system time with proper error handling for clock skew
+    pub fn check_heartbeat(&self, path: &PathBuf) -> bool {
+        match fs::read_to_string(path) {
+            Ok(content) => {
+                match content.trim().parse::<u64>() {
+                    Ok(timestamp_ms) => {
+                        // Get current time with fallback for clock issues
+                        let now_ms = match std::time::SystemTime::now()
+                            .duration_since(std::time::UNIX_EPOCH)
+                        {
+                            Ok(duration) => duration.as_millis() as u64,
+                            Err(_) => {
+                                log::warn!("[Heartbeat] System clock went backwards - assuming heartbeat failed");
+                                return false;
+                            }
+                        };
+
+                        // Handle both forward and backward time skew
+                        let age_ms = if now_ms >= timestamp_ms {
+                            now_ms - timestamp_ms
+                        } else {
+                            // Clock went backwards, file is "in the future"
+                            log::warn!(
+                                "[Heartbeat] Clock skew detected - file timestamp in future"
+                            );
+                            return false;
+                        };
+
+                        let age_secs = age_ms / 1000;
+
+                        if age_secs > HEARTBEAT_TIMEOUT_SECS {
+                            log::warn!("[Heartbeat] Heartbeat too old: {}s", age_secs);
+                            false
+                        } else {
+                            log::debug!("[Heartbeat] Heartbeat OK (age: {}s)", age_secs);
+                            true
+                        }
+                    }
+                    Err(e) => {
+                        log::warn!("[Heartbeat] Invalid timestamp format: {}", e);
+                        false
+                    }
+                }
+            }
+            Err(_) => {
+                log::warn!("[Heartbeat] Heartbeat file missing: {}", path.display());
+                false
+            }
+        }
+    }
+}
+
+/// Get the shared heartbeat file path with consistent logic
+pub fn get_heartbeat_path() -> PathBuf {
     #[cfg(target_os = "windows")]
     {
-        let temp_dir = std::env::temp_dir();
-        temp_dir.join(format!("clones-flutter-{}.heartbeat", flutter_pid))
+        let temp_dir = std::env::var("TEMP")
+            .or_else(|_| std::env::var("TMP"))
+            .unwrap_or_else(|_| "C:\\temp".to_string());
+        PathBuf::from(format!("{}\\{}", temp_dir, HEARTBEAT_FILE))
     }
-    
+
     #[cfg(not(target_os = "windows"))]
     {
-        let tmp_path = PathBuf::from(format!("/tmp/clones-flutter-{}.heartbeat", flutter_pid));
-        if tmp_path.exists() {
-            return tmp_path;
-        }
-        
-        // Fallback to system temp dir (for debug sandbox mode)
-        let temp_dir = std::env::temp_dir();
-        let temp_path = temp_dir.join(format!("clones-flutter-{}.heartbeat", flutter_pid));
-        if temp_path.exists() {
-            return temp_path;
-        }
-        
-        // Default to /tmp path (will be created there in production)
-        tmp_path
+        PathBuf::from(format!("/tmp/{}", HEARTBEAT_FILE))
     }
 }
 
-/// Start monitoring Flutter's heartbeat file
-pub async fn start_flutter_heartbeat_monitor(flutter_pid: u32, app: tauri::AppHandle) {
-    let flutter_heartbeat_path = get_flutter_heartbeat_path(flutter_pid);
-    
-    log::info!("[Heartbeat] Starting Flutter heartbeat monitor at: {}", flutter_heartbeat_path.display());
+/// Start monitoring the shared heartbeat file (Agent version)
+pub async fn start_heartbeat_monitor(app: tauri::AppHandle) {
+    let heartbeat_path = get_heartbeat_path();
+    let checker = HeartbeatChecker::new();
 
-    tauri::async_runtime::spawn(async move {
-        let mut check_interval = interval(Duration::from_secs(2));
-        
-        // Wait a bit for Flutter to create its heartbeat file
-        sleep(Duration::from_secs(3)).await;
-        
-        loop {
-            check_interval.tick().await;
-            
-            if !check_flutter_heartbeat(&flutter_heartbeat_path) {
-                log::info!("[Heartbeat] Flutter heartbeat failed - shutting down agent");
-                
-                // Cleanup any active recording
-                crate::core::record::force_kill_active_recorder(&app);
-                
-                // Force exit - guaranteed kill
-                std::process::exit(0);
-            }
-        }
-    });
-}
+    log::info!(
+        "[Heartbeat] Starting agent heartbeat monitor at: {}",
+        heartbeat_path.display()
+    );
 
+    let mut check_interval = interval(Duration::from_secs(MONITOR_INTERVAL_SECS));
 
-/// Check if Flutter's heartbeat file exists and is recent
-fn check_flutter_heartbeat(path: &PathBuf) -> bool {
-    match fs::metadata(path) {
-        Ok(metadata) => {
-            match metadata.modified() {
-                Ok(modified_time) => {
-                    let now = SystemTime::now();
-                    match now.duration_since(modified_time) {
-                        Ok(age) => {
-                            // Consider Flutter dead if heartbeat is older than 5 seconds
-                            if age.as_secs() > 5 {
-                                log::warn!("[Heartbeat] Flutter heartbeat too old: {:?}", age);
-                                false
-                            } else {
-                                log::debug!("[Heartbeat] Flutter heartbeat OK (age: {:?})", age);
-                                true
-                            }
-                        }
-                        Err(e) => {
-                            log::warn!("[Heartbeat] Time calculation error: {}", e);
-                            false
-                        }
-                    }
-                }
-                Err(e) => {
-                    log::warn!("[Heartbeat] Cannot get heartbeat file modification time: {}", e);
-                    false
-                }
-            }
-        }
-        Err(_) => {
-            log::warn!("[Heartbeat] Flutter heartbeat file missing: {}", path.display());
-            false
+    loop {
+        check_interval.tick().await;
+
+        if !checker.check_heartbeat(&heartbeat_path) {
+            log::info!("[Heartbeat] Flutter heartbeat failed - force killing agent");
+
+            // Force cleanup any active recording
+            crate::core::record::force_kill_active_recorder(&app);
+
+            // Force exit immediately
+            std::process::exit(1);
         }
     }
 }
 
-/// Auto-detect Flutter PID and start monitoring
-pub async fn auto_detect_and_monitor_flutter(app: tauri::AppHandle) {
-    // Try to detect Flutter process by looking for common patterns
-    // For now, we'll use a simple approach - check for environment variables or parent process
-    
-    if let Ok(ppid_str) = std::env::var("FLUTTER_PARENT_PID") {
-        if let Ok(flutter_pid) = ppid_str.parse::<u32>() {
-            log::info!("[Heartbeat] Using Flutter PID from environment: {}", flutter_pid);
-            start_flutter_heartbeat_monitor(flutter_pid, app).await;
-            return;
+/// Heartbeat monitor for threads with proper lifecycle management
+pub struct ThreadHeartbeatMonitor {
+    handle: Option<JoinHandle<()>>,
+    should_stop: Arc<AtomicBool>,
+}
+
+impl ThreadHeartbeatMonitor {
+    pub fn new(process_name: &str) -> Self {
+        let heartbeat_path = get_heartbeat_path();
+        let checker = HeartbeatChecker::new();
+        let should_stop = Arc::new(AtomicBool::new(false));
+        let should_stop_clone = should_stop.clone();
+        let process_name = process_name.to_string();
+
+        log::info!(
+            "[Heartbeat] Starting {} heartbeat monitor at: {}",
+            process_name,
+            heartbeat_path.display()
+        );
+
+        let handle = thread::spawn(move || {
+            while !should_stop_clone.load(Ordering::Relaxed) {
+                thread::sleep(Duration::from_secs(MONITOR_INTERVAL_SECS));
+
+                if !checker.check_heartbeat(&heartbeat_path) {
+                    log::warn!(
+                        "[Heartbeat] Flutter heartbeat failed - force killing {}",
+                        process_name
+                    );
+                    std::process::exit(1);
+                }
+            }
+            log::debug!("[Heartbeat] {} monitor thread stopping", process_name);
+        });
+
+        Self {
+            handle: Some(handle),
+            should_stop,
         }
     }
-    
-    // Fallback: try to detect Flutter by process hierarchy
-    log::info!("[Heartbeat] No Flutter PID provided, looking for heartbeat files in /tmp");
-    
-    // Look for any flutter heartbeat files
-    tauri::async_runtime::spawn(async move {
-        let mut check_interval = interval(Duration::from_secs(5));
-        
-        loop {
-            check_interval.tick().await;
-            
-            // Scan for flutter heartbeat files in both /tmp and system temp dir
-            let mut found_active_flutter = false;
-            
-            // Check /tmp first
-            if let Ok(entries) = fs::read_dir("/tmp") {
-                for entry in entries.flatten() {
-                    if let Some(filename) = entry.file_name().to_str() {
-                        if filename.starts_with("clones-flutter-") && filename.ends_with(".heartbeat") {
-                            let path = entry.path();
-                            if check_flutter_heartbeat(&path) {
-                                log::debug!("[Heartbeat] Found active Flutter heartbeat: {}", path.display());
-                                found_active_flutter = true;
-                                break; // Found one active, that's enough
-                            } else {
-                                log::warn!("[Heartbeat] Found stale Flutter heartbeat: {}", path.display());
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Check system temp dir if not found in /tmp (for debug sandbox mode)
-            if !found_active_flutter {
-                let temp_dir = std::env::temp_dir();
-                if let Ok(entries) = fs::read_dir(&temp_dir) {
-                    for entry in entries.flatten() {
-                        if let Some(filename) = entry.file_name().to_str() {
-                            if filename.starts_with("clones-flutter-") && filename.ends_with(".heartbeat") {
-                                let path = entry.path();
-                                if check_flutter_heartbeat(&path) {
-                                    log::debug!("[Heartbeat] Found active Flutter heartbeat in temp dir: {}", path.display());
-                                    found_active_flutter = true;
-                                    break; // Found one active, that's enough
-                                } else {
-                                    log::warn!("[Heartbeat] Found stale Flutter heartbeat in temp dir: {}", path.display());
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // If no active Flutter heartbeat found, we are orphaned
-            if !found_active_flutter {
-                log::warn!("[Heartbeat] No active Flutter heartbeat detected - agent is orphaned, shutting down");
-                
-                // Cleanup any active recording
-                crate::core::record::force_kill_active_recorder(&app);
-                
-                // Force exit - guaranteed kill
-                std::process::exit(0);
+
+    pub fn stop(&mut self) {
+        if let Some(handle) = self.handle.take() {
+            self.should_stop.store(true, Ordering::Relaxed);
+            if let Err(e) = handle.join() {
+                log::warn!("[Heartbeat] Failed to join monitor thread: {:?}", e);
             }
         }
-    });
+    }
+}
+
+impl Drop for ThreadHeartbeatMonitor {
+    fn drop(&mut self) {
+        self.stop();
+    }
 }
