@@ -133,11 +133,8 @@ pub fn run() {
                 log::info!("[Monitor] Agent will run independently until manually stopped");
             } else {
                 // Start simple heartbeat monitoring (production mode only)
-                let app_for_monitoring = app.handle().clone();
-                tauri::async_runtime::spawn(async move {
-                    log::info!("[Monitor] Starting simple heartbeat monitoring");
-                    heartbeat::start_heartbeat_monitor(app_for_monitoring).await;
-                });
+                log::info!("[Monitor] Starting simple heartbeat monitoring with native thread");
+                heartbeat::start_heartbeat_monitor_thread(app.handle().clone());
             }
 
             let app_handle = app.handle();

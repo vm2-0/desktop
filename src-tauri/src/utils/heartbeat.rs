@@ -121,6 +121,33 @@ pub async fn start_heartbeat_monitor(app: tauri::AppHandle) {
     }
 }
 
+/// Start monitoring the shared heartbeat file using native thread (more robust)
+pub fn start_heartbeat_monitor_thread(app: tauri::AppHandle) {
+    let heartbeat_path = get_heartbeat_path();
+    let checker = HeartbeatChecker::new();
+
+    log::info!(
+        "[Heartbeat] Starting agent heartbeat monitor (native thread) at: {}",
+        heartbeat_path.display()
+    );
+
+    std::thread::spawn(move || {
+        loop {
+            std::thread::sleep(Duration::from_secs(MONITOR_INTERVAL_SECS));
+
+            if !checker.check_heartbeat(&heartbeat_path) {
+                log::info!("[Heartbeat] Flutter heartbeat failed - force killing agent");
+
+                // Force cleanup any active recording
+                crate::core::record::force_kill_active_recorder(&app);
+
+                // Force exit immediately
+                std::process::exit(1);
+            }
+        }
+    });
+}
+
 /// Heartbeat monitor for threads with proper lifecycle management
 pub struct ThreadHeartbeatMonitor {
     handle: Option<JoinHandle<()>>,
