@@ -494,8 +494,15 @@ async fn check_tools_handler() -> Result<impl IntoResponse, (StatusCode, String)
 async fn process_recording_handler(
     State(state): State<AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
+    headers: axum::http::HeaderMap,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    match process_recording(state.app_handle, id).await {
+    // Extract connect token from headers
+    let connect_token = headers
+        .get("x-connect-token")
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.to_string());
+    
+    match process_recording(state.app_handle, id, connect_token).await {
         Ok(_) => Ok(StatusCode::OK),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }

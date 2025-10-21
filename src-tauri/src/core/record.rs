@@ -4,7 +4,6 @@
 
 use crate::core::input;
 use crate::tools::axtree;
-use crate::tools::cqa;
 use crate::tools::ffmpeg::{init_ffmpeg, FFmpegRecorder, FFMPEG_PATH};
 #[cfg(not(target_os = "macos"))]
 use crate::utils::keyboard_layout;
@@ -1042,8 +1041,8 @@ pub async fn get_recording_file(
     }
 }
 
-pub async fn process_recording(app: tauri::AppHandle, recording_id: String) -> Result<(), String> {
-    cqa::process_recording(&app, &recording_id)
+pub async fn process_recording(app: tauri::AppHandle, recording_id: String, connect_token: Option<String>) -> Result<(), String> {
+    crate::services::cqa_api::process_recording(&app, &recording_id, connect_token).await
 }
 
 pub async fn write_file(

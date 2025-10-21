@@ -4,7 +4,7 @@
 //! AXTree functionality uses local Python scripts and doesn't require initialization.
 
 use crate::tools::helpers::lock_with_timeout;
-use crate::tools::{cqa, ffmpeg};
+use crate::tools::ffmpeg;
 use log::error;
 use serde_json;
 use std::sync::{Arc, Mutex};
@@ -24,8 +24,7 @@ pub async fn init_tools(app: tauri::AppHandle) -> Result<(), String> {
     
     // Check if tools are already initialized
     if ffmpeg::FFMPEG_PATH.get().is_some() && 
-       ffmpeg::FFPROBE_PATH.get().is_some() && 
-       cqa::CQA_PATH.get().is_some() {
+       ffmpeg::FFPROBE_PATH.get().is_some() {
         log::info!("[Init Tools] All tools already initialized, skipping");
         return Ok(());
     }
@@ -66,26 +65,6 @@ async fn init_tools_background(app: tauri::AppHandle) {
         handles.push(handle);
     }
     
-    // Spawn thread for Clones Quality Agent initialization
-    if cqa::CQA_PATH.get().is_none() {
-        let errors = Arc::clone(&errors);
-        let handle = thread::spawn(move || {
-            log::info!("[Init Tools] Initializing Clones Quality Agent");
-            if let Err(e) = cqa::init_cqa() {
-                let lock = lock_with_timeout(&errors, std::time::Duration::from_secs(2));
-                if let Some(mut errors) = lock {
-                    errors.push(format!("Failed to initialize Clones Quality Agent: {}", e));
-                } else {
-                    log::error!(
-                        "[Init Tools] Could not acquire error lock for Clones Quality Agent"
-                    );
-                }
-            } else {
-                log::info!("[Init Tools] Clones Quality Agent initialized successfully");
-            }
-        });
-        handles.push(handle);
-    }
 
     // Wait for all threads to complete with timeout
     log::info!("[Init Tools] Waiting for {} initialization threads", handles.len());
@@ -131,7 +110,6 @@ pub async fn check_tools() -> Result<serde_json::Value, String> {
     // Return the status of each tool
     Ok(serde_json::json!({
         "ffmpeg": ffmpeg::FFMPEG_PATH.get().is_some(),
-        "ffprobe": ffmpeg::FFPROBE_PATH.get().is_some(),
-        "cqa": cqa::CQA_PATH.get().is_some()
+        "ffprobe": ffmpeg::FFPROBE_PATH.get().is_some()
     }))
 }

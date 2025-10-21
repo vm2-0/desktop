@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:clones_desktop/application/recording.dart';
+import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/application/submissions.dart';
 import 'package:clones_desktop/application/tauri_api.dart';
 import 'package:clones_desktop/application/upload/provider.dart';
@@ -573,14 +574,30 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     final recordingId = state.recording?.id;
     if (recordingId == null || state.isProcessing) return;
 
+    debugPrint(
+        '[DemoDetail] Starting processRecording, setting isProcessing = true');
     state = state.copyWith(isProcessing: true);
+
     try {
-      await ref.read(tauriApiClientProvider).processRecording(recordingId);
+      // Get connect token from session
+      final connectToken =
+          ref.read(sessionNotifierProvider.select((s) => s.connectionToken));
+
+      debugPrint('[DemoDetail] Calling backend API processRecording...');
+      await ref.read(tauriApiClientProvider).processRecording(
+            recordingId,
+            connectToken: connectToken,
+          );
+      debugPrint('[DemoDetail] Backend API processRecording completed');
+
       // After processing, we might need to reload some data, e.g., sft.json
       await loadSftData(recordingId);
     } catch (e) {
+      debugPrint('[DemoDetail] processRecording error: $e');
       // TODO(reddwarf03): handle error
     } finally {
+      debugPrint(
+          '[DemoDetail] Finished processRecording, setting isProcessing = false');
       state = state.copyWith(isProcessing: false);
     }
   }
@@ -588,7 +605,7 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
   static const String fullFirstMessage =
       'Now that your demo has been recorded, feel free to edit out anything you find sensitive. You can also trim parts that feel too long, unnecessary, or where mistakes happened. The more polished your demo is, the better your score will be!';
   static const String fullSecondMessage =
-      "Once you're happy with your demo, just click Upload to send it to the Clones Quality Agent for scoring.";
+      "Once you're happy with your demo, just click Analyse demo and then Upload to send it to the Clones Quality Agent for scoring.";
   static const String fullThirdMessage =
       'Your demo is now being uploaded and reviewed by the Clones Quality Agent. This may take a little while...';
 

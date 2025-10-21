@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/application/submissions.dart';
 import 'package:clones_desktop/application/tauri_api.dart';
 import 'package:clones_desktop/application/upload/provider.dart';
@@ -235,14 +236,8 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
       }
     }
 
-    // process the recording after stopping
-    try {
-      await ref
-          .read(tauriApiClientProvider)
-          .processRecording(state.currentRecordingId!);
-    } catch (processError) {
-      debugPrint('Failed to automatically process recording: $processError');
-    }
+    // Recording stopped, processing will be done manually via "Analyse demo" button
+    setRecordingProcessing(false);
   }
 
   Future<void> giveUp() async {

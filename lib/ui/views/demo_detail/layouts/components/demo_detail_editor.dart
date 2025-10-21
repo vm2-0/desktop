@@ -277,7 +277,7 @@ class DemoDetailEditor extends ConsumerWidget {
                   ? 'Loading editor data...'
                   : demoDetail.recording?.location == 'cloud'
                       ? 'Editor data not available for cloud recordings'
-                      : 'No editor data to display.',
+                      : 'Demo not analysed yet.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: ClonesColors.secondaryText,
               ),

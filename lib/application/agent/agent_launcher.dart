@@ -14,6 +14,7 @@ class AgentLauncher {
   Process? _agentProcess;
   bool _starting = false;
   final ProcessManager _processManager = const LocalProcessManager();
+  String? _cachedRepoRoot;
 
   /// Ensures the Tauri agent is running. If not, attempts to start it.
   Future<void> ensureStarted() async {
@@ -36,12 +37,25 @@ class AgentLauncher {
         throw Exception('Tauri agent executable not found');
       }
 
+      // Ensure the agent binary is executable
+      final executableFile = File(executable);
+      final stat = executableFile.statSync();
+      if ((stat.mode & 0x49) == 0) { // Check execute permissions (owner + group + other)
+        debugPrint('Making agent executable: $executable');
+        await Process.run('chmod', ['+x', executable]);
+      }
+
       final flutterPid = pid;
       debugPrint('Flutter PID: $flutterPid');
+      
+      // Get the Flutter heartbeat path that will be used
+      final flutterHeartbeatPath = await HeartbeatMonitor.getFlutterHeartbeatPathForPid(flutterPid);
+      
       final env = <String, String>{
         'PRIMARY_LOGGER': 'true',
         'RUST_LOG': 'info',
         'FLUTTER_PARENT_PID': flutterPid.toString(),
+        'FLUTTER_HEARTBEAT_PATH': flutterHeartbeatPath,
       };
 
       debugPrint('Starting Tauri agent: $executable');
@@ -54,11 +68,33 @@ class AgentLauncher {
       debugPrint('Starting agent with process manager: $executable');
       debugPrint('Working directory: $workingDir');
 
-      _agentProcess = await _processManager.start(
-        [executable],
-        workingDirectory: workingDir,
-        environment: env,
-      );
+      try {
+        _agentProcess = await _processManager.start(
+          [executable],
+          workingDirectory: workingDir,
+          environment: env,
+        );
+      } catch (e) {
+        // Fallback: try starting without ProcessManager for debug builds
+        debugPrint('ProcessManager.start failed ($e), trying Process.start fallback');
+        try {
+          _agentProcess = await Process.start(
+            executable,
+            [],
+            workingDirectory: workingDir,
+            environment: env,
+          );
+        } catch (e2) {
+          // Final fallback: try launching via shell for debug mode
+          debugPrint('Process.start also failed ($e2), trying shell execution');
+          final envVars = env.entries.map((e) => '${e.key}="${e.value}"').join(' ');
+          _agentProcess = await Process.start(
+            'sh',
+            ['-c', '$envVars exec "$executable"'],
+            workingDirectory: workingDir,
+          );
+        }
+      }
 
       final agentPid = _agentProcess!.pid;
       debugPrint('Agent started with PID: $agentPid');
@@ -66,10 +102,8 @@ class AgentLauncher {
       // Start Flutter heartbeat writer (agent will monitor this)
       await HeartbeatMonitor().startFlutterHeartbeat();
 
-      final flutterHeartbeatPath =
-          await HeartbeatMonitor.getFlutterHeartbeatPathForPid(flutterPid);
       debugPrint(
-          'Flutter heartbeat file for agent to monitor: $flutterHeartbeatPath');
+          'Flutter heartbeat file for agent to monitor: $flutterHeartbeatPath',);
 
       // Drain streams to prevent blocking
       _agentProcess!.stdout.listen((_) {}, onError: (_) {});
@@ -190,12 +224,20 @@ class AgentLauncher {
   }
 
   String? _findRepoRoot() {
+    // Return cached result if available
+    if (_cachedRepoRoot != null) {
+      return _cachedRepoRoot;
+    }
+
     // First try from current working directory
     final current = Directory.current;
     debugPrint('Starting repo root search from current dir: ${current.path}');
 
     var foundRoot = _searchUpForRepoMarkers(current);
-    if (foundRoot != null) return foundRoot;
+    if (foundRoot != null) {
+      _cachedRepoRoot = foundRoot;
+      return foundRoot;
+    }
 
     // If not found from current dir, try from the executable's location
     // This handles cases where the app is launched from a different working directory
@@ -205,7 +247,10 @@ class AgentLauncher {
         'Trying repo root search from executable dir: ${executableDir.path}',
       );
       foundRoot = _searchUpForRepoMarkers(executableDir);
-      if (foundRoot != null) return foundRoot;
+      if (foundRoot != null) {
+        _cachedRepoRoot = foundRoot;
+        return foundRoot;
+      }
     }
 
     debugPrint('No repo root found');
