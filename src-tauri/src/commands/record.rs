@@ -219,22 +219,69 @@ pub async fn get_current_demonstration() -> Result<Option<Demonstration>, String
 }
 
 fn validate_id(id: &str) -> Result<(), String> {
-    if id.trim().is_empty() {
+    let trimmed = id.trim();
+    
+    if trimmed.is_empty() {
         return Err("Recording ID cannot be empty".to_string());
     }
-    if id.contains("..") || id.contains('/') || id.contains('\\') {
-        return Err("Invalid recording ID (path traversal detected)".to_string());
+    
+    // Enforce reasonable length limits
+    if trimmed.len() > 100 {
+        return Err("Recording ID too long (max 100 characters)".to_string());
     }
+    
+    // Whitelist approach: only allow safe characters
+    // Allow: alphanumeric, hyphens, underscores, and periods (but not consecutive periods)
+    for c in trimmed.chars() {
+        if !c.is_ascii_alphanumeric() && c != '-' && c != '_' && c != '.' {
+            return Err(format!("Recording ID contains invalid character: '{}'", c));
+        }
+    }
+    
+    // Prevent consecutive periods (could be used for path traversal)
+    if trimmed.contains("..") {
+        return Err("Recording ID cannot contain consecutive periods".to_string());
+    }
+    
+    // Prevent starting or ending with periods (potential filesystem issues)
+    if trimmed.starts_with('.') || trimmed.ends_with('.') {
+        return Err("Recording ID cannot start or end with a period".to_string());
+    }
+    
     Ok(())
 }
 
 fn validate_filename(filename: &str) -> Result<(), String> {
-    if filename.trim().is_empty() {
+    let trimmed = filename.trim();
+    
+    if trimmed.is_empty() {
         return Err("Filename cannot be empty".to_string());
     }
-    if filename.contains("..") || filename.contains('/') || filename.contains('\\') {
-        return Err("Invalid filename (path traversal detected)".to_string());
+    
+    // Enforce reasonable length limits
+    if trimmed.len() > 255 {
+        return Err("Filename too long (max 255 characters)".to_string());
     }
+    
+    // Whitelist approach: only allow safe characters for filenames
+    // Allow: alphanumeric, hyphens, underscores, periods, and spaces
+    for c in trimmed.chars() {
+        if !c.is_ascii_alphanumeric() && c != '-' && c != '_' && c != '.' && c != ' ' {
+            return Err(format!("Filename contains invalid character: '{}'", c));
+        }
+    }
+    
+    // Prevent consecutive periods (could be used for path traversal)
+    if trimmed.contains("..") {
+        return Err("Filename cannot contain consecutive periods".to_string());
+    }
+    
+    // Prevent starting or ending with periods or spaces (filesystem issues)
+    if trimmed.starts_with('.') || trimmed.ends_with('.') || 
+       trimmed.starts_with(' ') || trimmed.ends_with(' ') {
+        return Err("Filename cannot start or end with periods or spaces".to_string());
+    }
+    
     Ok(())
 }
 
