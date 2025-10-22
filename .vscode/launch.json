@@ -5,27 +5,6 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "[Agent] Tauri Backend - Dev",
-      "type": "node-terminal",
-      "request": "launch",
-      "command": "cd ${workspaceFolder}/src-tauri && PRIMARY_LOGGER=true RUST_LOG=debug cargo run",
-      "cwd": "${workspaceFolder}/src-tauri"
-    },
-    {
-      "name": "[Agent] Tauri Backend - Test",
-      "type": "node-terminal",
-      "request": "launch",
-      "command": "cd ${workspaceFolder}/src-tauri && PRIMARY_LOGGER=true RUST_LOG=debug TAURI_CONFIG_PATH=tauri.conf.test.json cargo run",
-      "cwd": "${workspaceFolder}/src-tauri"
-    },
-    {
-      "name": "[Agent] Tauri Backend - Prod",
-      "type": "node-terminal",
-      "request": "launch",
-      "command": "cd ${workspaceFolder}/src-tauri && PRIMARY_LOGGER=true RUST_LOG=debug TAURI_CONFIG_PATH=tauri.conf.prod.json cargo run",
-      "cwd": "${workspaceFolder}/src-tauri"
-    },
-    {
       "name": "[UI] Flutter macOS",
       "request": "launch",
       "type": "dart",
@@ -44,51 +23,6 @@
         "-d",
         "windows"
       ]
-    },
-    {
-      "name": "Flutter Web (Development)",
-      "request": "launch",
-      "type": "dart",
-      "program": "lib/main.dart",
-      "args": [
-        "-d",
-        "web-server",
-        "--web-port",
-        "3000"
-      ]
-    },
-    {
-      "name": "Tauri Development",
-      "type": "node-terminal",
-      "request": "launch",
-      "command": "cargo tauri dev",
-      "cwd": "${workspaceFolder}/src-tauri"
-    }
-  ],
-  "compounds": [
-    {
-      "name": "[COMPOUND] Dev: Flutter UI + Tauri Agent",
-      "configurations": [
-        "[Agent] Tauri Backend - Dev",
-        "[UI] Flutter macOS"
-      ],
-      "stopAll": true
-    },
-    {
-      "name": "[COMPOUND] Test: Flutter UI + Tauri Agent",
-      "configurations": [
-        "[Agent] Tauri Backend - Test",
-        "[UI] Flutter macOS"
-      ],
-      "stopAll": true
-    },
-    {
-      "name": "[NEW] Flutter Web + Tauri Development",
-      "configurations": [
-        "Flutter Web (Development)",
-        "Tauri Development"
-      ],
-      "stopAll": true
     }
   ]
 }
