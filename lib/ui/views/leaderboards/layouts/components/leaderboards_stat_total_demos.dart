@@ -38,7 +38,7 @@ class LeaderboardsStatTotalDemos extends ConsumerWidget {
             ),
             const SizedBox(height: 5),
             Text(
-              'Demonstrations',
+              'Farmers',
               style: theme.textTheme.bodySmall,
             ),
           ],
