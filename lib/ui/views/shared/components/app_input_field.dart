@@ -1,4 +1,6 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:clones_desktop/assets.dart';
+import 'package:clones_desktop/utils/fav_tools.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -94,10 +96,12 @@ class _AppInputFieldState extends State<AppInputField> {
                       height: 20,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(16),
-                        child: Image.network(
-                          'http://127.0.0.1:19847/proxy-image?url=${Uri.encodeComponent('https://www.google.com/s2/favicons?domain=${widget.iconUrl}&sz=32')}',
-                          errorBuilder: (context, error, stackTrace) => Icon(
-                            Icons.apps,
+                        child: CachedNetworkImage(
+                          imageUrl: getFaviconUrl(widget.iconUrl),
+                          placeholder: (context, url) =>
+                              const CircularProgressIndicator(),
+                          errorWidget: (_, __, ___) => Icon(
+                            Icons.web,
                             size: 16,
                             color: ClonesColors.secondaryText,
                           ),

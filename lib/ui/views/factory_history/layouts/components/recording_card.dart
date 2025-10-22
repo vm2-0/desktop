@@ -79,7 +79,7 @@ class RecordingCard extends ConsumerWidget {
               imageUrl: iconUrl,
               width: 32,
               height: 32,
-              placeholder: (context, url) => CircularProgressIndicator(),
+              placeholder: (context, url) => const CircularProgressIndicator(),
               errorWidget: (_, __, ___) => const Icon(
                 Icons.apps,
                 color: ClonesColors.primaryText,

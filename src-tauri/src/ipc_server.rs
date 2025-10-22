@@ -32,17 +32,10 @@ use crate::commands::transaction::{
     get_transaction_request, handle_transaction_callback, list_pending_transactions,
     prepare_transaction_request, update_transaction_status, TransactionRequest, TransactionStatus,
 };
-// Import functions from `utils/windows`
-use crate::utils::windows::{
-    get_all_displays_size, get_window_size, resize_window, set_window_position,
-    set_window_resizable, ResizeWindowPayload, SetWindowAlignmentPayload,
-};
 // Import functions from `utils/platform`
 use crate::utils::platform::get_platform;
 // Import functions from `utils/url`
 use crate::utils::url::{open_external_url, OpenUrlPayload};
-// Import functions from `utils/proxy`
-use crate::utils::proxy::{proxy_image, ProxyImageQuery};
 // Import our new DeepLinkState
 use crate::DeepLinkState;
 
@@ -138,12 +131,6 @@ pub struct TransactionCallbackPayload {
     transaction_type: String,
 }
 
-// Structure for the `set_window_resizable` payload
-#[derive(Deserialize)]
-pub struct SetWindowResizablePayload {
-    resizable: bool,
-}
-
 // Structure for the process_recording query parameters
 #[derive(Deserialize)]
 pub struct ProcessRecordingQuery {
@@ -229,18 +216,6 @@ pub async fn init(app_handle: AppHandle) {
         .route("/open-url", post(open_external_url_handler))
         // GET /platform: Get the platform of the current system.
         .route("/platform", get(get_platform_handler))
-        // GET /proxy-image: Proxy an image from the internet.
-        .route("/proxy-image", get(proxy_image_handler))
-        // POST /resize-window: Resize the window.
-        .route("/window/resize", post(resize_window_handler))
-        // GET /window/size: Get the size of the window.
-        .route("/window/size", get(get_window_size_handler))
-        // POST /window/position: Set the position of the window.
-        .route("/window/position", post(set_window_position_handler))
-        // POST /window/resizable: Set the resizability of the window.
-        .route("/window/resizable", post(set_window_resizable_handler))
-        // GET /displays/size: Get the size of all displays.
-        .route("/displays/size", get(get_all_displays_size_handler))
         // Transaction endpoints
         // GET /transaction/session: Generate a new session token
         .route("/transaction/session", get(generate_session_token_handler))
@@ -395,11 +370,15 @@ async fn create_recording_zip_handler(
             let mut headers = axum::http::HeaderMap::new();
             headers.insert(
                 axum::http::header::CONTENT_TYPE,
-                "application/zip".parse().unwrap_or_else(|_| "application/octet-stream".parse().unwrap()),
+                "application/zip"
+                    .parse()
+                    .unwrap_or_else(|_| "application/octet-stream".parse().unwrap()),
             );
             headers.insert(
                 axum::http::header::CONTENT_DISPOSITION,
-                filename.parse().unwrap_or_else(|_| "download.zip".parse().unwrap()),
+                filename
+                    .parse()
+                    .unwrap_or_else(|_| "download.zip".parse().unwrap()),
             );
             Ok((headers, zip_data))
         }
@@ -508,7 +487,7 @@ async fn process_recording_handler(
         .get("x-connect-token")
         .and_then(|v| v.to_str().ok())
         .map(|s| s.to_string());
-    
+
     match process_recording(state.app_handle, id, connect_token, query.backend_url).await {
         Ok(_) => Ok(StatusCode::OK),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
@@ -550,67 +529,6 @@ pub async fn open_external_url_handler(
 // Get the platform of the current system
 pub async fn get_platform_handler(State(_state): State<AppState>) -> String {
     get_platform()
-}
-
-// Handler to proxy an image from the internet
-async fn proxy_image_handler(
-    Query(query): Query<ProxyImageQuery>,
-) -> Result<impl IntoResponse, (StatusCode, String)> {
-    match proxy_image(&query).await {
-        Ok((headers, bytes)) => Ok((headers, bytes)),
-        Err(e) => Err((StatusCode::BAD_REQUEST, e)),
-    }
-}
-
-// Handler to resize the window
-async fn resize_window_handler(
-    State(state): State<AppState>,
-    Json(payload): Json<ResizeWindowPayload>,
-) -> Result<StatusCode, (StatusCode, String)> {
-    match resize_window(&state.app_handle, &payload) {
-        Ok(_) => Ok(StatusCode::OK),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e)),
-    }
-}
-
-// Handler to set the position of the window
-async fn set_window_position_handler(
-    State(state): State<AppState>,
-    Json(payload): Json<SetWindowAlignmentPayload>,
-) -> Result<StatusCode, (StatusCode, String)> {
-    match set_window_position(&state.app_handle, &payload) {
-        Ok(_) => Ok(StatusCode::OK),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e)),
-    }
-}
-
-// Handler to get the size of the window
-pub async fn get_window_size_handler(
-    State(state): State<AppState>,
-) -> Result<impl IntoResponse, (StatusCode, String)> {
-    match get_window_size(&state.app_handle) {
-        Ok(size) => Ok((StatusCode::OK, Json(size))),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e)),
-    }
-}
-
-// Handler to set the resizability of the window
-async fn set_window_resizable_handler(
-    State(state): State<AppState>,
-    Json(payload): Json<SetWindowResizablePayload>,
-) -> Result<StatusCode, (StatusCode, String)> {
-    match set_window_resizable(&state.app_handle, payload.resizable) {
-        Ok(_) => Ok(StatusCode::OK),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e)),
-    }
-}
-
-// Handler to get the size of all displays
-async fn get_all_displays_size_handler() -> Result<impl IntoResponse, (StatusCode, String)> {
-    match get_all_displays_size() {
-        Ok(size) => Ok((StatusCode::OK, Json(size))),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e)),
-    }
 }
 
 // Transaction handlers
@@ -783,11 +701,15 @@ async fn create_filtered_recording_zip_handler(
             let mut headers = axum::http::HeaderMap::new();
             headers.insert(
                 axum::http::header::CONTENT_TYPE,
-                "application/zip".parse().unwrap_or_else(|_| "application/octet-stream".parse().unwrap()),
+                "application/zip"
+                    .parse()
+                    .unwrap_or_else(|_| "application/octet-stream".parse().unwrap()),
             );
             headers.insert(
                 axum::http::header::CONTENT_DISPOSITION,
-                filename.parse().unwrap_or_else(|_| "download.zip".parse().unwrap()),
+                filename
+                    .parse()
+                    .unwrap_or_else(|_| "download.zip".parse().unwrap()),
             );
             Ok((headers, zip_data))
         }
