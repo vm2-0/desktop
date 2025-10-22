@@ -21,6 +21,10 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'provider.g.dart';
 
+/// Provider to store the video seek callback
+final videoSeekCallbackProvider =
+    StateProvider<void Function(Duration)?> ((ref) => null);
+
 @riverpod
 class DemoDetailNotifier extends _$DemoDetailNotifier {
   File? _tempVideoFile;
@@ -29,7 +33,6 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
   @override
   DemoDetailState build() {
     ref.onDispose(() {
-      state.videoController?.dispose();
       _typingTimer?.cancel();
       // Clean up temporary file if it exists
       _tempVideoFile?.deleteSync();
@@ -45,7 +48,6 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       eventTypes: {},
       enabledEventTypes: {},
       startTime: 0,
-      videoController: null,
       videoSource: null,
       clips: [],
       selectedClipIds: {},
@@ -88,9 +90,7 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
 
   Future<void> initializeVideoPlayer(String recordingId) async {
     // Clear any existing video state first
-    await state.videoController?.dispose();
     state = state.copyWith(
-      videoController: null,
       videoSource: null,
     );
 
@@ -148,7 +148,6 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
 
     // Force a complete refresh by setting videoSource to null first
     state = state.copyWith(
-      videoController: null,
       videoSource: null,
     );
 
@@ -156,9 +155,13 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     await Future.delayed(const Duration(milliseconds: 100));
 
     state = state.copyWith(
-      videoController: null, // No controller in DemoDetailNotifier
       videoSource: videoSource,
     );
+  }
+
+  /// Store the current video ID for access from other widgets
+  void setCurrentVideoId(String videoId) {
+    state = state.copyWith(currentVideoId: videoId);
   }
 
   Future<void> loadEvents(String recordingId) async {
@@ -576,7 +579,7 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     if (recordingId == null || state.isProcessing) return;
 
     debugPrint(
-        '[DemoDetail] Starting processRecording, setting isProcessing = true');
+        '[DemoDetail] Starting processRecording, setting isProcessing = true',);
     state = state.copyWith(isProcessing: true);
 
     try {
@@ -599,7 +602,7 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       // TODO(reddwarf03): handle error
     } finally {
       debugPrint(
-          '[DemoDetail] Finished processRecording, setting isProcessing = false');
+          '[DemoDetail] Finished processRecording, setting isProcessing = false',);
       state = state.copyWith(isProcessing: false);
     }
   }

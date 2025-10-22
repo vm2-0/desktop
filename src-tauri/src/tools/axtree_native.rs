@@ -695,10 +695,549 @@ mod macos {
 
 #[cfg(target_os = "windows")]
 mod windows {
+    //! Windows UI Automation implementation for accessibility tree extraction.
+    //! 
+    //! This module uses the Windows UI Automation (UIA) API to extract the accessibility
+    //! tree of all visible applications and windows on the system. It provides similar
+    //! functionality to the macOS implementation but uses Windows-specific APIs.
+    //! 
+    //! Key features:
+    //! - Multi-monitor support with display index detection
+    //! - Focused application detection with heuristic fallback
+    //! - System app and screenshot tool filtering
+    //! - Process name resolution for better app identification
+    
     use super::*;
-    pub fn extract_accessibility_tree(_display_index: Option<u32>) -> Result<Value, String> {
+    use std::collections::HashMap;
+    use ::windows::Win32::Foundation::{BOOL, HWND, LPARAM, RECT};
+    use ::windows::Win32::Graphics::Gdi::{EnumDisplayMonitors, HDC, HMONITOR};
+    use ::windows::Win32::UI::Accessibility::{
+        CUIAutomation, IUIAutomation, IUIAutomationElement, UIA_PROPERTY_ID,
+        UIA_IsOffscreenPropertyId, UIA_NamePropertyId,
+    };
+    use ::windows::Win32::UI::WindowsAndMessaging::{
+        GetForegroundWindow, GetWindowRect, GetWindowTextW, GetWindowThreadProcessId,
+        IsWindowVisible,
+    };
+    use ::windows::Win32::System::Com::{
+        CoCreateInstance, CoInitializeEx, CoUninitialize, CLSCTX_ALL, COINIT_MULTITHREADED,
+    };
+
+    /// Monitor information structure
+    #[derive(Clone)]
+    struct MonitorInfo {
+        index: usize,
+        rect: RECT,
+    }
+
+    /// External callback for EnumDisplayMonitors
+    unsafe extern "system" fn monitor_enum_proc(
+        hmonitor: HMONITOR,
+        _hdc: HDC,
+        _lprect: *mut RECT,
+        lparam: LPARAM,
+    ) -> BOOL {
+        let monitors = &mut *(lparam.0 as *mut Vec<MonitorInfo>);
+        let mut info = ::windows::Win32::Graphics::Gdi::MONITORINFO {
+            cbSize: std::mem::size_of::<::windows::Win32::Graphics::Gdi::MONITORINFO>() as u32,
+            ..Default::default()
+        };
+
+        if ::windows::Win32::Graphics::Gdi::GetMonitorInfoW(hmonitor, &mut info).as_bool() {
+            monitors.push(MonitorInfo {
+                index: monitors.len(),
+                rect: info.rcMonitor,
+            });
+        }
+        BOOL::from(true)
+    }
+
+    /// Get all monitors
+    unsafe fn get_monitors() -> Vec<MonitorInfo> {
+        let mut monitors: Vec<MonitorInfo> = Vec::new();
+        let monitors_ptr = &mut monitors as *mut Vec<MonitorInfo>;
+        let _ = EnumDisplayMonitors(
+            HDC::default(),
+            None,
+            Some(monitor_enum_proc),
+            LPARAM(monitors_ptr as isize),
+        );
+        monitors
+    }
+
+    /// Determine which monitor contains the center of a rectangle
+    fn get_display_index_for_rect(rect: &RECT, monitors: &[MonitorInfo]) -> usize {
+        let center_x = (rect.left + rect.right) / 2;
+        let center_y = (rect.top + rect.bottom) / 2;
+
+        for monitor in monitors {
+            if center_x >= monitor.rect.left
+                && center_x < monitor.rect.right
+                && center_y >= monitor.rect.top
+                && center_y < monitor.rect.bottom
+            {
+                return monitor.index;
+            }
+        }
+        0 // Default to first monitor
+    }
+
+    /// Get the name of a window by HWND
+    unsafe fn get_window_title(hwnd: HWND) -> String {
+        let mut buffer = [0u16; 512];
+        let len = GetWindowTextW(hwnd, &mut buffer);
+        if len > 0 {
+            String::from_utf16_lossy(&buffer[..len as usize])
+        } else {
+            String::new()
+        }
+    }
+
+    /// Get process name from PID
+    unsafe fn get_process_name(pid: u32) -> String {
+        use ::windows::Win32::System::Threading::{
+            OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32,
+            PROCESS_QUERY_LIMITED_INFORMATION,
+        };
+
+        let handle = match OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid) {
+            Ok(h) => h,
+            Err(_) => return String::new(),
+        };
+
+        let mut buffer = [0u16; 512];
+        let mut size = buffer.len() as u32;
+        let result = QueryFullProcessImageNameW(handle, PROCESS_NAME_WIN32, ::windows::core::PWSTR(buffer.as_mut_ptr()), &mut size);
+
+        let _ = ::windows::Win32::Foundation::CloseHandle(handle);
+
+        if result.is_ok() && size > 0 {
+            let path = String::from_utf16_lossy(&buffer[..size as usize]);
+            // Extract just the filename
+            path.split('\\').last().unwrap_or("Unknown").to_string()
+        } else {
+            String::new()
+        }
+    }
+
+    /// Check if an app name should be filtered out
+    fn should_filter_app(name: &str) -> bool {
+        let name_lower = name.to_lowercase();
+        
+        // System apps to filter
+        let system_patterns = [
+            "dwm.exe",
+            "explorer.exe",
+            "searchhost.exe",
+            "startmenuexperiencehost.exe",
+            "shellexperiencehost.exe",
+            "textinputhost.exe",
+            "applicationframehost.exe",
+            "systemsettings.exe",
+            "lockapp.exe",
+            "clones",
+            "clones_desktop",
+            "clones-desktop",
+        ];
+
+        // Screenshot/capture apps
+        let screenshot_patterns = [
+            "snippingtool",
+            "snip",
+            "screenshot",
+            "capture",
+            "screencapture",
+        ];
+
+        system_patterns.iter().any(|p| name_lower.contains(p))
+            || screenshot_patterns.iter().any(|p| name_lower.contains(p))
+    }
+
+    /// Get property value as string from UI Automation element
+    unsafe fn get_element_string_property(
+        element: &IUIAutomationElement,
+        property_id: UIA_PROPERTY_ID,
+    ) -> Option<String> {
+        match element.GetCurrentPropertyValue(property_id) {
+            Ok(variant) => {
+                let bstr = variant.Anonymous.Anonymous.Anonymous.bstrVal.clone();
+                Some(bstr.to_string())
+            }
+            Err(_) => None,
+        }
+    }
+
+    /// Get property value as i32 from UI Automation element
+    unsafe fn get_element_i32_property(
+        element: &IUIAutomationElement,
+        property_id: UIA_PROPERTY_ID,
+    ) -> Option<i32> {
+        match element.GetCurrentPropertyValue(property_id) {
+            Ok(variant) => Some(variant.Anonymous.Anonymous.Anonymous.lVal),
+            Err(_) => None,
+        }
+    }
+
+    /// Get property value as bool from UI Automation element
+    unsafe fn get_element_bool_property(
+        element: &IUIAutomationElement,
+        property_id: UIA_PROPERTY_ID,
+    ) -> Option<bool> {
+        match element.GetCurrentPropertyValue(property_id) {
+            Ok(variant) => Some(variant.Anonymous.Anonymous.Anonymous.boolVal.as_bool()),
+            Err(_) => None,
+        }
+    }
+
+    /// Get bounding rectangle from UI Automation element
+    unsafe fn get_element_rect(element: &IUIAutomationElement) -> Option<RECT> {
+        // CurrentBoundingRectangle returns a RECT with left, top, right, bottom
+        element.CurrentBoundingRectangle().ok()
+    }
+
+    /// Extract window data from a UI Automation element
+    unsafe fn extract_window_from_element(
+        element: &IUIAutomationElement,
+        monitors: &[MonitorInfo],
+        display_filter: Option<u32>,
+    ) -> Option<Value> {
+        // Get bounding rectangle
+        let rect = get_element_rect(element)?;
+
+        // Filter tiny windows
+        let width = rect.right - rect.left;
+        let height = rect.bottom - rect.top;
+        if width < 100 || height < 100 {
+            return None;
+        }
+
+        // Check if offscreen
+        if let Some(true) = get_element_bool_property(element, UIA_IsOffscreenPropertyId) {
+            return None;
+        }
+
+        let display_index = get_display_index_for_rect(&rect, monitors);
+
+        // Filter by display if specified
+        if let Some(filter) = display_filter {
+            if display_index as u32 != filter {
+                return None;
+            }
+        }
+
+        let name = get_element_string_property(element, UIA_NamePropertyId)
+            .unwrap_or_else(|| format!("Window on display {}", display_index));
+
+        Some(json!({
+            "name": name,
+            "role": "window",
+            "description": format!("Display {}", display_index),
+            "value": "",
+            "bbox": {
+                "x": rect.left,
+                "y": rect.top,
+                "width": width,
+                "height": height
+            },
+            "display_index": display_index,
+            "children": []
+        }))
+    }
+
+    /// Get focused application info
+    unsafe fn get_focused_app_info() -> Option<Value> {
+        let hwnd = GetForegroundWindow();
+        if hwnd.0 == 0 {
+            return None;
+        }
+
+        if !IsWindowVisible(hwnd).as_bool() {
+            return None;
+        }
+
+        let title = get_window_title(hwnd);
+        let mut pid: u32 = 0;
+        GetWindowThreadProcessId(hwnd, Some(&mut pid));
+        let process_name = get_process_name(pid);
+
+        // Filter out our own app and system apps
+        if should_filter_app(&process_name) || should_filter_app(&title) {
+            info!("[AxTree Native] Skipping focused app: {} ({})", title, process_name);
+            
+            // Try heuristic fallback
+            return get_focused_app_via_heuristics();
+        }
+
+        info!("[AxTree Native] Detected focused app: {} ({})", title, process_name);
+
+        Some(json!({
+            "name": if title.is_empty() { process_name } else { title },
+            "bundle_id": null,
+            "path": null,
+            "pid": pid
+        }))
+    }
+
+    /// Fallback heuristic to find focused app by enumerating visible windows
+    unsafe fn get_focused_app_via_heuristics() -> Option<Value> {
+        use ::windows::Win32::UI::WindowsAndMessaging::{
+            EnumWindows, GetWindow, GW_OWNER,
+        };
+
+        struct EnumData {
+            best_window: HWND,
+            best_area: i32,
+        }
+
+        unsafe extern "system" fn enum_windows_proc(hwnd: HWND, lparam: LPARAM) -> BOOL {
+            let data = &mut *(lparam.0 as *mut EnumData);
+
+            if !IsWindowVisible(hwnd).as_bool() {
+                return BOOL::from(true);
+            }
+
+            // Skip windows with owners (likely dialogs/popups)
+            if GetWindow(hwnd, GW_OWNER).0 != 0 {
+                return BOOL::from(true);
+            }
+
+            let mut rect = RECT::default();
+            if GetWindowRect(hwnd, &mut rect).is_err() {
+                return BOOL::from(true);
+            }
+
+            let width = rect.right - rect.left;
+            let height = rect.bottom - rect.top;
+
+            // Skip tiny windows
+            if width < 200 || height < 200 {
+                return BOOL::from(true);
+            }
+
+            let mut pid: u32 = 0;
+            GetWindowThreadProcessId(hwnd, Some(&mut pid));
+            let process_name = get_process_name(pid);
+
+            // Skip system apps
+            if should_filter_app(&process_name) {
+                return BOOL::from(true);
+            }
+
+            // Find the largest window
+            let area = width * height;
+            if area > data.best_area {
+                data.best_area = area;
+                data.best_window = hwnd;
+            }
+
+            BOOL::from(true)
+        }
+
+        let mut data = EnumData {
+            best_window: HWND(0),
+            best_area: 0,
+        };
+
+        let data_ptr = &mut data as *mut EnumData;
+        let _ = EnumWindows(Some(enum_windows_proc), LPARAM(data_ptr as isize));
+
+        if data.best_window.0 != 0 {
+            let title = get_window_title(data.best_window);
+            let mut pid: u32 = 0;
+            GetWindowThreadProcessId(data.best_window, Some(&mut pid));
+            let process_name = get_process_name(pid);
+
+            info!(
+                "[AxTree Native] ✅ Heuristic detected focused app: {} ({})",
+                title, process_name
+            );
+
+            Some(json!({
+                "name": if title.is_empty() { process_name } else { title },
+                "bundle_id": null,
+                "path": null,
+                "pid": pid
+            }))
+        } else {
+            None
+        }
+    }
+
+    /// Main extraction function
+    pub fn extract_accessibility_tree(display_index: Option<u32>) -> Result<Value, String> {
+        println!(
+            "[DEBUG NATIVE WINDOWS] extract_accessibility_tree(display_index={:?})",
+            display_index
+        );
         info!("[AxTree Native] Starting native Windows UI Automation extraction");
-        Err("Windows native extraction not yet implemented".to_string())
+
+        unsafe {
+            // Initialize COM
+            if let Err(e) = CoInitializeEx(None, COINIT_MULTITHREADED) {
+                // S_FALSE means already initialized, which is OK
+                if e.code().0 != 0x00000001 {
+                    return Err(format!("Failed to initialize COM: {:?}", e));
+                }
+            }
+
+            let start_time = std::time::Instant::now();
+
+            // Create UI Automation instance
+            let automation: IUIAutomation = match CoCreateInstance(&CUIAutomation, None, CLSCTX_ALL)
+            {
+                Ok(a) => a,
+                Err(e) => {
+                    CoUninitialize();
+                    return Err(format!("Failed to create UI Automation instance: {:?}", e));
+                }
+            };
+
+            // Get monitors
+            let monitors = get_monitors();
+            info!("[AxTree Native] Found {} monitors", monitors.len());
+
+            // Get focused app
+            let focused_app = get_focused_app_info();
+
+            // Collect all applications and their windows using direct window enumeration
+            use ::windows::Win32::UI::WindowsAndMessaging::{EnumWindows, GetWindow, GW_OWNER};
+            
+            struct EnumWindowsData {
+                apps_map: HashMap<String, Vec<Value>>,
+                monitors: Vec<MonitorInfo>,
+                display_filter: Option<u32>,
+            }
+
+            unsafe extern "system" fn enum_windows_for_tree(hwnd: HWND, lparam: LPARAM) -> BOOL {
+                let data = &mut *(lparam.0 as *mut EnumWindowsData);
+
+                if !IsWindowVisible(hwnd).as_bool() {
+                    return BOOL::from(true);
+                }
+
+                // Skip windows with owners (dialogs/popups)
+                if GetWindow(hwnd, GW_OWNER).0 != 0 {
+                    return BOOL::from(true);
+                }
+
+                // Get window rect to filter tiny windows
+                let mut rect = RECT::default();
+                if GetWindowRect(hwnd, &mut rect).is_err() {
+                    return BOOL::from(true);
+                }
+
+                let width = rect.right - rect.left;
+                let height = rect.bottom - rect.top;
+
+                if width < 100 || height < 100 {
+                    return BOOL::from(true);
+                }
+
+                // Get process info
+                let mut pid: u32 = 0;
+                GetWindowThreadProcessId(hwnd, Some(&mut pid));
+                let process_name = get_process_name(pid);
+                let window_title = get_window_title(hwnd);
+
+                // Filter system apps
+                if should_filter_app(&process_name) || should_filter_app(&window_title) {
+                    return BOOL::from(true);
+                }
+
+                // Get display index
+                let display_index = get_display_index_for_rect(&rect, &data.monitors);
+
+                // Filter by display if specified
+                if let Some(filter) = data.display_filter {
+                    if display_index as u32 != filter {
+                        return BOOL::from(true);
+                    }
+                }
+
+                // Create window data
+                let window_name = if !window_title.is_empty() {
+                    window_title
+                } else {
+                    format!("Window on display {}", display_index)
+                };
+
+                let window_data = json!({
+                    "name": window_name,
+                    "role": "window",
+                    "description": format!("Display {}", display_index),
+                    "value": "",
+                    "bbox": {
+                        "x": rect.left,
+                        "y": rect.top,
+                        "width": width,
+                        "height": height
+                    },
+                    "display_index": display_index,
+                    "children": []
+                });
+
+                // Group by process name
+                let app_name = if !process_name.is_empty() {
+                    process_name
+                } else {
+                    "Unknown".to_string()
+                };
+
+                data.apps_map
+                    .entry(app_name)
+                    .or_default()
+                    .push(window_data);
+
+                BOOL::from(true)
+            }
+
+            let mut enum_data = EnumWindowsData {
+                apps_map: HashMap::new(),
+                monitors: monitors.clone(),
+                display_filter: display_index,
+            };
+
+            let data_ptr = &mut enum_data as *mut EnumWindowsData;
+            let _ = EnumWindows(Some(enum_windows_for_tree), LPARAM(data_ptr as isize));
+
+            let apps_map = enum_data.apps_map;
+            
+            // We don't need the automation object anymore, release it
+            drop(automation);
+
+            // Build final tree
+            let mut tree = Vec::new();
+            for (app_name, windows) in apps_map {
+                if !windows.is_empty() {
+                    tree.push(json!({
+                        "name": app_name,
+                        "role": "application",
+                        "description": display_index.map(|d| format!("Display {}", d)).unwrap_or_default(),
+                        "value": "",
+                        "bbox": {"x": 0, "y": 0, "width": 0, "height": 0},
+                        "children": windows
+                    }));
+                }
+            }
+
+            CoUninitialize();
+
+            let duration = start_time.elapsed().as_millis();
+            info!(
+                "[AxTree Native] Completed in {}ms via UI Automation, {} apps",
+                duration,
+                tree.len()
+            );
+
+            Ok(json!({
+                "time": chrono::Local::now().timestamp_millis(),
+                "data": {
+                    "duration": duration,
+                    "tree": tree,
+                    "focused_app": focused_app
+                }
+            }))
+        }
     }
 }
 

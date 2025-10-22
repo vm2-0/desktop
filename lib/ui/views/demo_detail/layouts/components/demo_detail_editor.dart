@@ -12,23 +12,22 @@ import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
 import 'package:clones_desktop/utils/format_time.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:video_player/video_player.dart';
 
 // Widget with AutomaticKeepAliveClientMixin to avoid rebuilds on scroll
 class _MessageCard extends StatefulWidget {
   const _MessageCard({
     required this.message,
-    required this.videoController,
     required this.startTime,
     required this.isInDeletedZone,
     required this.messageIndex,
+    this.onSeekToTimestamp,
   });
 
   final SftMessage message;
-  final VideoPlayerController? videoController;
   final int startTime;
   final bool isInDeletedZone;
   final int messageIndex;
+  final void Function(int timestampMs)? onSeekToTimestamp;
 
   @override
   State<_MessageCard> createState() => _MessageCardState();
@@ -81,7 +80,6 @@ class _MessageCardState extends State<_MessageCard>
     super.build(context); // Required for AutomaticKeepAliveClientMixin
 
     final theme = Theme.of(context);
-    final relativeTime = widget.message.timestamp - widget.startTime;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -91,12 +89,13 @@ class _MessageCardState extends State<_MessageCard>
             top: 0,
             left: 0,
             child: GestureDetector(
-              onTap: () {
-                if (widget.videoController != null && widget.startTime > 0) {
-                  widget.videoController!
-                      .seekTo(Duration(milliseconds: relativeTime));
-                }
-              },
+              onTap: widget.onSeekToTimestamp != null
+                  ? () {
+                      final relativeTime =
+                          widget.message.timestamp - widget.startTime;
+                      widget.onSeekToTimestamp!(relativeTime);
+                    }
+                  : null,
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
@@ -236,7 +235,6 @@ class DemoDetailEditor extends ConsumerWidget {
       demoDetailNotifierProvider.select(
         (state) => (
           sftMessages: state.sftMessages,
-          videoController: state.videoController,
           startTime: state.startTime,
           deletedClipsHistory: state.deletedClipsHistory,
           isLoading: state.isLoading,
@@ -245,8 +243,8 @@ class DemoDetailEditor extends ConsumerWidget {
       ),
     );
 
-    final videoController = demoDetail.videoController;
     final startTime = demoDetail.startTime;
+    final videoSeekCallback = ref.watch(videoSeekCallbackProvider);
     final theme = Theme.of(context);
 
     if (isConnected == false) {
@@ -342,11 +340,13 @@ class DemoDetailEditor extends ConsumerWidget {
               final chatItem = combinedData[index];
               return _MessageCard(
                 message: chatItem.item,
-                videoController: videoController,
                 startTime: startTime,
                 isInDeletedZone:
                     messagesInDeletedZones.contains(chatItem.messageIndex),
                 messageIndex: chatItem.messageIndex!,
+                onSeekToTimestamp: videoSeekCallback != null
+                    ? (timestampMs) => videoSeekCallback(Duration(milliseconds: timestampMs))
+                    : null,
               );
             },
           ),

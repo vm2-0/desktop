@@ -1,2 +1,3 @@
-export 'video_player_native.dart'
-    if (dart.library.html) 'video_player_web.dart';
+// Unified video player for desktop platforms (Windows and macOS)
+// Uses media_kit for all platforms
+export 'video_player_unified.dart';

@@ -112,6 +112,8 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
           setState(() {
             _currentVideoId = videoId;
           });
+          // Store videoId in the provider for access from other widgets
+          ref.read(demoDetailNotifierProvider.notifier).setCurrentVideoId(videoId);
         },
       );
       _lastVideoSource = videoSource;

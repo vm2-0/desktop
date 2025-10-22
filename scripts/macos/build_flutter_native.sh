@@ -456,17 +456,6 @@ create_universal_app() {
         return 1
     fi
     
-    # Copy supervisor script
-    local scripts_dir="$universal_app/Contents/Resources/scripts"
-    mkdir -p "$scripts_dir"
-    if [ -f "$ROOT_DIR/scripts/agent_supervisor.sh" ]; then
-        cp "$ROOT_DIR/scripts/agent_supervisor.sh" "$scripts_dir/"
-        chmod +x "$scripts_dir/agent_supervisor.sh"
-        log_success "Agent supervisor script copied"
-    else
-        log_warning "Agent supervisor script not found"
-    fi
-    
     log_success "Universal app bundle created"
 }
 

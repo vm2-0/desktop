@@ -15,7 +15,7 @@ set "ENVIRONMENT=%~1"
 echo 🚀 Clones Desktop - Complete Build ^& Deploy
 echo ===========================================
 
-echo ℹ️ Step 1/2: Building release...
+echo ℹ️ Step 1/3: Building release...
 powershell -ExecutionPolicy Bypass -Command "$env:ENVIRONMENT='%ENVIRONMENT%'; & 'scripts\windows\build_release_local.ps1'"
 
 if errorlevel 1 (
@@ -25,21 +25,34 @@ if errorlevel 1 (
 
 echo ✅ Build completed successfully!
 
-echo ℹ️ Step 2/2: Uploading to Tigris (%ENVIRONMENT%^)...
-call scripts\windows\upload_to_tigris_windows.bat "%ENVIRONMENT%"
+echo ℹ️ Step 2/3: Generating manifests...
+powershell -ExecutionPolicy Bypass -File "scripts\windows\generate_manifest_windows.ps1" -Environment "%ENVIRONMENT%"
+
+if errorlevel 1 (
+    echo ❌ Manifest generation failed, aborting deployment
+    exit /b 1
+)
+
+echo ✅ Manifests generated successfully!
+
+echo ℹ️ Step 3/3: Uploading to Tigris (%ENVIRONMENT%^)...
+call scripts\windows\upload_windows.bat "%ENVIRONMENT%"
 
 if errorlevel 1 (
     echo ❌ Upload failed
     exit /b 1
 )
 
-echo ✅ Complete deployment finished!
-echo ℹ️ Your app is now available for download at:
+echo.
+echo ✅ 🎉 Complete deployment finished!
+echo ℹ️ Your app is now available:
 
 if "%ENVIRONMENT%"=="prod" (
-    echo   🌐 https://releases.clones-ai.com/latest/windows/
+    echo   📱 Downloads: https://releases.clones-ai.com/latest/windows/
+    echo   🔗 Version manifest: https://releases.clones-ai.com/latest/windows/version.json
 ) else if "%ENVIRONMENT%"=="test" (
-    echo   🌐 https://releases-test.clones-ai.com/latest/windows/
+    echo   📱 Downloads: https://releases-test.clones-ai.com/latest/windows/
+    echo   🔗 Version manifest: https://releases-test.clones-ai.com/latest/windows/version.json
 ) else (
     echo   🌐 Unknown environment: %ENVIRONMENT%
 )

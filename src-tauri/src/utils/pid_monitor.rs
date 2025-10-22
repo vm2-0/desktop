@@ -173,21 +173,38 @@ fn check_process_exists(pid: u32) -> bool {
     
     #[cfg(target_os = "windows")]
     {
-        use std::process::Command;
-        match Command::new("tasklist")
-            .args(["/FI", &format!("PID eq {}", pid)])
-            .output() {
-            Ok(output) => {
-                let stdout = String::from_utf8_lossy(&output.stdout);
-                let exists = stdout.contains(&pid.to_string());
-                log::debug!("[PID Monitor] Process {} exists: {}", pid, exists);
-                exists
-            }
+        use windows::Win32::Foundation::{CloseHandle, BOOL};
+        use windows::Win32::System::Threading::{GetExitCodeProcess, OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION};
+
+        // SAFETY: We only request query access and immediately close the handle.
+        let handle = unsafe { OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, BOOL(0), pid) };
+        let handle = match handle {
+            Ok(h) => h,
             Err(e) => {
-                log::warn!("[PID Monitor] Error checking process {}: {}", pid, e);
-                false
+                log::debug!("[PID Monitor] OpenProcess failed for PID {}: {}", pid, e);
+                return false;
             }
+        };
+
+        let mut exit_code: u32 = 0;
+        let result = unsafe { GetExitCodeProcess(handle, &mut exit_code as *mut u32) };
+        // Close handle regardless of GetExitCodeProcess result
+        unsafe { CloseHandle(handle) };
+
+        if let Err(e) = result {
+            log::warn!("[PID Monitor] GetExitCodeProcess failed for PID {}: {}", pid, e);
+            return false;
         }
+
+        // STILL_ACTIVE == 259
+        let still_active = exit_code == 259;
+        log::debug!(
+            "[PID Monitor] Process {} exists: {} (exit_code={})",
+            pid,
+            still_active,
+            exit_code
+        );
+        still_active
     }
     
     #[cfg(target_os = "linux")]

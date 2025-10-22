@@ -57,3 +57,5 @@ vendor/
 sparkle_prod_private.pem
 sparkle_test_private.pem
 releases/
+.claude/settings.local.json
+build_log_*.txt
