@@ -32,6 +32,8 @@
 	<string>NSApplication</string>
 	<key>SUPublicEDKey</key>
 	<string>wAFtsPUOvfOIZ3FzHgJen1GJEtqXbiIV4RNUW3IgbHo=</string>
+	<key>SUFeedURL</key>
+	<string>$(SPARKLE_FEED_URL)</string>
 	<key>com.apple.security.files.downloads.read-write</key>
 	<true/>
 </dict>

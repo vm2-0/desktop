@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:clones_desktop/application/agent/agent_launcher.dart';
@@ -247,29 +248,37 @@ class _ClonesAppState extends ConsumerState<ClonesApp>
 
   Future<void> _initializeSparkleUpdater() async {
     try {
+      developer.log('[Sparkle] Initializing Sparkle updater...', name: 'Sparkle');
       final sparkle = SparkleUpdater();
 
       // Determine appcast URL based on environment
       String appcastUrl;
-      if (const String.fromEnvironment('ENVIRONMENT') == 'prod') {
+      const environment = String.fromEnvironment('ENVIRONMENT', defaultValue: 'dev');
+      developer.log('[Sparkle] Environment: $environment', name: 'Sparkle');
+      
+      if (environment == 'prod') {
         appcastUrl = 'https://releases.clones-ai.com/latest/darwin/appcast.xml';
       } else {
-        appcastUrl =
-            'https://releases-test.clones-ai.com/latest/darwin/appcast.xml';
+        appcastUrl = 'https://releases-test.clones-ai.com/latest/darwin/appcast.xml';
       }
+      
+      developer.log('[Sparkle] Using appcast URL: $appcastUrl', name: 'Sparkle');
 
       await sparkle.initialize(
         appcastUrl: appcastUrl,
         automaticallyChecksForUpdates: true,
-        automaticallyDownloadsUpdates: false, // Let user choose
+        automaticallyDownloadsUpdates: false,
       );
+      
+      developer.log('[Sparkle] Sparkle initialized successfully', name: 'Sparkle');
 
       // Check for updates in background
+      developer.log('[Sparkle] Checking for updates in background...', name: 'Sparkle');
       await sparkle.checkForUpdatesInBackground();
+      developer.log('[Sparkle] Background update check completed', name: 'Sparkle');
 
-      debugPrint('Sparkle updater initialized and checking for updates');
     } catch (e) {
-      debugPrint('Failed to initialize Sparkle updater: $e');
+      developer.log('[Sparkle] Failed to initialize Sparkle updater: $e', name: 'Sparkle', level: 1000);
     }
   }
 

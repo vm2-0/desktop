@@ -2,7 +2,7 @@ name: clones_desktop
 description: "A desktop application for contributing to the world's largest dataset for multimodal computer-use agents."
 publish_to: 'none'
 
-version: 0.2.36+1
+version: 0.2.45+45
 
 environment:
   sdk: ">=3.6.0 <4.0.0"

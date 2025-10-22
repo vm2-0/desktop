@@ -205,7 +205,23 @@ generate_appcast_from_build() {
     echo "$SPARKLE_PRIVATE_KEY" > "/tmp/sparkle_private.pem"
     
     # Use Sparkle's generate_appcast tool (resolved absolute path)
-    "$GEN_APPCAST" --ed-key-file "/tmp/sparkle_private.pem" --download-url-prefix "https://releases${ENVIRONMENT:+-$ENVIRONMENT}.clones-ai.com/latest/darwin/" "$releases_dir"
+    local download_url_prefix
+    case "$ENVIRONMENT" in
+        "prod")
+            download_url_prefix="https://releases.clones-ai.com/latest/darwin/"
+            ;;
+        "test")
+            download_url_prefix="https://releases-test.clones-ai.com/latest/darwin/"
+            ;;
+        *)
+            download_url_prefix="https://releases-${ENVIRONMENT}.clones-ai.com/latest/darwin/"
+            ;;
+    esac
+    
+    # Clean existing appcast to ensure fresh generation
+    rm -f "${releases_dir}/appcast.xml"
+    
+    "$GEN_APPCAST" --ed-key-file "/tmp/sparkle_private.pem" --download-url-prefix "$download_url_prefix" "$releases_dir"
     
     # Clean up temporary key file
     rm "/tmp/sparkle_private.pem"
