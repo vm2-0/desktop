@@ -5,7 +5,6 @@ import 'package:clones_desktop/domain/models/video_clip.dart';
 import 'package:clones_desktop/ui/components/video_player/video_source.dart';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:video_player/video_player.dart';
 
 part 'state.freezed.dart';
 
@@ -21,8 +20,8 @@ class DemoDetailState with _$DemoDetailState {
     @Default({}) Set<String> eventTypes,
     @Default({}) Set<String> enabledEventTypes,
     @Default(0) int startTime,
-    @JsonKey(includeIfNull: false) VideoPlayerController? videoController,
     @JsonKey(includeIfNull: false) VideoSource? videoSource,
+    String? currentVideoId,
     @Default(false) bool showTrainingSessionModal,
 
     // Video editing

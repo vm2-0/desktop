@@ -27,6 +27,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:window_manager/window_manager.dart';
 
 final _router = GoRouter(
@@ -143,6 +144,9 @@ final _router = GoRouter(
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize media_kit for video playback (Windows and macOS)
+  MediaKit.ensureInitialized();
 
   // Initialize window manager for desktop platforms
   if (!kIsWeb && (Platform.isMacOS || Platform.isWindows || Platform.isLinux)) {
@@ -428,7 +432,14 @@ class AppLifecycleManager with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     debugPrint('App lifecycle state changed: $state');
-    if (state == AppLifecycleState.detached && !_cleanupCalled) {
+    // IMPORTANT: On Windows desktop, AppLifecycleState.detached is unreliable
+    // and can be triggered even when the app is still running normally.
+    // Only cleanup on detached for mobile platforms where it's more reliable.
+    // On desktop, rely on the window close handler instead.
+    if (state == AppLifecycleState.detached &&
+        !_cleanupCalled &&
+        !kIsWeb &&
+        (Platform.isIOS || Platform.isAndroid)) {
       debugPrint('App detached - forcing cleanup');
       _forceCleanup();
     }

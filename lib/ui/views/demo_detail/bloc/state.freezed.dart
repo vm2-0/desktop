@@ -24,10 +24,8 @@ mixin _$DemoDetailState {
   Set<String> get enabledEventTypes => throw _privateConstructorUsedError;
   int get startTime => throw _privateConstructorUsedError;
   @JsonKey(includeIfNull: false)
-  VideoPlayerController? get videoController =>
-      throw _privateConstructorUsedError;
-  @JsonKey(includeIfNull: false)
   VideoSource? get videoSource => throw _privateConstructorUsedError;
+  String? get currentVideoId => throw _privateConstructorUsedError;
   bool get showTrainingSessionModal =>
       throw _privateConstructorUsedError; // Video editing
   List<VideoClip> get clips => throw _privateConstructorUsedError;
@@ -81,8 +79,8 @@ abstract class $DemoDetailStateCopyWith<$Res> {
       Set<String> eventTypes,
       Set<String> enabledEventTypes,
       int startTime,
-      @JsonKey(includeIfNull: false) VideoPlayerController? videoController,
       @JsonKey(includeIfNull: false) VideoSource? videoSource,
+      String? currentVideoId,
       bool showTrainingSessionModal,
       List<VideoClip> clips,
       Set<String> selectedClipIds,
@@ -135,8 +133,8 @@ class _$DemoDetailStateCopyWithImpl<$Res, $Val extends DemoDetailState>
     Object? eventTypes = null,
     Object? enabledEventTypes = null,
     Object? startTime = null,
-    Object? videoController = freezed,
     Object? videoSource = freezed,
+    Object? currentVideoId = freezed,
     Object? showTrainingSessionModal = null,
     Object? clips = null,
     Object? selectedClipIds = null,
@@ -191,14 +189,14 @@ class _$DemoDetailStateCopyWithImpl<$Res, $Val extends DemoDetailState>
           ? _value.startTime
           : startTime // ignore: cast_nullable_to_non_nullable
               as int,
-      videoController: freezed == videoController
-          ? _value.videoController
-          : videoController // ignore: cast_nullable_to_non_nullable
-              as VideoPlayerController?,
       videoSource: freezed == videoSource
           ? _value.videoSource
           : videoSource // ignore: cast_nullable_to_non_nullable
               as VideoSource?,
+      currentVideoId: freezed == currentVideoId
+          ? _value.currentVideoId
+          : currentVideoId // ignore: cast_nullable_to_non_nullable
+              as String?,
       showTrainingSessionModal: null == showTrainingSessionModal
           ? _value.showTrainingSessionModal
           : showTrainingSessionModal // ignore: cast_nullable_to_non_nullable
@@ -357,8 +355,8 @@ abstract class _$$DemoDetailStateImplCopyWith<$Res>
       Set<String> eventTypes,
       Set<String> enabledEventTypes,
       int startTime,
-      @JsonKey(includeIfNull: false) VideoPlayerController? videoController,
       @JsonKey(includeIfNull: false) VideoSource? videoSource,
+      String? currentVideoId,
       bool showTrainingSessionModal,
       List<VideoClip> clips,
       Set<String> selectedClipIds,
@@ -412,8 +410,8 @@ class __$$DemoDetailStateImplCopyWithImpl<$Res>
     Object? eventTypes = null,
     Object? enabledEventTypes = null,
     Object? startTime = null,
-    Object? videoController = freezed,
     Object? videoSource = freezed,
+    Object? currentVideoId = freezed,
     Object? showTrainingSessionModal = null,
     Object? clips = null,
     Object? selectedClipIds = null,
@@ -468,14 +466,14 @@ class __$$DemoDetailStateImplCopyWithImpl<$Res>
           ? _value.startTime
           : startTime // ignore: cast_nullable_to_non_nullable
               as int,
-      videoController: freezed == videoController
-          ? _value.videoController
-          : videoController // ignore: cast_nullable_to_non_nullable
-              as VideoPlayerController?,
       videoSource: freezed == videoSource
           ? _value.videoSource
           : videoSource // ignore: cast_nullable_to_non_nullable
               as VideoSource?,
+      currentVideoId: freezed == currentVideoId
+          ? _value.currentVideoId
+          : currentVideoId // ignore: cast_nullable_to_non_nullable
+              as String?,
       showTrainingSessionModal: null == showTrainingSessionModal
           ? _value.showTrainingSessionModal
           : showTrainingSessionModal // ignore: cast_nullable_to_non_nullable
@@ -587,8 +585,8 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
       final Set<String> eventTypes = const {},
       final Set<String> enabledEventTypes = const {},
       this.startTime = 0,
-      @JsonKey(includeIfNull: false) this.videoController,
       @JsonKey(includeIfNull: false) this.videoSource,
+      this.currentVideoId,
       this.showTrainingSessionModal = false,
       final List<VideoClip> clips = const [],
       final Set<String> selectedClipIds = const {},
@@ -671,10 +669,9 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
   final int startTime;
   @override
   @JsonKey(includeIfNull: false)
-  final VideoPlayerController? videoController;
-  @override
-  @JsonKey(includeIfNull: false)
   final VideoSource? videoSource;
+  @override
+  final String? currentVideoId;
   @override
   @JsonKey()
   final bool showTrainingSessionModal;
@@ -787,7 +784,7 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
 
   @override
   String toString() {
-    return 'DemoDetailState(isLoading: $isLoading, recording: $recording, events: $events, sftMessages: $sftMessages, eventTypes: $eventTypes, enabledEventTypes: $enabledEventTypes, startTime: $startTime, videoController: $videoController, videoSource: $videoSource, showTrainingSessionModal: $showTrainingSessionModal, clips: $clips, selectedClipIds: $selectedClipIds, clipboardClip: $clipboardClip, deletedClipsHistory: $deletedClipsHistory, clipSegments: $clipSegments, selectedClipIndexes: $selectedClipIndexes, isProcessing: $isProcessing, isExporting: $isExporting, isUploading: $isUploading, showUploadConfirmModal: $showUploadConfirmModal, exportPath: $exportPath, exportError: $exportError, uploadError: $uploadError, showAxTreeOverlay: $showAxTreeOverlay, currentAxTreeEvent: $currentAxTreeEvent, firstMessage: $firstMessage, secondMessage: $secondMessage, thirdMessage: $thirdMessage, showFirstMessage: $showFirstMessage, showSecondMessage: $showSecondMessage, showThirdMessage: $showThirdMessage, currentTypingIndex: $currentTypingIndex, currentMessageIndex: $currentMessageIndex)';
+    return 'DemoDetailState(isLoading: $isLoading, recording: $recording, events: $events, sftMessages: $sftMessages, eventTypes: $eventTypes, enabledEventTypes: $enabledEventTypes, startTime: $startTime, videoSource: $videoSource, currentVideoId: $currentVideoId, showTrainingSessionModal: $showTrainingSessionModal, clips: $clips, selectedClipIds: $selectedClipIds, clipboardClip: $clipboardClip, deletedClipsHistory: $deletedClipsHistory, clipSegments: $clipSegments, selectedClipIndexes: $selectedClipIndexes, isProcessing: $isProcessing, isExporting: $isExporting, isUploading: $isUploading, showUploadConfirmModal: $showUploadConfirmModal, exportPath: $exportPath, exportError: $exportError, uploadError: $uploadError, showAxTreeOverlay: $showAxTreeOverlay, currentAxTreeEvent: $currentAxTreeEvent, firstMessage: $firstMessage, secondMessage: $secondMessage, thirdMessage: $thirdMessage, showFirstMessage: $showFirstMessage, showSecondMessage: $showSecondMessage, showThirdMessage: $showThirdMessage, currentTypingIndex: $currentTypingIndex, currentMessageIndex: $currentMessageIndex)';
   }
 
   @override
@@ -808,10 +805,10 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
                 .equals(other._enabledEventTypes, _enabledEventTypes) &&
             (identical(other.startTime, startTime) ||
                 other.startTime == startTime) &&
-            (identical(other.videoController, videoController) ||
-                other.videoController == videoController) &&
             (identical(other.videoSource, videoSource) ||
                 other.videoSource == videoSource) &&
+            (identical(other.currentVideoId, currentVideoId) ||
+                other.currentVideoId == currentVideoId) &&
             (identical(
                     other.showTrainingSessionModal, showTrainingSessionModal) ||
                 other.showTrainingSessionModal == showTrainingSessionModal) &&
@@ -872,8 +869,8 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
         const DeepCollectionEquality().hash(_eventTypes),
         const DeepCollectionEquality().hash(_enabledEventTypes),
         startTime,
-        videoController,
         videoSource,
+        currentVideoId,
         showTrainingSessionModal,
         const DeepCollectionEquality().hash(_clips),
         const DeepCollectionEquality().hash(_selectedClipIds),
@@ -919,9 +916,8 @@ abstract class _DemoDetailState extends DemoDetailState {
       final Set<String> eventTypes,
       final Set<String> enabledEventTypes,
       final int startTime,
-      @JsonKey(includeIfNull: false)
-      final VideoPlayerController? videoController,
       @JsonKey(includeIfNull: false) final VideoSource? videoSource,
+      final String? currentVideoId,
       final bool showTrainingSessionModal,
       final List<VideoClip> clips,
       final Set<String> selectedClipIds,
@@ -964,10 +960,9 @@ abstract class _DemoDetailState extends DemoDetailState {
   int get startTime;
   @override
   @JsonKey(includeIfNull: false)
-  VideoPlayerController? get videoController;
-  @override
-  @JsonKey(includeIfNull: false)
   VideoSource? get videoSource;
+  @override
+  String? get currentVideoId;
   @override
   bool get showTrainingSessionModal; // Video editing
   @override

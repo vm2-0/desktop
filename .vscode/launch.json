@@ -36,6 +36,16 @@
       ]
     },
     {
+      "name": "[UI] Flutter Windows",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [
+        "-d",
+        "windows"
+      ]
+    },
+    {
       "name": "Flutter Web (Development)",
       "request": "launch",
       "type": "dart",

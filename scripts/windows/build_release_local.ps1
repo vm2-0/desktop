@@ -1,11 +1,11 @@
 ﻿# PowerShell script for Windows Release Build
-# This script builds the release version of the Windows app
+# Equivalent to macOS build_release_local.sh
 
 param(
-    [switch]$Clean
+    [switch]$Clean,
+    [switch]$Verbose
 )
 
-# Set error action preference
 $ErrorActionPreference = "Stop"
 
 Write-Host "🚀 Building Clones Desktop for Windows Release (Local)" -ForegroundColor Green
@@ -14,97 +14,35 @@ Write-Host "🚀 Building Clones Desktop for Windows Release (Local)" -Foregroun
 $ProjectRoot = Get-Location
 $BuildDate = Get-Date -Format "yyyyMMdd_HHmmss"
 $BuildDir = Join-Path $ProjectRoot "build_output_$BuildDate"
-$TauriDir = Join-Path $ProjectRoot "src-tauri"
 $LogFile = Join-Path $ProjectRoot "build_log_$BuildDate.txt"
-
-# Windows-specific temp directory setup
-$TempBuildDir = Join-Path $env:TEMP "clones-desktop-build"
-$TempTargetDir = Join-Path $env:TEMP "clones-desktop-target"
 
 Write-Host "Project Root: $ProjectRoot" -ForegroundColor Cyan
 Write-Host "Build Directory: $BuildDir" -ForegroundColor Cyan
 Write-Host "Log File: $LogFile" -ForegroundColor Cyan
-Write-Host "Temporary Build Directory: $TempBuildDir" -ForegroundColor Cyan
-Write-Host "Temporary Target Directory: $TempTargetDir" -ForegroundColor Cyan
 
-function Write-LogInfo {
-    param($Message)
+# Colored output functions
+function Write-LogInfo($Message) {
     $LogMessage = "[INFO] $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') - $Message"
-    Write-Host "ℹ️  $Message" -ForegroundColor Blue
+    Write-Host "$Message" -ForegroundColor Blue
     Add-Content -Path $LogFile -Value $LogMessage
 }
 
-function Write-LogSuccess {
-    param($Message)
+function Write-LogSuccess($Message) {
     $LogMessage = "[SUCCESS] $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') - $Message"
-    Write-Host "✅ $Message" -ForegroundColor Green
+    Write-Host "$Message" -ForegroundColor Green
     Add-Content -Path $LogFile -Value $LogMessage
 }
 
-function Write-LogWarning {
-    param($Message)
+function Write-LogWarning($Message) {
     $LogMessage = "[WARNING] $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') - $Message"
-    Write-Host "⚠️  $Message" -ForegroundColor Yellow
+    Write-Host "$Message" -ForegroundColor Yellow
     Add-Content -Path $LogFile -Value $LogMessage
 }
 
-function Write-LogError {
-    param($Message)
+function Write-LogError($Message) {
     $LogMessage = "[ERROR] $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') - $Message"
-    Write-Host "❌ $Message" -ForegroundColor Red
+    Write-Host "$Message" -ForegroundColor Red
     Add-Content -Path $LogFile -Value $LogMessage
-}
-
-# Function to clean up temporary directory
-function Clean-TempBuildDir {
-    if (Test-Path $TempBuildDir) {
-        Write-LogInfo "Cleaning temporary build directory..."
-        Remove-Item -Path $TempBuildDir -Recurse -Force -ErrorAction SilentlyContinue
-        Start-Sleep -Seconds 2
-    }
-    if (Test-Path $TempTargetDir) {
-        Write-LogInfo "Cleaning temporary target directory..."
-        Remove-Item -Path $TempTargetDir -Recurse -Force -ErrorAction SilentlyContinue
-        Start-Sleep -Seconds 2
-    }
-}
-
-# Function to setup temporary build directory
-function Setup-TempBuildDir {
-    Write-LogInfo "🪟 Setting up Windows temporary build directory"
-
-    if (-not (Test-Path $TempBuildDir)) {
-        Write-LogInfo "Creating temporary build directory..."
-        New-Item -ItemType Directory -Path $TempBuildDir -Force | Out-Null
-    }
-
-    if (-not (Test-Path $TempTargetDir)) {
-        Write-LogInfo "Creating temporary target directory..."
-        New-Item -ItemType Directory -Path $TempTargetDir -Force | Out-Null
-    }
-
-    # Copy necessary files to temp directory
-    Write-LogInfo "📋 Copying project files to temporary directory..."
-    Copy-Item -Path (Join-Path $TauriDir "Cargo.toml") -Destination $TempBuildDir -Force
-    Copy-Item -Path (Join-Path $TauriDir "Cargo.lock") -Destination $TempBuildDir -Force
-    Copy-Item -Path (Join-Path $TauriDir "build.rs") -Destination $TempBuildDir -Force
-
-    # Copy src directory
-    $SrcDir = Join-Path $TauriDir "src"
-    if (Test-Path $SrcDir) {
-        Copy-Item -Path $SrcDir -Destination $TempBuildDir -Recurse -Force
-    }
-
-    # Copy other necessary directories
-    $DirsToCopy = @("icons", "capabilities")
-    foreach ($Dir in $DirsToCopy) {
-        $SourceDir = Join-Path $TauriDir $Dir
-        if (Test-Path $SourceDir) {
-            Copy-Item -Path $SourceDir -Destination $TempBuildDir -Recurse -Force
-        }
-    }
-
-    Write-LogInfo "🎯 Set CARGO_TARGET_DIR to: $TempTargetDir"
 }
 
 # Check prerequisites
@@ -146,31 +84,31 @@ function Test-Prerequisites {
         exit 1
     }
 
-    # Check if .env exists
-    if (-not (Test-Path ".env")) {
-        Write-LogError ".env file not found. Please create it with your environment variables."
-        exit 1
-    }
-
-    # Check if trusted-signing-cli is available for code signing
-    try {
-        $TrustedSigningVersion = trusted-signing-cli --version 2>&1
-        Write-LogInfo "Trusted Signing CLI found: $TrustedSigningVersion"
-    } catch {
-        Write-LogWarning "Trusted Signing CLI not found. Code signing will be skipped."
-        Write-LogWarning "To enable code signing, install trusted-signing-cli from: https://www.nuget.org/packages/Microsoft.Trusted.Signing.Client"
+    # Check environment files based on ENVIRONMENT variable
+    if ($env:ENVIRONMENT) {
+        $envFile = ".env.$($env:ENVIRONMENT)"
+        if (-not (Test-Path $envFile)) {
+            Write-LogError "$envFile file not found. Please create it with your environment variables."
+            exit 1
+        }
+        Write-LogInfo "Will use environment file: $envFile"
+    } else {
+        # Fallback to generic .env for dev/local usage
+        if (-not (Test-Path ".env")) {
+            Write-LogError ".env file not found. Please create it with your environment variables."
+            exit 1
+        }
+        Write-LogInfo "Will use generic .env file"
     }
 
     Write-LogSuccess "Prerequisites check passed"
 }
-
 
 # Setup environment
 function Initialize-Environment {
     Write-LogInfo "Setting up environment..."
 
     # Load environment variables from environment-specific .env file
-    # Priority: .env.{ENVIRONMENT} > .env.test > .env
     $envFile = ".env"
 
     if ($env:ENVIRONMENT) {
@@ -193,7 +131,7 @@ function Initialize-Environment {
 
     if (Test-Path $envFile) {
         Get-Content $envFile | ForEach-Object {
-            if ($_ -match "^\s*([^#][^=]*)\s*=\s*(.*)\s*$") {
+            if ($_ -match '^\s*([^#][^=]*)\s*=\s*(.*)\s*$') {
                 $name = $matches[1].Trim()
                 $value = $matches[2].Trim()
                 [Environment]::SetEnvironmentVariable($name, $value, [EnvironmentVariableTarget]::Process)
@@ -219,7 +157,7 @@ function Install-Dependencies {
     flutter pub get
 
     Write-LogInfo "Installing Tauri CLI (if not already installed)..."
-    
+
     # Check if Tauri CLI is installed
     $tauriInstalled = $false
     try {
@@ -231,7 +169,7 @@ function Install-Dependencies {
     } catch {
         # Command failed, Tauri CLI not installed
     }
-    
+
     if (-not $tauriInstalled) {
         Write-LogInfo "Installing Tauri CLI..."
         cargo install tauri-cli --version "^2.0"
@@ -243,98 +181,55 @@ function Install-Dependencies {
     }
 }
 
-# Build Flutter Web
-function Build-Flutter {
-    Write-LogInfo "Building Flutter Web..."
-    flutter build web --base-href="/"
-    Write-LogSuccess "Flutter Web build completed"
+# Build Flutter Windows Native app
+function Build-FlutterWindows {
+    Write-LogInfo "Building Flutter Windows Native app..."
+
+    $nativeScript = ".\scripts\windows\build_flutter_windows.ps1"
+    if (-not (Test-Path $nativeScript)) {
+        Write-LogError "Flutter Windows build script not found: $nativeScript"
+        exit 1
+    }
+
+    $env:BUILD_DIR = $BuildDir
+    $env:ENVIRONMENT = if ($env:ENVIRONMENT) { $env:ENVIRONMENT } else { "dev" }
+
+    # Build arguments for the native script
+    $scriptArgs = @{
+        Environment = $env:ENVIRONMENT
+    }
+    
+    if ($Verbose) {
+        $scriptArgs.Verbose = $true
+    }
+
+    & $nativeScript @scriptArgs
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Flutter Windows build failed"
+    }
+
+    Write-LogSuccess "Flutter Windows build completed"
 }
 
-# Build Tauri for specific target
-function Build-TauriTarget {
-    param(
-        [string]$Target,
-        [string]$Arch
-    )
+# Main build function
+function Invoke-MainBuild {
+    Write-LogInfo "Starting main build process..."
 
-    Write-LogInfo "Building Tauri app for $Arch ($Target)..."
+    Build-FlutterWindows
 
-    # Build directly from src-tauri directory instead of using temp directory
-    Push-Location (Join-Path $ProjectRoot "src-tauri")
-    try {
-        # Add target if not already added
-        Write-LogInfo "Adding Rust target $Target..."
-        rustup target add $Target
+    Write-LogSuccess "Build completed!"
+    Write-LogInfo "Build artifacts located in: $BuildDir"
 
-        # Build the Windows application
-        # Use environment-specific config if provided, otherwise use base config
-        $ConfigFile = "tauri.conf.json"
-        if ($env:ENVIRONMENT) {
-            $EnvConfig = "tauri.$($env:ENVIRONMENT).conf.json"
-            if (Test-Path $EnvConfig) {
-                $ConfigFile = $EnvConfig
-                Write-LogInfo "Using environment-specific config: $ConfigFile"
-            } else {
-                Write-LogWarning "Environment config $EnvConfig not found, using base config"
-            }
-        }
-        
-        # Ensure Tauri signing variables are exported for the build process
-        if ($env:TAURI_SIGNING_PRIVATE_KEY) {
-            Write-LogInfo "TAURI_SIGNING_PRIVATE_KEY exported for build (length: $($env:TAURI_SIGNING_PRIVATE_KEY.Length) chars)"
-        }
-        if ($env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD) {
-            Write-LogInfo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD exported for build (length: $($env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD.Length) chars)"
-        } else {
-            Write-LogWarning "TAURI_SIGNING_PRIVATE_KEY_PASSWORD not found - signing may require manual password input"
-        }
-
-        # Enable Rust debugging
-        $env:RUST_BACKTRACE = "full"
-        $env:RUST_LOG = "tauri=debug,tauri_bundler=debug"
-
-        Write-LogInfo "Running: cargo tauri build --target $Target --config $ConfigFile"
-        Write-LogInfo "Current working directory: $(Get-Location)"
-        Write-LogInfo "RUST_BACKTRACE=full RUST_LOG=tauri=debug,tauri_bundler=debug"
-
-        # Run the build command directly without capturing output to avoid issues
-        cargo tauri build --target $Target --config $ConfigFile
-
-        if ($LASTEXITCODE -ne 0) {
-            throw "Tauri build failed with exit code $LASTEXITCODE"
-        }
-
-        Write-LogSuccess "Tauri build completed successfully"
-
-        # Define where Tauri puts the built files
-        $TargetDir = Join-Path $ProjectRoot "src-tauri\target\$Target\release\bundle"
-
-        # Copy MSI installer if it exists
-        $MsiDir = Join-Path $TargetDir "msi"
-        if (Test-Path $MsiDir) {
-            $BuildMsiDir = Join-Path $BuildDir "msi_$Arch"
-            New-Item -ItemType Directory -Path $BuildMsiDir -Force | Out-Null
-            Copy-Item -Path "$MsiDir\*" -Destination $BuildMsiDir -Recurse -Force
-            Write-LogSuccess "MSI installer copied to build directory: msi_$Arch"
-        }
-
-        # Copy NSIS installer if it exists
-        $NsisDir = Join-Path $TargetDir "nsis"
-        if (Test-Path $NsisDir) {
-            $BuildNsisDir = Join-Path $BuildDir "nsis_$Arch"
-            New-Item -ItemType Directory -Path $BuildNsisDir -Force | Out-Null
-            Copy-Item -Path "$NsisDir\*" -Destination $BuildNsisDir -Recurse -Force
-            Write-LogSuccess "NSIS installer copied to build directory: nsis_$Arch"
-        }
-
-    } finally {
-        Pop-Location
+    Write-Host ""
+    Write-LogInfo "Built artifacts:"
+    Get-ChildItem -Path $BuildDir -Recurse -Directory | Where-Object { $_.Name -match "flutter_windows|clones_windows|tauri_agent" } | ForEach-Object {
+        Write-Host "  $($_.Name)" -ForegroundColor Cyan
     }
 }
 
-
 # Clean old builds function
-function Clean-OldBuilds {
+function Remove-OldBuilds {
     Write-LogInfo "Cleaning old build artifacts..."
 
     # Clean old build_output directories
@@ -355,63 +250,6 @@ function Clean-OldBuilds {
     Write-LogSuccess "Old builds cleanup completed"
 }
 
-# Clean bundle directory before build to avoid old versions
-function Clean-BundleDirectory {
-    Write-LogInfo "Cleaning bundle directory before build..."
-
-    $targetBundleDir = Join-Path $ProjectRoot "src-tauri\target\x86_64-pc-windows-msvc\release\bundle"
-    if (Test-Path $targetBundleDir) {
-        Write-LogInfo "Removing ALL files from bundle directory: $targetBundleDir"
-        try {
-            Remove-Item -Path "$targetBundleDir\*" -Recurse -Force -ErrorAction Stop
-            Write-LogSuccess "Bundle directory cleaned successfully"
-        } catch {
-            Write-LogWarning "Could not fully clean bundle directory: $_"
-        }
-    } else {
-        Write-LogInfo "Bundle directory does not exist yet, will be created during build"
-    }
-}
-
-# Main build function
-function Start-MainBuild {
-    Write-LogInfo "Starting main build process..."
-
-    # Clean bundle directory BEFORE building to avoid old versions
-    Clean-BundleDirectory
-
-    # Build for Windows x86_64 (Intel/AMD 64-bit)
-    Write-LogInfo "Building for Windows x86_64..."
-    Build-TauriTarget -Target "x86_64-pc-windows-msvc" -Arch "x64"
-
-    Write-LogSuccess "Build completed!"
-    Write-LogInfo "Build artifacts located in: $BuildDir"
-
-    # List built artifacts
-    Write-Host ""
-    Write-LogInfo "Built artifacts:"
-    Get-ChildItem -Path $BuildDir -Recurse -Include "*.msi", "*.exe" | ForEach-Object {
-        $IsSigned = "❓"
-        try {
-            # Check if file is signed using Get-AuthenticodeSignature
-            $Signature = Get-AuthenticodeSignature -FilePath $_.FullName -ErrorAction SilentlyContinue
-            if ($Signature -and $Signature.Status -eq "Valid") {
-                $IsSigned = "🔒"
-            } elseif ($Signature -and $Signature.Status -ne "NotSigned") {
-                $IsSigned = "⚠️"
-            } else {
-                $IsSigned = "🔓"
-            }
-        } catch {
-            $IsSigned = "❓"
-        }
-        Write-Host "  📦 $($_.Name) $IsSigned" -ForegroundColor Cyan
-    }
-
-    # Clean old builds after successful build
-    Clean-OldBuilds
-}
-
 # Cleanup function
 function Invoke-Cleanup {
     Write-LogInfo "Cleaning up temporary files..."
@@ -430,7 +268,7 @@ function Handle-Error {
 
 # Main execution
 try {
-    Write-Host "📱 Clones Desktop - Local Windows Build Script" -ForegroundColor Green
+    Write-Host "Clones Desktop - Local Windows Build Script" -ForegroundColor Green
     Write-Host "==============================================" -ForegroundColor Green
 
     # Initialize log file
@@ -443,12 +281,12 @@ try {
     Test-Prerequisites
     Initialize-Environment
     Install-Dependencies
-    Build-Flutter
-    Start-MainBuild
+    Invoke-MainBuild
+    Remove-OldBuilds
     Invoke-Cleanup
 
     Write-Host ""
-    Write-LogSuccess "🎉 Build process completed successfully!"
+    Write-LogSuccess "Build process completed successfully!"
     Write-LogInfo "Your Windows apps are ready for distribution"
     Write-LogInfo "Log file saved to: $LogFile"
 

@@ -12,51 +12,7 @@ use std::path::Path;
 use tauri::AppHandle;
 use tokio::fs as async_fs;
 
-/// CQA scores returned by the backend
-#[derive(Debug, Serialize, Deserialize)]
-pub struct CQAScores {
-    pub score: f64,
-    pub confidence: f64,
-    #[serde(rename = "confidenceReasoning")]
-    pub confidence_reasoning: String,
-    #[serde(rename = "outcomeAchievement")]
-    pub outcome_achievement: f64,
-    #[serde(rename = "outcomeAchievementReasoning")]
-    pub outcome_achievement_reasoning: String,
-    #[serde(rename = "processQuality")]
-    pub process_quality: f64,
-    #[serde(rename = "processQualityReasoning")]
-    pub process_quality_reasoning: String,
-    pub efficiency: f64,
-    #[serde(rename = "efficiencyReasoning")]
-    pub efficiency_reasoning: String,
-    pub summary: String,
-    pub observations: String,
-    pub reasoning: String,
-    pub version: Option<String>,
-}
-
-/// CQA metrics returned by the backend
-#[derive(Debug, Serialize, Deserialize)]
-pub struct CQAMetrics {
-    #[serde(rename = "sessionId")]
-    pub session_id: String,
-    pub status: String,
-    #[serde(rename = "totalRequests")]
-    pub total_requests: i32,
-    #[serde(rename = "successfulRequests")]
-    pub successful_requests: Option<i32>,
-    #[serde(rename = "failedRequests")]
-    pub failed_requests: Option<i32>,
-    #[serde(rename = "totalTokens")]
-    pub total_tokens: i32,
-    #[serde(rename = "totalDuration")]
-    pub total_duration: i32,
-    #[serde(rename = "averageRetries")]
-    pub average_retries: f64,
-}
-
-/// Response from the CQA backend API
+// Response from the CQA backend API
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CQAResponse {
     pub success: bool,

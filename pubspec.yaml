@@ -2,7 +2,7 @@ name: clones_desktop
 description: "A desktop application for contributing to the world's largest dataset for multimodal computer-use agents."
 publish_to: 'none'
 
-version: 0.2.33+1
+version: 0.2.35+1
 
 environment:
   sdk: ">=3.6.0 <4.0.0"
@@ -31,6 +31,7 @@ dependencies:
   http: ^1.2.1
   intl: ^0.20.2
   json_annotation: ^4.8.1
+  msix: ^3.16.12
   package_info_plus: ^8.0.2
   path_provider: ^2.1.4
   process: ^5.0.5
@@ -39,7 +40,10 @@ dependencies:
   screen_retriever: ^0.2.0
   shared_preferences: ^2.2.2
   url_launcher: ^6.3.2
-  video_player: ^2.10.0
+  media_kit: ^1.1.11
+  media_kit_video: ^1.2.5
+  media_kit_libs_windows_video: ^1.0.10
+  media_kit_libs_macos_video: ^1.0.8
   window_manager: ^0.5.1
   
 dev_dependencies:
@@ -56,6 +60,13 @@ dev_dependencies:
 dependency_overrides:
   analyzer_plugin: ^0.13.1
 
+
+msix_config:
+  display_name: Clones Desktop
+  publisher_display_name: Clones AI
+  identity_name: com.clones-ai.desktop
+  logo_path: assets/icons-app/icon.png
+  languages: en-us
 
 flutter:
 

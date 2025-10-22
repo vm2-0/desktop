@@ -78,7 +78,7 @@ abstract class ConsumerVideoPlayerState<T extends ConsumerStatefulWidget>
         builder: (context, constraints) {
           // Calculate available height minus controls and spacing
           const controlsHeight =
-              120; // Approximate height for timeline + transport controls + spacing
+              250; // Approximate height for timeline + transport controls + spacing
           final availableVideoHeight = constraints.maxHeight - controlsHeight;
           final maxVideoWidth = constraints.maxWidth;
 
@@ -93,10 +93,11 @@ abstract class ConsumerVideoPlayerState<T extends ConsumerStatefulWidget>
             videoWidth = videoHeight * aspectRatio;
           }
 
-          return Column(
-            children: [
-              Expanded(
-                child: Center(
+          return SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Center(
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
                       maxWidth: videoWidth,
@@ -120,22 +121,22 @@ abstract class ConsumerVideoPlayerState<T extends ConsumerStatefulWidget>
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              TimelineWidget(
-                videoId: videoId,
-                onSeek: _handleSeek,
-              ),
-              const SizedBox(height: 16),
-              TransportControls(
-                videoId: videoId,
-                onPlayPause: _handlePlayPause,
-                onStop: _handleStop,
-                onSeekBackward: _handleSeekBackward,
-                onSeekForward: _handleSeekForward,
-                onSpeedChange: _handleSpeedChange,
-              ),
-            ],
+                const SizedBox(height: 16),
+                TimelineWidget(
+                  videoId: videoId,
+                  onSeek: _handleSeek,
+                ),
+                const SizedBox(height: 16),
+                TransportControls(
+                  videoId: videoId,
+                  onPlayPause: _handlePlayPause,
+                  onStop: _handleStop,
+                  onSeekBackward: _handleSeekBackward,
+                  onSeekForward: _handleSeekForward,
+                  onSpeedChange: _handleSpeedChange,
+                ),
+              ],
+            ),
           );
         },
       ),

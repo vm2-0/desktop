@@ -30,7 +30,7 @@ class DemoDetailEvents extends ConsumerWidget {
     final events = demoDetail.events;
     final eventTypes = demoDetail.eventTypes;
     final enabledEventTypes = demoDetail.enabledEventTypes;
-    final videoController = demoDetail.videoController;
+    final videoSeekCallback = ref.watch(videoSeekCallbackProvider);
     final startTime = demoDetail.startTime;
 
     // Build a map from filtered events to their original indices for deleted zone lookup
@@ -184,12 +184,13 @@ class DemoDetailEvents extends ConsumerWidget {
                     top: 0,
                     left: 0,
                     child: GestureDetector(
-                      onTap: () {
-                        if (videoController != null && startTime > 0) {
-                          videoController
-                              .seekTo(Duration(milliseconds: relativeTime));
-                        }
-                      },
+                      onTap: videoSeekCallback != null && startTime > 0
+                          ? () {
+                              videoSeekCallback(
+                                Duration(milliseconds: relativeTime),
+                              );
+                            }
+                          : null,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,

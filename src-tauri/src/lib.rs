@@ -107,18 +107,19 @@ pub fn setup_builder() -> tauri::Builder<tauri::Wry> {
 /// This function initializes the Tauri runtime, registers all plugins, manages state, and exposes command handlers for frontend invocation.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // Single instance check - exit if another agent is running
+    // This check must be done BEFORE setup() to avoid race conditions
+    if let Ok(_) = std::net::TcpStream::connect("127.0.0.1:19847") {
+        log::error!("Another agent instance is already running on port 19847");
+        std::process::exit(1);
+    }
+
     let app = setup_builder()
         .setup(|app| {
             #[cfg(target_os = "macos")]
             {
                 // Hide the app icon from the Dock - this is a background agent
                 app.set_activation_policy(tauri::ActivationPolicy::Accessory);
-            }
-
-            // Single instance check - exit if another agent is running
-            if let Ok(_) = std::net::TcpStream::connect("127.0.0.1:19847") {
-                log::error!("Another agent instance is already running on port 19847");
-                std::process::exit(1);
             }
 
             // Check if agent is launched in development mode

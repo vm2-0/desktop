@@ -1,20 +1,9 @@
 import 'dart:async';
 
-import 'package:clones_desktop/ui/components/video_player/video_source.dart';
 import 'package:clones_desktop/ui/components/video_player/video_state.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-abstract class VideoController {
-  Future<void> initialize();
-  Future<void> play();
-  Future<void> pause();
-  Future<void> stop();
-  Future<void> seekTo(Duration position);
-  Future<void> setSpeed(double speed);
-  void dispose();
-}
-
+/// Exception for video controller errors
 class VideoControllerException implements Exception {
   VideoControllerException(this.message, [this.originalException]);
   final String message;
@@ -102,98 +91,3 @@ mixin VideoControllerMixin {
   }
 }
 
-// Provider for creating video controllers based on source type
-final videoControllerProvider = Provider.family<VideoController, VideoSource>(
-  (ref, source) {
-    if (kIsWeb) {
-      return WebVideoController(source, ref);
-    } else {
-      return NativeVideoController(source, ref);
-    }
-  },
-);
-
-// We'll implement these in the respective platform files
-class WebVideoController extends VideoController with VideoControllerMixin {
-  WebVideoController(this.source, this.ref);
-  final VideoSource source;
-  final dynamic ref;
-
-  @override
-  Future<void> initialize() async {
-    // Implementation will be in video_player_web.dart
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> play() async {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> pause() async {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> stop() async {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> seekTo(Duration position) async {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> setSpeed(double speed) async {
-    throw UnimplementedError();
-  }
-
-  @override
-  void dispose() {
-    // Implementation will be in video_player_web.dart
-  }
-}
-
-class NativeVideoController extends VideoController with VideoControllerMixin {
-  NativeVideoController(this.source, this.ref);
-  final VideoSource source;
-  final dynamic ref;
-
-  @override
-  Future<void> initialize() async {
-    // Implementation will be in video_player_native.dart
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> play() async {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> pause() async {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> stop() async {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> seekTo(Duration position) async {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> setSpeed(double speed) async {
-    throw UnimplementedError();
-  }
-
-  @override
-  void dispose() {
-    // Implementation will be in video_player_native.dart
-  }
-}

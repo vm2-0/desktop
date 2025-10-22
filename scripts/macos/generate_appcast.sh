@@ -15,19 +15,19 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 log_info() {
-    echo -e "${BLUE}ℹ️  $1${NC}"
+    echo -e "${BLUE}INFO: $1${NC}"
 }
 
 log_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+    echo -e "${GREEN}SUCCESS: $1${NC}"
 }
 
 log_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+    echo -e "${YELLOW}WARNING: $1${NC}"
 }
 
 log_error() {
-    echo -e "${RED}❌ $1${NC}"
+    echo -e "${RED}ERROR: $1${NC}"
 }
 
 # Resolve Sparkle CLI path robustly
@@ -233,24 +233,24 @@ upload_appcast() {
     
     case "$ENVIRONMENT" in
         "prod")
-            echo "  🌐 https://releases.clones-ai.com/latest/darwin/"
+            echo "  URL: https://releases.clones-ai.com/latest/darwin/"
             ;;
         "test")
-            echo "  🌐 https://releases-test.clones-ai.com/latest/darwin/"
+            echo "  URL: https://releases-test.clones-ai.com/latest/darwin/"
             ;;
     esac
     
     echo ""
     log_info "Files to upload:"
     find "$releases_dir" -type f | while read -r file; do
-        echo "  📄 $(basename "$file")"
+        echo "  FILE: $(basename "$file")"
     done
 }
 
 # Main execution
 main() {
-    echo "🔗 Sparkle Appcast Generator"
-    echo "============================"
+    echo "Sparkle Appcast Generator"
+    echo "========================="
     
     if [ -z "${1:-}" ]; then
         log_error "Usage: $0 <environment>"
@@ -266,7 +266,7 @@ main() {
     upload_appcast
     
     echo ""
-    log_success "🎉 Appcast generation completed!"
+    log_success "Appcast generation completed!"
     log_info "Your Sparkle appcast is ready for distribution"
 }
 

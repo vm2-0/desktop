@@ -1,0 +1,71 @@
+# Auto detect text files and normalize line endings
+* text=auto
+
+# Force LF for Dart files (cross-platform consistency)
+*.dart text eol=lf
+*.freezed.dart text eol=lf
+*.g.dart text eol=lf
+
+# Force LF for YAML files
+*.yaml text eol=lf
+*.yml text eol=lf
+
+# Force LF for JSON files
+*.json text eol=lf
+
+# Force LF for Markdown files
+*.md text eol=lf
+*.mdx text eol=lf
+
+# Force LF for Rust files
+*.rs text eol=lf
+*.toml text eol=lf
+
+# Force LF for Swift files
+*.swift text eol=lf
+
+# Force LF for C/C++ files
+*.cpp text eol=lf
+*.h text eol=lf
+*.cc text eol=lf
+
+# Force LF for shell scripts
+*.sh text eol=lf
+
+# Force CRLF for Windows scripts
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Force LF for CMake files
+CMakeLists.txt text eol=lf
+*.cmake text eol=lf
+
+# Force LF for HTML/CSS/JS
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.icns binary
+*.svg binary
+*.wav binary
+*.mp3 binary
+*.mp4 binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+
