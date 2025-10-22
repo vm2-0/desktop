@@ -50,7 +50,7 @@ class VideoControllerImpl with VideoControllerMixin {
 
       await withInitializationTimeout(
         _player!.open(
-          Media('file:///$filePath'),
+          Media(Uri.file(filePath).toString()),
           play: false, // Disable autoplay
         ),
         'initialize media_kit player',
