@@ -40,6 +40,15 @@ main() {
     
     local environment="$1"
     
+    log_info "Cleaning previous build artifacts..."
+    if ls build_output_* 1> /dev/null 2>&1; then
+        log_info "Removing existing build_output_* directories..."
+        rm -rf build_output_*
+        log_success "Previous builds cleaned"
+    else
+        log_info "No previous builds found"
+    fi
+    
     log_info "Step 1/2: Building release..."
     ENVIRONMENT="$environment" ./scripts/macos/build_release_local.sh
     

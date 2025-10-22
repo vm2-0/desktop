@@ -125,7 +125,7 @@ create_tauri_manifest() {
     local version="$1"
     local releases_dir="$2"
     
-    local manifest_file=$(mktemp)
+    local manifest_file=$(mktemp -t "manifest_XXXXXX")
     local upload_date=$(date -u +%Y-%m-%dT%H:%M:%SZ)
     
     # Find DMG files and extract info
@@ -206,7 +206,7 @@ create_version_manifest() {
     local version="$1"
     local releases_dir="$2"
     
-    local manifest_file=$(mktemp)
+    local manifest_file=$(mktemp -t "manifest_XXXXXX")
     local upload_date=$(date -u +%Y-%m-%dT%H:%M:%SZ)
     
     # Start JSON
@@ -392,6 +392,18 @@ main() {
     log_success "🎉 Sparkle upload completed!"
     log_info "Appcast URL: ${BUCKET_URL}/latest/darwin/appcast.xml"
     log_info "Downloads: ${BUCKET_URL}/latest/darwin/"
+    
+    # Verify CDN propagation with cache-busting
+    log_info "Verifying CDN propagation..."
+    sleep 2
+    local remote_version=$(curl -s -H "Cache-Control: no-cache" -H "Pragma: no-cache" "${BUCKET_URL}/latest/darwin/appcast.xml" | grep -o '<sparkle:shortVersionString>[^<]*</sparkle:shortVersionString>' | sed 's/<[^>]*>//g' || echo "unknown")
+    
+    if [ "$remote_version" = "$version" ]; then
+        log_success "CDN propagation verified - version $version is live"
+    else
+        log_warning "CDN propagation pending - remote shows $remote_version, expected $version"
+        log_info "This is normal and should resolve within a few minutes"
+    fi
 }
 
 # Run if executed directly

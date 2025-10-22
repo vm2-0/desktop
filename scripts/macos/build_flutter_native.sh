@@ -302,6 +302,20 @@ build_flutter_macos() {
     local dart_defines=""
     dart_defines+="--dart-define=ENVIRONMENT=${ENVIRONMENT:-dev}"
     
+    # Set Sparkle feed URL based on environment
+    local sparkle_feed_url=""
+    case "${ENVIRONMENT:-dev}" in
+        "prod")
+            sparkle_feed_url="https://releases.clones-ai.com/latest/darwin/appcast.xml"
+            ;;
+        "test")
+            sparkle_feed_url="https://releases-test.clones-ai.com/latest/darwin/appcast.xml"
+            ;;
+        *)
+            sparkle_feed_url="https://releases-${ENVIRONMENT:-dev}.clones-ai.com/latest/darwin/appcast.xml"
+            ;;
+    esac
+    
     # Read environment-specific variables if file exists
     local env_file=".env.${ENVIRONMENT:-dev}"
     if [ -f "$env_file" ]; then
@@ -322,6 +336,7 @@ build_flutter_macos() {
     fi
     
     log_verbose "Building with: $dart_defines"
+    export SPARKLE_FEED_URL="$sparkle_feed_url"
     flutter build macos --release $dart_defines
     
     # Copy the universal build
