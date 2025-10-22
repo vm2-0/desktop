@@ -78,6 +78,7 @@ class RecordOverlayObjectives extends ConsumerWidget {
                           child: AppText(
                             text: demonstration.objectives[index],
                             style: Theme.of(context).textTheme.bodySmall,
+                            iconUrl: demonstration.iconUrl,
                           ),
                         ),
                       ],

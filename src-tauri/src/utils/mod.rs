@@ -11,7 +11,5 @@ pub mod logger;
 pub mod permissions;
 pub mod pid_monitor;
 pub mod platform;
-pub mod proxy;
 pub mod settings;
 pub mod url;
-pub mod windows;

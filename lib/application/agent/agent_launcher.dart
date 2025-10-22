@@ -15,7 +15,7 @@ class AgentLauncher {
   bool _starting = false;
   final ProcessManager _processManager = const LocalProcessManager();
   String? _cachedRepoRoot;
-  
+
   // File permission bits: owner execute (0x40) is what we care about for the current user
   static const int _ownerExecutePermission = 0x40;
 
@@ -25,7 +25,9 @@ class AgentLauncher {
 
     // Quick check if agent already running (e.g., launched via VSCode)
     if (await _isAgentAlive()) {
-      debugPrint('Agent already running - starting heartbeat for existing agent');
+      debugPrint(
+        'Agent already running - starting heartbeat for existing agent',
+      );
       // CRUCIAL: Always start heartbeat even if agent already exists
       await HeartbeatMonitor().startFlutterHeartbeat();
       return;
@@ -50,10 +52,11 @@ class AgentLauncher {
 
       final flutterPid = pid;
       debugPrint('Flutter PID: $flutterPid');
-      
+
       // Get the Flutter heartbeat path that will be used
-      final flutterHeartbeatPath = await HeartbeatMonitor.getFlutterHeartbeatPathForPid(flutterPid);
-      
+      final flutterHeartbeatPath =
+          await HeartbeatMonitor.getFlutterHeartbeatPathForPid(flutterPid);
+
       final env = <String, String>{
         'PRIMARY_LOGGER': 'true',
         'RUST_LOG': 'info',
@@ -82,15 +85,20 @@ class AgentLauncher {
       }
 
       debugPrint('Starting agent with process manager: $executable');
-      debugPrint('Working directory: $workingDir (repo root: ${repoRoot != null}, platform: ${Platform.operatingSystem})');
+      debugPrint(
+        'Working directory: $workingDir (repo root: ${repoRoot != null}, platform: ${Platform.operatingSystem})',
+      );
 
       // On Windows in release mode, use normal mode (not detached) with hidden console
       // The console window fix in main.cpp prevents windows from appearing
       // On other platforms, use ProcessManager for better process management
-      final useDetachedMode = false; // Detached mode breaks stdio, use hidden console instead
+      const useDetachedMode =
+          false; // Detached mode breaks stdio, use hidden console instead
 
       if (Platform.isWindows) {
-        debugPrint('Using Process.start for Windows (normal mode with hidden console)');
+        debugPrint(
+          'Using Process.start for Windows (normal mode with hidden console)',
+        );
         _agentProcess = await Process.start(
           executable,
           [],
@@ -99,7 +107,9 @@ class AgentLauncher {
             ...Platform.environment, // Preserve existing environment
             ...env, // Add our custom variables
           },
-          mode: useDetachedMode ? ProcessStartMode.detached : ProcessStartMode.normal,
+          mode: useDetachedMode
+              ? ProcessStartMode.detached
+              : ProcessStartMode.normal,
         );
       } else {
         // macOS/Linux: use ProcessManager
@@ -110,7 +120,9 @@ class AgentLauncher {
             environment: env,
           );
         } catch (e) {
-          debugPrint('ProcessManager.start failed ($e), trying Process.start fallback');
+          debugPrint(
+            'ProcessManager.start failed ($e), trying Process.start fallback',
+          );
           _agentProcess = await Process.start(
             executable,
             [],
@@ -127,20 +139,27 @@ class AgentLauncher {
       await HeartbeatMonitor().startFlutterHeartbeat();
 
       debugPrint(
-          'Flutter heartbeat file for agent to monitor: $flutterHeartbeatPath',);
+        'Flutter heartbeat file for agent to monitor: $flutterHeartbeatPath',
+      );
 
       // Capture agent output for debugging
-      _agentProcess!.stdout.transform(systemEncoding.decoder).listen((line) {
-        debugPrint('[Agent stdout] $line');
-      }, onError: (e) {
-        debugPrint('[Agent stdout error] $e');
-      });
+      _agentProcess!.stdout.transform(systemEncoding.decoder).listen(
+        (line) {
+          debugPrint('[Agent stdout] $line');
+        },
+        onError: (e) {
+          debugPrint('[Agent stdout error] $e');
+        },
+      );
 
-      _agentProcess!.stderr.transform(systemEncoding.decoder).listen((line) {
-        debugPrint('[Agent stderr] $line');
-      }, onError: (e) {
-        debugPrint('[Agent stderr error] $e');
-      });
+      _agentProcess!.stderr.transform(systemEncoding.decoder).listen(
+        (line) {
+          debugPrint('[Agent stderr] $line');
+        },
+        onError: (e) {
+          debugPrint('[Agent stderr error] $e');
+        },
+      );
 
       await _waitUntilAlive(timeout: const Duration(seconds: 8));
     } finally {

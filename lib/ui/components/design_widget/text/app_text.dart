@@ -1,10 +1,17 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:flutter/material.dart';
 
 class AppText extends StatelessWidget {
-  const AppText({super.key, required this.text, required this.style});
+  const AppText({
+    super.key,
+    required this.text,
+    required this.style,
+    required this.iconUrl,
+  });
   final String text;
   final TextStyle? style;
+  final String iconUrl;
 
   List<Part> parseText(String text) {
     final parts = <Part>[];
@@ -51,10 +58,6 @@ class AppText extends StatelessWidget {
             style: style,
           );
         } else {
-          final domain = part.content.toLowerCase();
-          final googleFaviconUrl = 'https://www.google.com/s2/favicons?domain=$domain.com';
-          final faviconUrl = 'http://127.0.0.1:19847/proxy-image?url=${Uri.encodeComponent(googleFaviconUrl)}';
-
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
@@ -64,12 +67,14 @@ class AppText extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Image.network(
-                  faviconUrl,
+                CachedNetworkImage(
+                  imageUrl: iconUrl,
                   width: 16,
                   height: 16,
-                  errorBuilder: (context, error, stackTrace) => Icon(
-                    Icons.apps,
+                  placeholder: (context, url) =>
+                      const CircularProgressIndicator(),
+                  errorWidget: (_, __, ___) => Icon(
+                    Icons.web,
                     size: 16,
                     color: ClonesColors.secondaryText,
                   ),

@@ -212,16 +212,17 @@ class TauriApiClient {
 
   // --- Recording Actions ---
 
-  Future<void> processRecording(String recordingId, {String? connectToken, required String backendUrl}) async {
+  Future<void> processRecording(String recordingId,
+      {String? connectToken, required String backendUrl}) async {
     final headers = <String, String>{'Content-Type': 'application/json'};
     if (connectToken != null) {
       headers['x-connect-token'] = connectToken;
     }
-    
+
     final uri = Uri.parse('$_baseUrl/recordings/$recordingId/process').replace(
       queryParameters: {'backend_url': backendUrl},
     );
-    
+
     final response = await _client.post(uri, headers: headers);
     if (response.statusCode != 200) {
       throw Exception('Failed to process recording: ${response.body}');
@@ -272,21 +273,6 @@ class TauriApiClient {
       return response.body;
     } else {
       throw Exception('Failed to get platform: ${response.body}');
-    }
-  }
-
-  // TODO:Replace with Flutter method image loader with cache
-  Future<Uint8List> fetchImageViaProxy(String imageUrl) async {
-    final response = await _client.get(
-      Uri.parse('$_baseUrl/proxy-image?url=$imageUrl'),
-    );
-
-    if (response.statusCode == 200) {
-      return response.bodyBytes;
-    } else {
-      throw Exception(
-        'Failed to proxy image ${'$_baseUrl/proxy-image?url=$imageUrl'}: ${response.body}',
-      );
     }
   }
 }

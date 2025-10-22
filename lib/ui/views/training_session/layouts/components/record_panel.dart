@@ -124,6 +124,8 @@ Once the recording is finished, you’ll be able to trim segments—for example,
                       child: AppText(
                         text: obj,
                         style: theme.textTheme.bodyMedium,
+                        iconUrl:
+                            trainingSession.recordingDemonstration!.iconUrl,
                       ),
                     ),
                   ],
