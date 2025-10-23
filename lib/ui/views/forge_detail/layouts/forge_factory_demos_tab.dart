@@ -2,15 +2,17 @@ import 'package:clones_desktop/application/submissions.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/domain/models/submission/pool_submission.dart';
 import 'package:clones_desktop/ui/components/card.dart';
+import 'package:clones_desktop/ui/views/demo_detail/layouts/demo_detail_view.dart';
 import 'package:clones_desktop/ui/views/forge_detail/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/components/forge_factory_header.dart';
+import 'package:clones_desktop/utils/format_num.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-class ForgeFactoryUploadsTab extends ConsumerWidget {
-  const ForgeFactoryUploadsTab({super.key});
+class ForgeFactoryDemonstrationsTab extends ConsumerWidget {
+  const ForgeFactoryDemonstrationsTab({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -58,7 +60,7 @@ class _PageHeader extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              '3. Uploads',
+              '3. Demonstrations',
               style: theme.textTheme.titleMedium,
             ),
           ],
@@ -84,6 +86,7 @@ class _UploadsTable extends ConsumerWidget {
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: DataTable(
+                showCheckboxColumn: false,
                 dividerThickness: 0,
                 headingRowColor: WidgetStateProperty.all(
                   ClonesColors.tertiary.withValues(alpha: 0.1),
@@ -113,6 +116,9 @@ class _UploadsTable extends ConsumerWidget {
                   DataColumn(
                     label: Text('Reward', style: theme.textTheme.titleSmall),
                   ),
+                  DataColumn(
+                    label: Text('Actions', style: theme.textTheme.titleSmall),
+                  ),
                 ],
                 rows: submissions
                     .map(
@@ -137,8 +143,28 @@ class _UploadsTable extends ConsumerWidget {
     WidgetRef ref,
   ) {
     final theme = Theme.of(context);
+    final factory = ref.watch(forgeDetailNotifierProvider).factory;
 
     return DataRow(
+      onSelectChanged: (_) {
+        context.push(
+          DemoDetailView.routeName,
+          extra: {
+            'submissionId': submission.id,
+            'metaId': submission.meta.id,
+            'factoryAddress': factory?.id,
+            'isFactorySubmission': true,
+          },
+        );
+      },
+      color: WidgetStateProperty.resolveWith<Color?>(
+        (Set<WidgetState> states) {
+          if (states.contains(WidgetState.hovered)) {
+            return ClonesColors.tertiary.withValues(alpha: 0.05);
+          }
+          return null;
+        },
+      ),
       cells: [
         DataCell(_PlatformCell(submission: submission)),
         DataCell(
@@ -168,6 +194,13 @@ class _UploadsTable extends ConsumerWidget {
         ),
         DataCell(_QualityCell(submission: submission)),
         DataCell(_RewardCell(submission: submission)),
+        DataCell(
+          Icon(
+            Icons.visibility,
+            size: 16,
+            color: ClonesColors.secondaryText,
+          ),
+        ),
       ],
     );
   }
@@ -214,16 +247,6 @@ class _PlatformCell extends StatelessWidget {
   const _PlatformCell({required this.submission});
   final PoolSubmission submission;
 
-  IconData _getOSIcon(PoolSubmission submission) {
-    final platform = submission.meta.platform.toLowerCase();
-    if (platform.contains('windows')) return FontAwesomeIcons.desktop;
-    if (platform.contains('mac') || platform.contains('darwin')) {
-      return FontAwesomeIcons.laptop;
-    }
-    if (platform.contains('linux')) return FontAwesomeIcons.linux;
-    return FontAwesomeIcons.question;
-  }
-
   String _getOSName(PoolSubmission submission) {
     final platform = submission.meta.platform.toLowerCase();
     if (platform.contains('windows')) return 'Windows';
@@ -239,15 +262,9 @@ class _PlatformCell extends StatelessWidget {
     final theme = Theme.of(context);
     return Row(
       children: [
-        FaIcon(
-          _getOSIcon(submission),
-          size: 16,
-          color: ClonesColors.secondaryText,
-        ),
-        const SizedBox(width: 8),
         Text(
           _getOSName(submission),
-          style: theme.textTheme.bodyMedium,
+          style: theme.textTheme.bodySmall,
         ),
       ],
     );
@@ -330,7 +347,7 @@ class _RewardCell extends ConsumerWidget {
     if (reward != null && reward > 0) {
       final factory = ref.watch(forgeDetailNotifierProvider).factory;
       return Text(
-        '$reward ${factory?.token.symbol}',
+        '${reward.toStringAsFixedLowValue(4, 5)} ${factory?.token.symbol}',
         style: theme.textTheme.bodySmall,
       );
     }

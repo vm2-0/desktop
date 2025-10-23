@@ -90,4 +90,3 @@ mixin VideoControllerMixin {
     }
   }
 }
-

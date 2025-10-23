@@ -14,10 +14,10 @@ import 'package:clones_desktop/ui/views/demo_detail/layouts/demo_detail_view.dar
 import 'package:clones_desktop/ui/views/factory/layouts/factory_view.dart';
 import 'package:clones_desktop/ui/views/factory_history/layouts/factory_history_view.dart';
 import 'package:clones_desktop/ui/views/forge/layouts/forge_view.dart';
+import 'package:clones_desktop/ui/views/forge_detail/layouts/forge_factory_demos_tab.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/forge_factory_detail_shell.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/forge_factory_general_tab.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/forge_factory_tasks_tab.dart';
-import 'package:clones_desktop/ui/views/forge_detail/layouts/forge_factory_uploads_tab.dart';
 import 'package:clones_desktop/ui/views/home/layouts/home_view.dart';
 import 'package:clones_desktop/ui/views/leaderboards/layouts/leaderboards_view.dart';
 import 'package:clones_desktop/ui/views/record_overlay/layouts/record_overlay_view.dart';
@@ -66,13 +66,19 @@ final _router = GoRouter(
             String? recordingId;
             Map<String, dynamic>? trainingParams;
 
-            // Handle both cases: String recordingId or Map with training params
+            // Handle cases: String recordingId, Map with training params, or Map with factory submission
             if (extra is String) {
               recordingId = extra.isEmpty ? null : extra;
             } else if (extra is Map<String, dynamic>) {
-              // For new demo recording, recordingId is null
-              recordingId = null;
-              trainingParams = extra;
+              if (extra['isFactorySubmission'] == true) {
+                // For factory submissions, pass the submission info through trainingParams
+                recordingId = null;
+                trainingParams = extra;
+              } else {
+                // For new demo recording, recordingId is null
+                recordingId = null;
+                trainingParams = extra;
+              }
             }
 
             return NoTransitionPage(
@@ -113,9 +119,11 @@ final _router = GoRouter(
               },
             ),
             GoRoute(
-              path: '/forge/:id/uploads',
+              path: '/forge/:id/demonstrations',
               pageBuilder: (context, state) {
-                return const NoTransitionPage(child: ForgeFactoryUploadsTab());
+                return const NoTransitionPage(
+                  child: ForgeFactoryDemonstrationsTab(),
+                );
               },
             ),
           ],
@@ -248,8 +256,10 @@ class _ClonesAppState extends ConsumerState<ClonesApp>
 
   Future<void> _initializeSparkleUpdater() async {
     try {
-      developer.log('[Sparkle] Initializing Sparkle updater...',
-          name: 'Sparkle');
+      developer.log(
+        '[Sparkle] Initializing Sparkle updater...',
+        name: 'Sparkle',
+      );
       final sparkle = SparkleUpdater();
 
       // Determine appcast URL based on environment
@@ -265,8 +275,10 @@ class _ClonesAppState extends ConsumerState<ClonesApp>
             'https://releases-test.clones-ai.com/latest/darwin/appcast.xml';
       }
 
-      developer.log('[Sparkle] Using appcast URL: $appcastUrl',
-          name: 'Sparkle');
+      developer.log(
+        '[Sparkle] Using appcast URL: $appcastUrl',
+        name: 'Sparkle',
+      );
 
       await sparkle.initialize(
         appcastUrl: appcastUrl,
@@ -274,18 +286,27 @@ class _ClonesAppState extends ConsumerState<ClonesApp>
         automaticallyDownloadsUpdates: false,
       );
 
-      developer.log('[Sparkle] Sparkle initialized successfully',
-          name: 'Sparkle');
+      developer.log(
+        '[Sparkle] Sparkle initialized successfully',
+        name: 'Sparkle',
+      );
 
       // Check for updates in background
-      developer.log('[Sparkle] Checking for updates in background...',
-          name: 'Sparkle');
+      developer.log(
+        '[Sparkle] Checking for updates in background...',
+        name: 'Sparkle',
+      );
       await sparkle.checkForUpdatesInBackground();
-      developer.log('[Sparkle] Background update check completed',
-          name: 'Sparkle');
+      developer.log(
+        '[Sparkle] Background update check completed',
+        name: 'Sparkle',
+      );
     } catch (e) {
-      developer.log('[Sparkle] Failed to initialize Sparkle updater: $e',
-          name: 'Sparkle', level: 1000);
+      developer.log(
+        '[Sparkle] Failed to initialize Sparkle updater: $e',
+        name: 'Sparkle',
+        level: 1000,
+      );
     }
   }
 

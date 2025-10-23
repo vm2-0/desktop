@@ -57,6 +57,7 @@ mixin _$DemoDetailState {
   bool get showThirdMessage => throw _privateConstructorUsedError;
   int get currentTypingIndex => throw _privateConstructorUsedError;
   int get currentMessageIndex => throw _privateConstructorUsedError;
+  String? get userAccessType => throw _privateConstructorUsedError;
 
   /// Create a copy of DemoDetailState
   /// with the given fields replaced by the non-null parameter values.
@@ -104,7 +105,8 @@ abstract class $DemoDetailStateCopyWith<$Res> {
       bool showSecondMessage,
       bool showThirdMessage,
       int currentTypingIndex,
-      int currentMessageIndex});
+      int currentMessageIndex,
+      String? userAccessType});
 
   $ApiRecordingCopyWith<$Res>? get recording;
   $VideoClipCopyWith<$Res>? get clipboardClip;
@@ -159,6 +161,7 @@ class _$DemoDetailStateCopyWithImpl<$Res, $Val extends DemoDetailState>
     Object? showThirdMessage = null,
     Object? currentTypingIndex = null,
     Object? currentMessageIndex = null,
+    Object? userAccessType = freezed,
   }) {
     return _then(_value.copyWith(
       isLoading: null == isLoading
@@ -293,6 +296,10 @@ class _$DemoDetailStateCopyWithImpl<$Res, $Val extends DemoDetailState>
           ? _value.currentMessageIndex
           : currentMessageIndex // ignore: cast_nullable_to_non_nullable
               as int,
+      userAccessType: freezed == userAccessType
+          ? _value.userAccessType
+          : userAccessType // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 
@@ -380,7 +387,8 @@ abstract class _$$DemoDetailStateImplCopyWith<$Res>
       bool showSecondMessage,
       bool showThirdMessage,
       int currentTypingIndex,
-      int currentMessageIndex});
+      int currentMessageIndex,
+      String? userAccessType});
 
   @override
   $ApiRecordingCopyWith<$Res>? get recording;
@@ -436,6 +444,7 @@ class __$$DemoDetailStateImplCopyWithImpl<$Res>
     Object? showThirdMessage = null,
     Object? currentTypingIndex = null,
     Object? currentMessageIndex = null,
+    Object? userAccessType = freezed,
   }) {
     return _then(_$DemoDetailStateImpl(
       isLoading: null == isLoading
@@ -570,6 +579,10 @@ class __$$DemoDetailStateImplCopyWithImpl<$Res>
           ? _value.currentMessageIndex
           : currentMessageIndex // ignore: cast_nullable_to_non_nullable
               as int,
+      userAccessType: freezed == userAccessType
+          ? _value.userAccessType
+          : userAccessType // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -610,7 +623,8 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
       this.showSecondMessage = false,
       this.showThirdMessage = false,
       this.currentTypingIndex = 0,
-      this.currentMessageIndex = 0})
+      this.currentMessageIndex = 0,
+      this.userAccessType})
       : _events = events,
         _sftMessages = sftMessages,
         _eventTypes = eventTypes,
@@ -781,10 +795,12 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
   @override
   @JsonKey()
   final int currentMessageIndex;
+  @override
+  final String? userAccessType;
 
   @override
   String toString() {
-    return 'DemoDetailState(isLoading: $isLoading, recording: $recording, events: $events, sftMessages: $sftMessages, eventTypes: $eventTypes, enabledEventTypes: $enabledEventTypes, startTime: $startTime, videoSource: $videoSource, currentVideoId: $currentVideoId, showTrainingSessionModal: $showTrainingSessionModal, clips: $clips, selectedClipIds: $selectedClipIds, clipboardClip: $clipboardClip, deletedClipsHistory: $deletedClipsHistory, clipSegments: $clipSegments, selectedClipIndexes: $selectedClipIndexes, isProcessing: $isProcessing, isExporting: $isExporting, isUploading: $isUploading, showUploadConfirmModal: $showUploadConfirmModal, exportPath: $exportPath, exportError: $exportError, uploadError: $uploadError, showAxTreeOverlay: $showAxTreeOverlay, currentAxTreeEvent: $currentAxTreeEvent, firstMessage: $firstMessage, secondMessage: $secondMessage, thirdMessage: $thirdMessage, showFirstMessage: $showFirstMessage, showSecondMessage: $showSecondMessage, showThirdMessage: $showThirdMessage, currentTypingIndex: $currentTypingIndex, currentMessageIndex: $currentMessageIndex)';
+    return 'DemoDetailState(isLoading: $isLoading, recording: $recording, events: $events, sftMessages: $sftMessages, eventTypes: $eventTypes, enabledEventTypes: $enabledEventTypes, startTime: $startTime, videoSource: $videoSource, currentVideoId: $currentVideoId, showTrainingSessionModal: $showTrainingSessionModal, clips: $clips, selectedClipIds: $selectedClipIds, clipboardClip: $clipboardClip, deletedClipsHistory: $deletedClipsHistory, clipSegments: $clipSegments, selectedClipIndexes: $selectedClipIndexes, isProcessing: $isProcessing, isExporting: $isExporting, isUploading: $isUploading, showUploadConfirmModal: $showUploadConfirmModal, exportPath: $exportPath, exportError: $exportError, uploadError: $uploadError, showAxTreeOverlay: $showAxTreeOverlay, currentAxTreeEvent: $currentAxTreeEvent, firstMessage: $firstMessage, secondMessage: $secondMessage, thirdMessage: $thirdMessage, showFirstMessage: $showFirstMessage, showSecondMessage: $showSecondMessage, showThirdMessage: $showThirdMessage, currentTypingIndex: $currentTypingIndex, currentMessageIndex: $currentMessageIndex, userAccessType: $userAccessType)';
   }
 
   @override
@@ -856,7 +872,9 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
             (identical(other.currentTypingIndex, currentTypingIndex) ||
                 other.currentTypingIndex == currentTypingIndex) &&
             (identical(other.currentMessageIndex, currentMessageIndex) ||
-                other.currentMessageIndex == currentMessageIndex));
+                other.currentMessageIndex == currentMessageIndex) &&
+            (identical(other.userAccessType, userAccessType) ||
+                other.userAccessType == userAccessType));
   }
 
   @override
@@ -894,7 +912,8 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
         showSecondMessage,
         showThirdMessage,
         currentTypingIndex,
-        currentMessageIndex
+        currentMessageIndex,
+        userAccessType
       ]);
 
   /// Create a copy of DemoDetailState
@@ -941,7 +960,8 @@ abstract class _DemoDetailState extends DemoDetailState {
       final bool showSecondMessage,
       final bool showThirdMessage,
       final int currentTypingIndex,
-      final int currentMessageIndex}) = _$DemoDetailStateImpl;
+      final int currentMessageIndex,
+      final String? userAccessType}) = _$DemoDetailStateImpl;
   const _DemoDetailState._() : super._();
 
   @override
@@ -1014,6 +1034,8 @@ abstract class _DemoDetailState extends DemoDetailState {
   int get currentTypingIndex;
   @override
   int get currentMessageIndex;
+  @override
+  String? get userAccessType;
 
   /// Create a copy of DemoDetailState
   /// with the given fields replaced by the non-null parameter values.

@@ -45,10 +45,10 @@ class _ForgeFactoryDetailSidebarState
         key: 'tasks',
       ),
       SidebarButtonData(
-        path: '/forge/${widget.poolId}/uploads',
-        icon: Icons.upload,
-        label: 'Uploads',
-        key: 'uploads',
+        path: '/forge/${widget.poolId}/demonstrations',
+        icon: Icons.video_library_outlined,
+        label: 'Demos',
+        key: 'demos',
       ),
     ];
 
