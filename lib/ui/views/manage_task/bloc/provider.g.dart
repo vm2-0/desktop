@@ -7,7 +7,7 @@ part of 'provider.dart';
 // **************************************************************************
 
 String _$manageTaskNotifierHash() =>
-    r'1d84a50d17df1f5b03407c29b54a819f9efebf6e';
+    r'3c056a0b32a598167451da4556b06ca2d1952bd9';
 
 /// See also [ManageTaskNotifier].
 @ProviderFor(ManageTaskNotifier)

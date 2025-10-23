@@ -1,3 +1,4 @@
+import 'package:clones_desktop/domain/models/factory/factory.dart';
 import 'package:clones_desktop/domain/models/factory/factory_app.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/components/add_task_button_widget.dart';
@@ -11,11 +12,11 @@ class AppCardWidget extends ConsumerWidget {
     super.key,
     required this.app,
     required this.appIdx,
-    required this.forgeId,
+    required this.factory,
   });
   final FactoryApp app;
   final int appIdx;
-  final String forgeId;
+  final Factory factory;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -60,7 +61,7 @@ class AppCardWidget extends ConsumerWidget {
                     app: app,
                     appIdx: appIdx,
                     taskIdx: taskIdx,
-                    forgeId: forgeId,
+                    factory: factory,
                   );
                 },
               ),
