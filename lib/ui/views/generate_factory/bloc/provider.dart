@@ -143,6 +143,39 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
     setApps(newApps);
   }
 
+  void updateTaskWithLimits(
+    int appIndex, 
+    int taskIndex, 
+    String prompt,
+    double? rewardLimit,
+    int? uploadLimit,
+  ) {
+    if (state.apps == null) return;
+
+    // Validate prompt length (500 characters max like skills)
+    if (prompt.length > 500) {
+      setError('Task prompt is too long (${prompt.length}/500 characters max)');
+      return;
+    } else {
+      // Clear error if it was about prompt length
+      if (state.error != null &&
+          state.error!.contains('Task prompt is too long')) {
+        setError('');
+      }
+    }
+
+    final newApps = List<FactoryApp>.from(state.apps!);
+    final appToUpdate = newApps[appIndex];
+    final newTasks = List.from(appToUpdate.tasks);
+    newTasks[taskIndex] = newTasks[taskIndex].copyWith(
+      prompt: prompt,
+      rewardLimit: rewardLimit,
+      uploadLimit: uploadLimit,
+    );
+    newApps[appIndex] = appToUpdate.copyWith(tasks: newTasks.cast());
+    setApps(newApps);
+  }
+
   void addTask(int appIndex) {
     if (state.apps == null) return;
 

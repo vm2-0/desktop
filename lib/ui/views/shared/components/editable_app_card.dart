@@ -17,6 +17,13 @@ class EditableAppCard extends StatelessWidget {
     this.showTaskActions = true,
     this.showAppActions = true,
     this.enabled = true,
+    this.showLimits = false,
+    this.tokenSymbol,
+    this.defaultRewardPerTask,
+    this.taskRewardLimits,
+    this.taskUploadLimits,
+    this.onTaskRewardLimitChanged,
+    this.onTaskUploadLimitChanged,
   });
 
   final String? appName;
@@ -30,6 +37,13 @@ class EditableAppCard extends StatelessWidget {
   final bool showTaskActions;
   final bool showAppActions;
   final bool enabled;
+  final bool showLimits;
+  final String? tokenSymbol;
+  final double? defaultRewardPerTask;
+  final List<double?>? taskRewardLimits;
+  final List<int?>? taskUploadLimits;
+  final void Function(int taskIndex, double? rewardLimit)? onTaskRewardLimitChanged;
+  final void Function(int taskIndex, int? uploadLimit)? onTaskUploadLimitChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +98,15 @@ class EditableAppCard extends StatelessWidget {
                                 TaskChangeEvent(taskIdx, value),
                               ),
                               enabled: enabled,
+                              showLimits: showLimits,
+                              tokenSymbol: tokenSymbol,
+                              defaultRewardLimit: defaultRewardPerTask,
+                              rewardLimit: taskRewardLimits?[taskIdx],
+                              uploadLimit: taskUploadLimits?[taskIdx],
+                              onRewardLimitChanged: (rewardLimit) =>
+                                  onTaskRewardLimitChanged?.call(taskIdx, rewardLimit),
+                              onUploadLimitChanged: (uploadLimit) =>
+                                  onTaskUploadLimitChanged?.call(taskIdx, uploadLimit),
                             ),
                           ),
                           if (showTaskActions && enabled) ...[
