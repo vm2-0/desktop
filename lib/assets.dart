@@ -1,6 +1,4 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class Assets {
   static const String assetFolder = 'assets/';
@@ -9,6 +7,7 @@ class Assets {
 
   static const String background = '${assetFolder}main-background.png';
   static const String logo = '${assetFolder}Logo-Circle-Transparent.svg';
+  static const String logoWhite = '${assetFolder}icons-app/icon-white.png';
 
   // Icons
   static const String homeIcon = '${assetIconsFolder}home_icon.png';
@@ -40,60 +39,49 @@ class Assets {
 }
 
 class ClonesFonts {
-  // font primary: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif
-  static const String primary =
-      '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif';
-
-  // font monospace: 'JetBrains Mono', 'Fira Code', Consolas, monospace
-  static const String mono = 'JetBrains Mono, Fira Code, Consolas, monospace';
-
   static TextStyle getPrimaryFont({
     double? fontSize,
     FontWeight? fontWeight,
+    FontStyle? fontStyle,
     Color? color,
+    double? letterSpacing,
+    double? height,
   }) {
-    if (kIsWeb) {
-      return GoogleFonts.inter(
-        fontSize: fontSize ?? 16,
-        fontWeight: fontWeight ?? FontWeight.normal,
-        color: color,
-      );
-    } else {
-      return TextStyle(
-        fontFamily: primary,
-        fontSize: fontSize ?? 16,
-        fontWeight: fontWeight ?? FontWeight.normal,
-        color: color,
-      );
-    }
+    return TextStyle(
+      fontFamily: 'Inter',
+      fontSize: fontSize ?? 16,
+      fontWeight: fontWeight ?? FontWeight.normal,
+      color: color,
+      fontStyle: fontStyle ?? FontStyle.normal,
+      letterSpacing: letterSpacing,
+      height: height,
+    );
   }
 
   static TextStyle getMonoFont({
     double? fontSize,
     FontWeight? fontWeight,
+    FontStyle? fontStyle,
     Color? color,
+    double? letterSpacing,
+    double? height,
   }) {
-    if (kIsWeb) {
-      return GoogleFonts.jetBrainsMono(
-        fontSize: fontSize ?? 14,
-        fontWeight: fontWeight ?? FontWeight.normal,
-        color: color,
-      );
-    } else {
-      return TextStyle(
-        fontFamily: mono,
-        fontSize: fontSize ?? 14,
-        fontWeight: fontWeight ?? FontWeight.normal,
-        color: color,
-      );
-    }
+    return TextStyle(
+      fontFamily: 'JetBrains Mono',
+      fontSize: fontSize ?? 14,
+      fontWeight: fontWeight ?? FontWeight.normal,
+      color: color,
+      fontStyle: fontStyle ?? FontStyle.normal,
+      letterSpacing: letterSpacing,
+      height: height,
+    );
   }
 }
 
 class ClonesColors {
   static const Color primaryText = Colors.white;
   static Color secondaryText = Colors.white.withValues(alpha: 0.6);
-  static const Color primary = Color(0xFFC34EFF);
+  static const Color primary = Color(0xFF9E72FF);
   static const Color secondary = Color(0xFF9050FF);
   static const Color tertiary = Color(0xFF5C51FF);
   static const Color error = Color(0xFFFB923C);
@@ -105,8 +93,8 @@ class ClonesColors {
 
   static Gradient gradientBtnPrimary = const LinearGradient(
     colors: [
-      Color(0xFFA855F6),
-      Color(0xFFEB489A),
+      Color(0xFFB99AFF),
+      Color(0xFF844BFF),
     ],
   );
 

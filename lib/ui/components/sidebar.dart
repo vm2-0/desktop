@@ -91,6 +91,13 @@ class Sidebar extends ConsumerWidget {
               padding: const EdgeInsets.only(bottom: 16, top: 8),
               child: Column(
                 children: [
+                  Image.asset(
+                    Assets.logoWhite,
+                    width: 30,
+                    height: 30,
+                    color: ClonesColors.primaryText.withValues(alpha: 0.5),
+                  ),
+                  const SizedBox(height: 8),
                   Text(
                     version,
                     style: theme.textTheme.bodySmall?.copyWith(

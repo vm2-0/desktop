@@ -48,8 +48,10 @@ class MenuItemWidget extends StatelessWidget {
             Column(
               children: [
                 Text(
-                  item.title,
+                  item.title.toUpperCase(),
                   style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
                     color: ClonesColors.primary,
                   ),
                 ),

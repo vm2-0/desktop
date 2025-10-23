@@ -155,7 +155,7 @@ Future<void> main(List<String> args) async {
     await windowManager.setPreventClose(true);
     windowManager.addListener(CloseListener());
     const windowOptions = WindowOptions(
-      size: Size(1200, 800),
+      size: Size(1440, 900),
       center: true,
       backgroundColor: Colors.transparent,
       skipTaskbar: false,
@@ -188,7 +188,7 @@ Future<void> main(List<String> args) async {
 
   // Initialize app lifecycle management for cleanup
   AppLifecycleManager.initialize();
-  
+
   runApp(const ProviderScope(child: ClonesApp()));
 }
 
@@ -202,10 +202,10 @@ Future<void> _shutdown() async {
   } catch (e) {
     debugPrint('Error during agent shutdown: $e');
   }
-  
+
   // Force cleanup if not already done
   AppLifecycleManager._forceCleanup();
-  
+
   exit(0);
 }
 
@@ -248,37 +248,44 @@ class _ClonesAppState extends ConsumerState<ClonesApp>
 
   Future<void> _initializeSparkleUpdater() async {
     try {
-      developer.log('[Sparkle] Initializing Sparkle updater...', name: 'Sparkle');
+      developer.log('[Sparkle] Initializing Sparkle updater...',
+          name: 'Sparkle');
       final sparkle = SparkleUpdater();
 
       // Determine appcast URL based on environment
       String appcastUrl;
-      const environment = String.fromEnvironment('ENVIRONMENT', defaultValue: 'dev');
+      const environment =
+          String.fromEnvironment('ENVIRONMENT', defaultValue: 'dev');
       developer.log('[Sparkle] Environment: $environment', name: 'Sparkle');
-      
+
       if (environment == 'prod') {
         appcastUrl = 'https://releases.clones-ai.com/latest/darwin/appcast.xml';
       } else {
-        appcastUrl = 'https://releases-test.clones-ai.com/latest/darwin/appcast.xml';
+        appcastUrl =
+            'https://releases-test.clones-ai.com/latest/darwin/appcast.xml';
       }
-      
-      developer.log('[Sparkle] Using appcast URL: $appcastUrl', name: 'Sparkle');
+
+      developer.log('[Sparkle] Using appcast URL: $appcastUrl',
+          name: 'Sparkle');
 
       await sparkle.initialize(
         appcastUrl: appcastUrl,
         automaticallyChecksForUpdates: true,
         automaticallyDownloadsUpdates: false,
       );
-      
-      developer.log('[Sparkle] Sparkle initialized successfully', name: 'Sparkle');
+
+      developer.log('[Sparkle] Sparkle initialized successfully',
+          name: 'Sparkle');
 
       // Check for updates in background
-      developer.log('[Sparkle] Checking for updates in background...', name: 'Sparkle');
+      developer.log('[Sparkle] Checking for updates in background...',
+          name: 'Sparkle');
       await sparkle.checkForUpdatesInBackground();
-      developer.log('[Sparkle] Background update check completed', name: 'Sparkle');
-
+      developer.log('[Sparkle] Background update check completed',
+          name: 'Sparkle');
     } catch (e) {
-      developer.log('[Sparkle] Failed to initialize Sparkle updater: $e', name: 'Sparkle', level: 1000);
+      developer.log('[Sparkle] Failed to initialize Sparkle updater: $e',
+          name: 'Sparkle', level: 1000);
     }
   }
 
@@ -354,31 +361,37 @@ class _ClonesAppState extends ConsumerState<ClonesApp>
           bodySmall: ClonesFonts.getPrimaryFont(
             fontSize: Theme.of(context).textTheme.bodySmall?.fontSize,
             fontWeight: Theme.of(context).textTheme.bodySmall?.fontWeight,
+            fontStyle: Theme.of(context).textTheme.bodySmall?.fontStyle,
             color: ClonesColors.secondaryText,
           ),
           bodyMedium: ClonesFonts.getPrimaryFont(
             fontSize: Theme.of(context).textTheme.bodyMedium?.fontSize,
             fontWeight: Theme.of(context).textTheme.bodyMedium?.fontWeight,
+            fontStyle: Theme.of(context).textTheme.bodySmall?.fontStyle,
             color: ClonesColors.secondaryText,
           ),
           bodyLarge: ClonesFonts.getPrimaryFont(
             fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
             fontWeight: Theme.of(context).textTheme.bodyLarge?.fontWeight,
+            fontStyle: Theme.of(context).textTheme.bodySmall?.fontStyle,
             color: ClonesColors.secondaryText,
           ),
           titleLarge: ClonesFonts.getPrimaryFont(
             fontSize: Theme.of(context).textTheme.titleLarge?.fontSize,
             fontWeight: Theme.of(context).textTheme.titleLarge?.fontWeight,
+            fontStyle: Theme.of(context).textTheme.bodySmall?.fontStyle,
             color: ClonesColors.primaryText,
           ),
           titleMedium: ClonesFonts.getPrimaryFont(
             fontSize: Theme.of(context).textTheme.titleMedium?.fontSize,
             fontWeight: Theme.of(context).textTheme.titleMedium?.fontWeight,
+            fontStyle: Theme.of(context).textTheme.bodySmall?.fontStyle,
             color: ClonesColors.primaryText,
           ),
           titleSmall: ClonesFonts.getPrimaryFont(
             fontSize: Theme.of(context).textTheme.titleSmall?.fontSize,
             fontWeight: Theme.of(context).textTheme.titleSmall?.fontWeight,
+            fontStyle: Theme.of(context).textTheme.bodySmall?.fontStyle,
             color: ClonesColors.primaryText,
           ),
           labelSmall: ClonesFonts.getMonoFont(
@@ -457,9 +470,9 @@ class AppLifecycleManager with WidgetsBindingObserver {
   static void _forceCleanup() {
     if (_cleanupCalled) return;
     _cleanupCalled = true;
-    
+
     debugPrint('Force cleanup: stopping heartbeat');
-    
+
     // Force cleanup heartbeat synchronously
     try {
       HeartbeatMonitor().stopFlutterHeartbeat();
