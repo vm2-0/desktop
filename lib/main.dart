@@ -388,31 +388,31 @@ class _ClonesAppState extends ConsumerState<ClonesApp>
           bodyMedium: ClonesFonts.getPrimaryFont(
             fontSize: Theme.of(context).textTheme.bodyMedium?.fontSize,
             fontWeight: Theme.of(context).textTheme.bodyMedium?.fontWeight,
-            fontStyle: Theme.of(context).textTheme.bodySmall?.fontStyle,
+            fontStyle: Theme.of(context).textTheme.bodyMedium?.fontStyle,
             color: ClonesColors.secondaryText,
           ),
           bodyLarge: ClonesFonts.getPrimaryFont(
             fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
             fontWeight: Theme.of(context).textTheme.bodyLarge?.fontWeight,
-            fontStyle: Theme.of(context).textTheme.bodySmall?.fontStyle,
+            fontStyle: Theme.of(context).textTheme.bodyLarge?.fontStyle,
             color: ClonesColors.secondaryText,
           ),
           titleLarge: ClonesFonts.getPrimaryFont(
             fontSize: Theme.of(context).textTheme.titleLarge?.fontSize,
             fontWeight: Theme.of(context).textTheme.titleLarge?.fontWeight,
-            fontStyle: Theme.of(context).textTheme.bodySmall?.fontStyle,
+            fontStyle: Theme.of(context).textTheme.titleLarge?.fontStyle,
             color: ClonesColors.primaryText,
           ),
           titleMedium: ClonesFonts.getPrimaryFont(
             fontSize: Theme.of(context).textTheme.titleMedium?.fontSize,
             fontWeight: Theme.of(context).textTheme.titleMedium?.fontWeight,
-            fontStyle: Theme.of(context).textTheme.bodySmall?.fontStyle,
+            fontStyle: Theme.of(context).textTheme.titleMedium?.fontStyle,
             color: ClonesColors.primaryText,
           ),
           titleSmall: ClonesFonts.getPrimaryFont(
             fontSize: Theme.of(context).textTheme.titleSmall?.fontSize,
             fontWeight: Theme.of(context).textTheme.titleSmall?.fontWeight,
-            fontStyle: Theme.of(context).textTheme.bodySmall?.fontStyle,
+            fontStyle: Theme.of(context).textTheme.titleSmall?.fontStyle,
             color: ClonesColors.primaryText,
           ),
           labelSmall: ClonesFonts.getMonoFont(
