@@ -33,18 +33,21 @@ class LayoutBackground extends ConsumerWidget {
         const maxLogoSize = 400.0;
         logoSize.clamp(minLogoSize, maxLogoSize);
         final currentRoute = ref.watch(currentRouteProvider);
-        final isVideoFullscreen = ref.watch(uiStateNotifierProvider.select((s) => s.isVideoFullscreen));
+        final isVideoFullscreen = ref
+            .watch(uiStateNotifierProvider.select((s) => s.isVideoFullscreen));
 
         return Stack(
           alignment: Alignment.center,
           children: [
             const SizedBox.expand(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage(Assets.background),
-                    fit: BoxFit.cover,
-                    alignment: Alignment.centerRight,
+              child: Opacity(
+                opacity: 0.8,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage(Assets.background),
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
               ),
