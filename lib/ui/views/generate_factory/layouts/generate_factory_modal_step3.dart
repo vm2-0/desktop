@@ -53,8 +53,35 @@ class GenerateFactoryModalStep3 extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(height: 8),
+          Text(
+            'Choose a descriptive name for your factory. This name will be visible to users and cannot be changed after creation.',
+            style: theme.textTheme.bodySmall,
+          ),
+          const SizedBox(height: 6),
           const GenerateFactoryTextFieldFactoryApp(),
           const SizedBox(height: 12),
+          Builder(
+            builder: (context) {
+              final totalFunding =
+                  double.tryParse(generateFactory.fundingAmount ?? '0') ?? 0.0;
+              final totalTasks = generateFactory.apps
+                      ?.fold<int>(0, (sum, a) => sum + a.tasks.length) ??
+                  1;
+              final defaultReward =
+                  totalTasks > 0 ? totalFunding / totalTasks : 0.0;
+
+              return Text(
+                'Apps & Tasks: Review and customize the generated apps and tasks below.\n'
+                '• Edit task descriptions to be more specific\n'
+                '• Set custom reward amounts (leave empty for automatic distribution: ${defaultReward.toStringAsFixed(4)} ${generateFactory.selectedTokenSymbol ?? ''} per task)\n'
+                '• Set upload limits to control how many times each task can be completed\n'
+                '• Add or remove apps and tasks as needed',
+                style: theme.textTheme.bodySmall,
+              );
+            },
+          ),
+
           if (generateFactory.apps != null && generateFactory.apps!.isNotEmpty)
             Expanded(
               child: ListView.builder(
@@ -64,11 +91,28 @@ class GenerateFactoryModalStep3 extends ConsumerWidget {
                   final generateFactoryNotifier =
                       ref.watch(generateFactoryNotifierProvider.notifier);
 
+                  // Calculate default reward per task
+                  final totalFunding =
+                      double.tryParse(generateFactory.fundingAmount ?? '0') ??
+                          0.0;
+                  final totalTasks = generateFactory.apps
+                          ?.fold<int>(0, (sum, a) => sum + a.tasks.length) ??
+                      1;
+                  final defaultRewardPerTask =
+                      totalTasks > 0 ? totalFunding / totalTasks : 0.0;
+
                   return EditableAppCard(
                     appName: app.name,
                     appDomain: app.domain,
                     tasks:
                         app.tasks.map<String>((task) => task.prompt).toList(),
+                    showLimits: true,
+                    tokenSymbol: generateFactory.selectedTokenSymbol,
+                    defaultRewardPerTask: defaultRewardPerTask,
+                    taskRewardLimits:
+                        app.tasks.map((task) => task.rewardLimit).toList(),
+                    taskUploadLimits:
+                        app.tasks.map((task) => task.uploadLimit).toList(),
                     onAppNameChanged: (newName) {
                       generateFactoryNotifier.updateAppName(appIdx, newName);
                     },
@@ -77,6 +121,26 @@ class GenerateFactoryModalStep3 extends ConsumerWidget {
                         appIdx,
                         event.taskIndex,
                         event.newValue,
+                      );
+                    },
+                    onTaskRewardLimitChanged: (taskIdx, rewardLimit) {
+                      final task = app.tasks[taskIdx];
+                      generateFactoryNotifier.updateTaskWithLimits(
+                        appIdx,
+                        taskIdx,
+                        task.prompt,
+                        rewardLimit,
+                        task.uploadLimit,
+                      );
+                    },
+                    onTaskUploadLimitChanged: (taskIdx, uploadLimit) {
+                      final task = app.tasks[taskIdx];
+                      generateFactoryNotifier.updateTaskWithLimits(
+                        appIdx,
+                        taskIdx,
+                        task.prompt,
+                        task.rewardLimit,
+                        uploadLimit,
                       );
                     },
                     onTaskAdded: () {

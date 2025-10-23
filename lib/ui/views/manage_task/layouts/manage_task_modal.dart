@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:clones_desktop/assets.dart';
+import 'package:clones_desktop/domain/models/factory/factory.dart';
 import 'package:clones_desktop/domain/models/factory/factory_task.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
@@ -20,13 +21,15 @@ class ManageTaskModal extends ConsumerStatefulWidget {
     required this.onDone,
     required this.onClose,
     required this.modalType,
-    this.task,
+    required this.task,
+    required this.factory,
   });
   final String tokenSymbol;
   final void Function(FactoryTask? task) onDone;
   final VoidCallback onClose;
   final ManageTaskModalType modalType;
   final FactoryTask? task;
+  final Factory? factory;
 
   @override
   ConsumerState<ManageTaskModal> createState() => _ManageTaskModalState();
@@ -50,7 +53,11 @@ class _ManageTaskModalState extends ConsumerState<ManageTaskModal> {
       if (widget.task != null) {
         ref.read(manageTaskNotifierProvider.notifier)
           ..setPrompt(widget.task!.prompt)
-          ..setPricePerDemo(widget.task!.rewardLimit)
+          ..setPricePerDemo(
+            widget.task?.rewardLimit != null
+                ? widget.task!.rewardLimit
+                : widget.factory?.pricePerDemo,
+          )
           ..setUploadLimitValue(widget.task!.uploadLimit);
       }
     });

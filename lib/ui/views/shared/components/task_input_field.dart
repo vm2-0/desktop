@@ -12,6 +12,13 @@ class TaskInputField extends StatefulWidget {
     this.enabled = true,
     this.minLines = 1,
     this.maxLines = 3,
+    this.onRewardLimitChanged,
+    this.onUploadLimitChanged,
+    this.rewardLimit,
+    this.uploadLimit,
+    this.tokenSymbol,
+    this.defaultRewardLimit,
+    this.showLimits = false,
   });
 
   final String? initialValue;
@@ -21,6 +28,13 @@ class TaskInputField extends StatefulWidget {
   final bool enabled;
   final int minLines;
   final int maxLines;
+  final ValueChanged<double?>? onRewardLimitChanged;
+  final ValueChanged<int?>? onUploadLimitChanged;
+  final double? rewardLimit;
+  final int? uploadLimit;
+  final String? tokenSymbol;
+  final double? defaultRewardLimit;
+  final bool showLimits;
 
   @override
   State<TaskInputField> createState() => _TaskInputFieldState();
@@ -28,18 +42,26 @@ class TaskInputField extends StatefulWidget {
 
 class _TaskInputFieldState extends State<TaskInputField> {
   late TextEditingController _controller;
+  late TextEditingController _rewardController;
+  late TextEditingController _uploadController;
   late FocusNode _focusNode;
 
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController(text: widget.initialValue ?? '');
+    _rewardController = TextEditingController(
+      text: widget.rewardLimit?.toString() ?? widget.defaultRewardLimit?.toString() ?? '',
+    );
+    _uploadController = TextEditingController(text: widget.uploadLimit?.toString() ?? '');
     _focusNode = FocusNode();
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _rewardController.dispose();
+    _uploadController.dispose();
     _focusNode.dispose();
     super.dispose();
   }
@@ -59,79 +81,213 @@ class _TaskInputFieldState extends State<TaskInputField> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Task ',
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: ClonesColors.tertiary.withValues(alpha: 0.3),
-                width: 0.5,
-              ),
-              gradient: LinearGradient(
-                colors: [
-                  ClonesColors.primary.withValues(alpha: 0.05),
-                  ClonesColors.tertiary.withValues(alpha: 0.05),
-                ],
+        // Task prompt
+        Row(
+          children: [
+            Text(
+              'Task ',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.bold,
               ),
             ),
-            child: TextField(
-              style: theme.textTheme.bodyMedium,
-              autocorrect: false,
-              controller: _controller,
-              enabled: widget.enabled,
-              onChanged: widget.onChanged,
-              focusNode: _focusNode,
-              textInputAction: TextInputAction.newline,
-              keyboardType: TextInputType.multiline,
-              minLines: widget.minLines,
-              maxLines: widget.maxLines,
-              inputFormatters: [
-                LengthLimitingTextInputFormatter(widget.maxLength),
+            const SizedBox(width: 8),
+            Expanded(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: ClonesColors.tertiary.withValues(alpha: 0.3),
+                    width: 0.5,
+                  ),
+                  gradient: LinearGradient(
+                    colors: [
+                      ClonesColors.primary.withValues(alpha: 0.05),
+                      ClonesColors.tertiary.withValues(alpha: 0.05),
+                    ],
+                  ),
+                ),
+                child: TextField(
+                  style: theme.textTheme.bodyMedium,
+                  autocorrect: false,
+                  controller: _controller,
+                  enabled: widget.enabled,
+                  onChanged: widget.onChanged,
+                  focusNode: _focusNode,
+                  textInputAction: TextInputAction.newline,
+                  keyboardType: TextInputType.multiline,
+                  minLines: widget.minLines,
+                  maxLines: widget.maxLines,
+                  inputFormatters: [
+                    LengthLimitingTextInputFormatter(widget.maxLength),
+                  ],
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    hintText: widget.placeholder,
+                    hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.2),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: ClonesColors.secondary.withValues(alpha: 0.4),
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        width: 0.5,
+                        color: ClonesColors.primary.withValues(alpha: 0.2),
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    disabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        width: 0.5,
+                        color: ClonesColors.tertiary.withValues(alpha: 0.2),
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        
+        // Limits section (only if showLimits is true)
+        if (widget.showLimits && widget.enabled) ...[
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.only(left: 38),
+            child: Row(
+              children: [
+                // Reward limit
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Max reward',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: ClonesColors.rewardInfo,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: ClonesColors.tertiary.withValues(alpha: 0.3),
+                            width: 0.5,
+                          ),
+                          gradient: LinearGradient(
+                            colors: [
+                              ClonesColors.primary.withValues(alpha: 0.03),
+                              ClonesColors.tertiary.withValues(alpha: 0.03),
+                            ],
+                          ),
+                        ),
+                        child: TextField(
+                          controller: _rewardController,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          style: theme.textTheme.bodySmall,
+                          enabled: widget.enabled,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,18}$')),
+                          ],
+                          onChanged: (value) {
+                            final parsedValue = value.isEmpty ? null : double.tryParse(value);
+                            widget.onRewardLimitChanged?.call(parsedValue);
+                          },
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 8,
+                            ),
+                            hintText: 'Auto',
+                            hintStyle: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.4),
+                            ),
+                            suffixText: widget.tokenSymbol,
+                            suffixStyle: theme.textTheme.bodySmall?.copyWith(
+                              color: ClonesColors.rewardInfo,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Upload limit
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Upload limit',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: ClonesColors.uploadLimit,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: ClonesColors.tertiary.withValues(alpha: 0.3),
+                            width: 0.5,
+                          ),
+                          gradient: LinearGradient(
+                            colors: [
+                              ClonesColors.primary.withValues(alpha: 0.03),
+                              ClonesColors.tertiary.withValues(alpha: 0.03),
+                            ],
+                          ),
+                        ),
+                        child: TextField(
+                          controller: _uploadController,
+                          keyboardType: TextInputType.number,
+                          style: theme.textTheme.bodySmall,
+                          enabled: widget.enabled,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          onChanged: (value) {
+                            final parsedValue = value.isEmpty ? null : int.tryParse(value);
+                            widget.onUploadLimitChanged?.call(parsedValue);
+                          },
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 8,
+                            ),
+                            hintText: 'Unlimited',
+                            hintStyle: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.4),
+                            ),
+                            suffixText: 'demos',
+                            suffixStyle: theme.textTheme.bodySmall?.copyWith(
+                              color: ClonesColors.uploadLimit,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                hintText: widget.placeholder,
-                hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                  color:
-                      theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.2),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                    color: ClonesColors.secondary.withValues(alpha: 0.4),
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                    width: 0.5,
-                    color: ClonesColors.primary.withValues(alpha: 0.2),
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                disabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                    width: 0.5,
-                    color: ClonesColors.tertiary.withValues(alpha: 0.2),
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 12,
-                ),
-              ),
             ),
           ),
-        ),
+        ],
       ],
     );
   }

@@ -101,6 +101,7 @@ class _ForgeFactoryTasksTabState extends ConsumerState<ForgeFactoryTasksTab> {
                 ? null
                 : forgeDetail.apps[forgeDetail.editingTaskAppIdx!]
                     .tasks[forgeDetail.editingTaskIdx!],
+            factory: forgeDetail.factory,
             onClose: () {
               ref
                   .read(forgeDetailNotifierProvider.notifier)
