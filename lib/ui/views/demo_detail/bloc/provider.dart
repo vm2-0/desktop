@@ -25,7 +25,7 @@ part 'provider.g.dart';
 
 /// Provider to store the video seek callback
 final videoSeekCallbackProvider =
-    StateProvider<void Function(Duration)?> ((ref) => null);
+    StateProvider<void Function(Duration)?>((ref) => null);
 
 @riverpod
 class DemoDetailNotifier extends _$DemoDetailNotifier {
@@ -91,7 +91,10 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     state = state.copyWith(isLoading: false);
   }
 
-  Future<void> loadPoolSubmission(String submissionId, String factoryAddress) async {
+  Future<void> loadPoolSubmission(
+    String submissionId,
+    String factoryAddress,
+  ) async {
     state = state.copyWith(
       isLoading: true,
       events: [],
@@ -112,9 +115,11 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
 
     try {
       // Try to find the PoolSubmission and convert it to ApiRecording
-      final factorySubmissions = await ref.read(getFactorySubmissionsProvider(factoryAddress).future);
-      final poolSubmission = factorySubmissions.firstWhereOrNull((s) => s.id == submissionId);
-      
+      final factorySubmissions =
+          await ref.read(getFactorySubmissionsProvider(factoryAddress).future);
+      final poolSubmission =
+          factorySubmissions.firstWhereOrNull((s) => s.id == submissionId);
+
       if (poolSubmission != null) {
         // Convert PoolSubmission to SubmissionStatus format for ApiRecording
         final submissionStatus = SubmissionStatus(
@@ -179,11 +184,12 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     // Get fresh recording data to avoid stale state
     // First check if we have a recording in current state (for factory submissions)
     var recording = state.recording;
-    
+
     // If not, get from merged recordings (for regular recordings)
     if (recording == null) {
       final recordings = await ref.read(mergedRecordingsProvider.future);
-      recording = recordings.firstWhereOrNull((element) => element.id == recordingId);
+      recording =
+          recordings.firstWhereOrNull((element) => element.id == recordingId);
     }
 
     // Check if the recording is local or cloud
@@ -666,7 +672,8 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     if (recordingId == null || state.isProcessing) return;
 
     debugPrint(
-        '[DemoDetail] Starting processRecording, setting isProcessing = true',);
+      '[DemoDetail] Starting processRecording, setting isProcessing = true',
+    );
     state = state.copyWith(isProcessing: true);
 
     try {
@@ -689,7 +696,8 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       // TODO(reddwarf03): handle error
     } finally {
       debugPrint(
-          '[DemoDetail] Finished processRecording, setting isProcessing = false',);
+        '[DemoDetail] Finished processRecording, setting isProcessing = false',
+      );
       state = state.copyWith(isProcessing: false);
     }
   }
