@@ -32,7 +32,9 @@ class _ManageTaskModalUploadLimitState
     super.initState();
     final manageTask = ref.read(manageTaskNotifierProvider);
     uploadLimitValueController = TextEditingController(
-      text: manageTask.uploadLimitValue.toString(),
+      text: manageTask.uploadLimitValue == null
+          ? ''
+          : manageTask.uploadLimitValue.toString(),
     );
   }
 
@@ -41,8 +43,9 @@ class _ManageTaskModalUploadLimitState
     final manageTask = ref.watch(manageTaskNotifierProvider);
 
     if (uploadLimitValueController.text !=
-        manageTask.uploadLimitValue.toString()) {
-      uploadLimitValueController.text = manageTask.uploadLimitValue.toString();
+        manageTask.uploadLimitValue?.toString()) {
+      uploadLimitValueController.text =
+          manageTask.uploadLimitValue?.toString() ?? '';
     }
     final theme = Theme.of(context);
     return Column(
@@ -78,12 +81,12 @@ class _ManageTaskModalUploadLimitState
                 horizontal: 10,
                 vertical: 12,
               ),
-              hintText: 'Value',
+              hintText: 'Number of demos maximum',
             ),
             onChanged: (val) {
               ref
                   .read(manageTaskNotifierProvider.notifier)
-                  .setUploadLimitValue(int.tryParse(val) ?? 0);
+                  .setUploadLimitValue(int.tryParse(val));
             },
           ),
         ),

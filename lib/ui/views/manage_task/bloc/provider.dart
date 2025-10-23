@@ -16,11 +16,11 @@ class ManageTaskNotifier extends _$ManageTaskNotifier {
     state = state.copyWith(prompt: prompt);
   }
 
-  void setPricePerDemo(double pricePerDemo) {
+  void setPricePerDemo(double? pricePerDemo) {
     state = state.copyWith(pricePerDemo: pricePerDemo);
   }
 
-  void setUploadLimitValue(int uploadLimitValue) {
+  void setUploadLimitValue(int? uploadLimitValue) {
     state = state.copyWith(uploadLimitValue: uploadLimitValue);
   }
 

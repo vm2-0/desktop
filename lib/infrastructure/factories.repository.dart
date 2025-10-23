@@ -409,27 +409,47 @@ class FactoriesRepositoryImpl implements FactoriesRepository {
           ..remove('_id')
           ..remove('pool_id');
 
+        // Ensure required fields are present
+        appJson['name'] = app.name;
+        appJson['domain'] = app.domain;
+        appJson['categories'] = app.categories;
+
         // Clean tasks
         if (appJson['tasks'] is List) {
           appJson['tasks'] = (appJson['tasks'] as List).map((task) {
             if (task is Map<String, dynamic>) {
-              final cleanTask = Map<String, dynamic>.from(task)
-                // Remove UI-only fields
-                ..remove('_id')
-                ..remove('limitReason');
-              // Remove null ID if present
-              if (cleanTask['id'] == null) {
-                cleanTask.remove('id');
+              final cleanTask = <String, dynamic>{
+                'prompt': task['prompt'],
+              };
+
+              // Only include ID if it's not null and not empty
+              if (task['id'] != null && task['id'].toString().isNotEmpty) {
+                cleanTask['id'] = task['id'];
               }
-              // Handle limits: remove if null or 0 (API expects either undefined or > 0)
-              if (cleanTask['uploadLimit'] == null ||
-                  cleanTask['uploadLimit'] == 0) {
-                cleanTask.remove('uploadLimit');
+
+              // Handle uploadLimit: include positive integers or explicit null
+              final uploadLimit = task['uploadLimit'];
+              if (uploadLimit != null &&
+                  uploadLimit is int &&
+                  uploadLimit >= 1) {
+                cleanTask['uploadLimit'] = uploadLimit;
+              } else {
+                cleanTask['uploadLimit'] = null;
               }
-              if (cleanTask['rewardLimit'] == null ||
-                  cleanTask['rewardLimit'] == 0) {
-                cleanTask.remove('rewardLimit');
+
+              // Handle rewardLimit: include positive doubles or explicit null
+              // Note: rewardLimit is a crypto amount that can be very small (10^-18)
+              final rewardLimit = task['rewardLimit'];
+              if (rewardLimit != null &&
+                  rewardLimit is num &&
+                  rewardLimit > 0) {
+                cleanTask['rewardLimit'] = rewardLimit.toDouble();
+              } else {
+                cleanTask['rewardLimit'] = null;
               }
+
+              // Don't include limitReason - it's not used by the API
+
               return cleanTask;
             }
             return task;

@@ -23,6 +23,7 @@ class ManageTaskModalPricePerDemo extends ConsumerStatefulWidget {
 class _ManageTaskModalPricePerDemoState
     extends ConsumerState<ManageTaskModalPricePerDemo> {
   late final TextEditingController controller;
+  bool _isUserEditing = false;
 
   @override
   void dispose() {
@@ -34,19 +35,32 @@ class _ManageTaskModalPricePerDemoState
   void initState() {
     super.initState();
     final manageTask = ref.read(manageTaskNotifierProvider);
-    controller =
-        TextEditingController(text: manageTask.pricePerDemo.toString());
+    controller = TextEditingController(
+      text: manageTask.pricePerDemo == null
+          ? ''
+          : manageTask.pricePerDemo.toString(),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final manageTask = ref.watch(manageTaskNotifierProvider);
+    
+    // Don't update controller text while user is actively editing
+    if (!_isUserEditing) {
+      final expectedText = manageTask.pricePerDemo?.toString() ?? '';
+      if (controller.text != expectedText) {
+        controller.text = expectedText;
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          'Price per demonstration for this task.',
+          'Max reward per demonstration for this task.',
           style: theme.textTheme.titleSmall,
         ),
         const SizedBox(height: 4),
@@ -63,16 +77,26 @@ class _ManageTaskModalPricePerDemoState
                 gradient: ClonesColors.gradientInputFormBackground,
               ),
               child: TextField(
-                onSubmitted: widget.onSubmitted,
+                onSubmitted: (value) {
+                  _isUserEditing = false;
+                  widget.onSubmitted?.call(value);
+                },
                 focusNode: widget.focusNode,
+                onTap: () {
+                  _isUserEditing = true;
+                },
                 onChanged: (value) {
+                  _isUserEditing = true;
                   ref
                       .read(
                         manageTaskNotifierProvider.notifier,
                       )
                       .setPricePerDemo(
-                        double.tryParse(value) ?? 0,
+                        double.tryParse(value),
                       );
+                },
+                onEditingComplete: () {
+                  _isUserEditing = false;
                 },
                 controller: controller,
                 textInputAction: TextInputAction.next,

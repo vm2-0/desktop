@@ -18,8 +18,8 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$ManageTaskState {
   ManageTaskModalType get modalType => throw _privateConstructorUsedError;
   String get prompt => throw _privateConstructorUsedError;
-  double get pricePerDemo => throw _privateConstructorUsedError;
-  int get uploadLimitValue => throw _privateConstructorUsedError;
+  double? get pricePerDemo => throw _privateConstructorUsedError;
+  int? get uploadLimitValue => throw _privateConstructorUsedError;
   UploadLimitType get uploadLimitType => throw _privateConstructorUsedError;
 
   /// Create a copy of ManageTaskState
@@ -38,8 +38,8 @@ abstract class $ManageTaskStateCopyWith<$Res> {
   $Res call(
       {ManageTaskModalType modalType,
       String prompt,
-      double pricePerDemo,
-      int uploadLimitValue,
+      double? pricePerDemo,
+      int? uploadLimitValue,
       UploadLimitType uploadLimitType});
 }
 
@@ -60,8 +60,8 @@ class _$ManageTaskStateCopyWithImpl<$Res, $Val extends ManageTaskState>
   $Res call({
     Object? modalType = null,
     Object? prompt = null,
-    Object? pricePerDemo = null,
-    Object? uploadLimitValue = null,
+    Object? pricePerDemo = freezed,
+    Object? uploadLimitValue = freezed,
     Object? uploadLimitType = null,
   }) {
     return _then(_value.copyWith(
@@ -73,14 +73,14 @@ class _$ManageTaskStateCopyWithImpl<$Res, $Val extends ManageTaskState>
           ? _value.prompt
           : prompt // ignore: cast_nullable_to_non_nullable
               as String,
-      pricePerDemo: null == pricePerDemo
+      pricePerDemo: freezed == pricePerDemo
           ? _value.pricePerDemo
           : pricePerDemo // ignore: cast_nullable_to_non_nullable
-              as double,
-      uploadLimitValue: null == uploadLimitValue
+              as double?,
+      uploadLimitValue: freezed == uploadLimitValue
           ? _value.uploadLimitValue
           : uploadLimitValue // ignore: cast_nullable_to_non_nullable
-              as int,
+              as int?,
       uploadLimitType: null == uploadLimitType
           ? _value.uploadLimitType
           : uploadLimitType // ignore: cast_nullable_to_non_nullable
@@ -100,8 +100,8 @@ abstract class _$$ManageTaskStateImplCopyWith<$Res>
   $Res call(
       {ManageTaskModalType modalType,
       String prompt,
-      double pricePerDemo,
-      int uploadLimitValue,
+      double? pricePerDemo,
+      int? uploadLimitValue,
       UploadLimitType uploadLimitType});
 }
 
@@ -120,8 +120,8 @@ class __$$ManageTaskStateImplCopyWithImpl<$Res>
   $Res call({
     Object? modalType = null,
     Object? prompt = null,
-    Object? pricePerDemo = null,
-    Object? uploadLimitValue = null,
+    Object? pricePerDemo = freezed,
+    Object? uploadLimitValue = freezed,
     Object? uploadLimitType = null,
   }) {
     return _then(_$ManageTaskStateImpl(
@@ -133,14 +133,14 @@ class __$$ManageTaskStateImplCopyWithImpl<$Res>
           ? _value.prompt
           : prompt // ignore: cast_nullable_to_non_nullable
               as String,
-      pricePerDemo: null == pricePerDemo
+      pricePerDemo: freezed == pricePerDemo
           ? _value.pricePerDemo
           : pricePerDemo // ignore: cast_nullable_to_non_nullable
-              as double,
-      uploadLimitValue: null == uploadLimitValue
+              as double?,
+      uploadLimitValue: freezed == uploadLimitValue
           ? _value.uploadLimitValue
           : uploadLimitValue // ignore: cast_nullable_to_non_nullable
-              as int,
+              as int?,
       uploadLimitType: null == uploadLimitType
           ? _value.uploadLimitType
           : uploadLimitType // ignore: cast_nullable_to_non_nullable
@@ -155,8 +155,8 @@ class _$ManageTaskStateImpl extends _ManageTaskState {
   const _$ManageTaskStateImpl(
       {this.modalType = ManageTaskModalType.create,
       this.prompt = '',
-      this.pricePerDemo = 1,
-      this.uploadLimitValue = 10,
+      this.pricePerDemo,
+      this.uploadLimitValue,
       this.uploadLimitType = UploadLimitType.perTask})
       : super._();
 
@@ -167,11 +167,9 @@ class _$ManageTaskStateImpl extends _ManageTaskState {
   @JsonKey()
   final String prompt;
   @override
-  @JsonKey()
-  final double pricePerDemo;
+  final double? pricePerDemo;
   @override
-  @JsonKey()
-  final int uploadLimitValue;
+  final int? uploadLimitValue;
   @override
   @JsonKey()
   final UploadLimitType uploadLimitType;
@@ -215,8 +213,8 @@ abstract class _ManageTaskState extends ManageTaskState {
   const factory _ManageTaskState(
       {final ManageTaskModalType modalType,
       final String prompt,
-      final double pricePerDemo,
-      final int uploadLimitValue,
+      final double? pricePerDemo,
+      final int? uploadLimitValue,
       final UploadLimitType uploadLimitType}) = _$ManageTaskStateImpl;
   const _ManageTaskState._() : super._();
 
@@ -225,9 +223,9 @@ abstract class _ManageTaskState extends ManageTaskState {
   @override
   String get prompt;
   @override
-  double get pricePerDemo;
+  double? get pricePerDemo;
   @override
-  int get uploadLimitValue;
+  int? get uploadLimitValue;
   @override
   UploadLimitType get uploadLimitType;
 

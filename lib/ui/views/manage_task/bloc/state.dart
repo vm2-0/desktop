@@ -13,8 +13,8 @@ class ManageTaskState with _$ManageTaskState {
   const factory ManageTaskState({
     @Default(ManageTaskModalType.create) ManageTaskModalType modalType,
     @Default('') String prompt,
-    @Default(1) double pricePerDemo,
-    @Default(10) int uploadLimitValue,
+    double? pricePerDemo,
+    int? uploadLimitValue,
     @Default(UploadLimitType.perTask) UploadLimitType uploadLimitType,
   }) = _ManageTaskState;
   const ManageTaskState._();

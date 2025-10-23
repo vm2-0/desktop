@@ -1,3 +1,4 @@
+import 'package:clones_desktop/domain/models/factory/factory.dart';
 import 'package:clones_desktop/domain/models/factory/factory_app.dart';
 import 'package:clones_desktop/domain/models/factory/factory_task.dart';
 import 'package:clones_desktop/ui/components/card.dart';
@@ -12,13 +13,13 @@ class TaskItemWidget extends StatelessWidget {
     required this.app,
     required this.appIdx,
     required this.taskIdx,
-    required this.forgeId,
+    required this.factory,
   });
   final FactoryTask task;
   final FactoryApp app;
   final int appIdx;
   final int taskIdx;
-  final String forgeId;
+  final Factory factory;
 
   @override
   Widget build(BuildContext context) {
@@ -29,35 +30,28 @@ class TaskItemWidget extends StatelessWidget {
       child: CardWidget(
         padding: CardPadding.small,
         variant: CardVariant.secondary,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Task prompt
-            Text(
-              task.prompt,
-              style: theme.textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 8),
-            // Limits and actions row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Task limits
-                Expanded(
-                  child: TaskLimitsWidget(
-                    task: task,
-                    textStyle: theme.textTheme.bodyMedium,
-                  ),
+                Text(
+                  task.prompt,
+                  style: theme.textTheme.bodyMedium,
                 ),
-                // Task actions
-                TaskActionsWidget(
+                TaskLimitsWidget(
                   task: task,
-                  app: app,
-                  appIdx: appIdx,
-                  taskIdx: taskIdx,
-                  forgeId: forgeId,
+                  factoryToken: factory.token,
                 ),
               ],
+            ),
+            TaskActionsWidget(
+              task: task,
+              app: app,
+              appIdx: appIdx,
+              taskIdx: taskIdx,
+              forgeId: factory.id,
             ),
           ],
         ),
