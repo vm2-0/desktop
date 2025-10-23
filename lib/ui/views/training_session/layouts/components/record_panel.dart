@@ -27,10 +27,19 @@ class _RecordPanelState extends ConsumerState<RecordPanel> {
     final theme = Theme.of(context);
     final trainingSession = ref.watch(trainingSessionNotifierProvider);
     final recordingState = trainingSession.recordingState;
+
+    final rewardAmount = trainingSession.factoryTask == null
+        ? trainingSession.factory?.pricePerDemo
+        : trainingSession.factoryTask?.rewardLimit ??
+            trainingSession.factory?.pricePerDemo;
+
+    final rewardText =
+        'Up to: ${rewardAmount?.toStringAsFixedLowValue(2, 5)} ${trainingSession.factory?.token.symbol ?? ''}';
+
     final tokenPrice = ref.watch(
       convertTokenPriceProvider(
         trainingSession.factory?.token.symbol ?? '',
-        trainingSession.factory?.pricePerDemo ?? 0,
+        rewardAmount ?? 0,
       ),
     );
 
@@ -60,7 +69,7 @@ class _RecordPanelState extends ConsumerState<RecordPanel> {
                   Row(
                     children: [
                       Text(
-                        'Up to: ${trainingSession.factory?.pricePerDemo.toStringAsFixedLowValue(2, 5) ?? 0} ${trainingSession.factory?.token.symbol ?? ''} ',
+                        rewardText,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: ClonesColors.secondary,
                         ),

@@ -170,17 +170,19 @@ class _ForgeFactoryDetailState extends ConsumerState<ForgeFactoryDetail> {
                                 buttonText: 'Refresh Balance',
                                 btnPrimaryType: BtnPrimaryType.outlinePrimary,
                               ),
-                              const SizedBox(width: 16),
-                              BtnPrimary(
-                                onTap: () {
-                                  ref
-                                      .read(
-                                        forgeDetailNotifierProvider.notifier,
-                                      )
-                                      .updateFactory();
-                                },
-                                buttonText: 'Save',
-                              ),
+                              if (ref.watch(forgeDetailNotifierProvider).hasAnyUnsavedChanges) ...[
+                                const SizedBox(width: 16),
+                                BtnPrimary(
+                                  onTap: () {
+                                    ref
+                                        .read(
+                                          forgeDetailNotifierProvider.notifier,
+                                        )
+                                        .updateFactory();
+                                  },
+                                  buttonText: 'Save',
+                                ),
+                              ],
                               const SizedBox(width: 16),
                               if (factory.status != FactoryStatus.error)
                                 BtnPrimary(

@@ -8,7 +8,7 @@ part of 'factory_task.dart';
 
 _$FactoryTaskImpl _$$FactoryTaskImplFromJson(Map<String, dynamic> json) =>
     _$FactoryTaskImpl(
-      id: json['id'] as String?,
+      id: json['_id'] as String?,
       prompt: json['prompt'] as String,
       uploadLimit: (json['uploadLimit'] as num?)?.toInt(),
       rewardLimit: (json['rewardLimit'] as num?)?.toDouble(),
@@ -17,7 +17,7 @@ _$FactoryTaskImpl _$$FactoryTaskImplFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$$FactoryTaskImplToJson(_$FactoryTaskImpl instance) =>
     <String, dynamic>{
-      'id': instance.id,
+      '_id': instance.id,
       'prompt': instance.prompt,
       'uploadLimit': instance.uploadLimit,
       'rewardLimit': instance.rewardLimit,

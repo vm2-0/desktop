@@ -29,6 +29,7 @@ mixin _$ForgeDetailState {
   bool get isUpdatePoolSuccess => throw _privateConstructorUsedError;
   bool get isRefreshBalanceSuccess => throw _privateConstructorUsedError;
   bool get hasUnsavedChanges => throw _privateConstructorUsedError;
+  bool get hasFactoryPropertyChanges => throw _privateConstructorUsedError;
   bool get showNewAppForm => throw _privateConstructorUsedError;
   bool get showManageTaskModal => throw _privateConstructorUsedError;
   ManageTaskModalType get manageTaskModalType =>
@@ -65,6 +66,7 @@ abstract class $ForgeDetailStateCopyWith<$Res> {
       bool isUpdatePoolSuccess,
       bool isRefreshBalanceSuccess,
       bool hasUnsavedChanges,
+      bool hasFactoryPropertyChanges,
       bool showNewAppForm,
       bool showManageTaskModal,
       ManageTaskModalType manageTaskModalType,
@@ -104,6 +106,7 @@ class _$ForgeDetailStateCopyWithImpl<$Res, $Val extends ForgeDetailState>
     Object? isUpdatePoolSuccess = null,
     Object? isRefreshBalanceSuccess = null,
     Object? hasUnsavedChanges = null,
+    Object? hasFactoryPropertyChanges = null,
     Object? showNewAppForm = null,
     Object? showManageTaskModal = null,
     Object? manageTaskModalType = null,
@@ -164,6 +167,10 @@ class _$ForgeDetailStateCopyWithImpl<$Res, $Val extends ForgeDetailState>
       hasUnsavedChanges: null == hasUnsavedChanges
           ? _value.hasUnsavedChanges
           : hasUnsavedChanges // ignore: cast_nullable_to_non_nullable
+              as bool,
+      hasFactoryPropertyChanges: null == hasFactoryPropertyChanges
+          ? _value.hasFactoryPropertyChanges
+          : hasFactoryPropertyChanges // ignore: cast_nullable_to_non_nullable
               as bool,
       showNewAppForm: null == showNewAppForm
           ? _value.showNewAppForm
@@ -233,6 +240,7 @@ abstract class _$$ForgeDetailStateImplCopyWith<$Res>
       bool isUpdatePoolSuccess,
       bool isRefreshBalanceSuccess,
       bool hasUnsavedChanges,
+      bool hasFactoryPropertyChanges,
       bool showNewAppForm,
       bool showManageTaskModal,
       ManageTaskModalType manageTaskModalType,
@@ -271,6 +279,7 @@ class __$$ForgeDetailStateImplCopyWithImpl<$Res>
     Object? isUpdatePoolSuccess = null,
     Object? isRefreshBalanceSuccess = null,
     Object? hasUnsavedChanges = null,
+    Object? hasFactoryPropertyChanges = null,
     Object? showNewAppForm = null,
     Object? showManageTaskModal = null,
     Object? manageTaskModalType = null,
@@ -332,6 +341,10 @@ class __$$ForgeDetailStateImplCopyWithImpl<$Res>
           ? _value.hasUnsavedChanges
           : hasUnsavedChanges // ignore: cast_nullable_to_non_nullable
               as bool,
+      hasFactoryPropertyChanges: null == hasFactoryPropertyChanges
+          ? _value.hasFactoryPropertyChanges
+          : hasFactoryPropertyChanges // ignore: cast_nullable_to_non_nullable
+              as bool,
       showNewAppForm: null == showNewAppForm
           ? _value.showNewAppForm
           : showNewAppForm // ignore: cast_nullable_to_non_nullable
@@ -381,6 +394,7 @@ class _$ForgeDetailStateImpl extends _ForgeDetailState {
       this.isUpdatePoolSuccess = false,
       this.isRefreshBalanceSuccess = false,
       this.hasUnsavedChanges = false,
+      this.hasFactoryPropertyChanges = false,
       this.showNewAppForm = false,
       this.showManageTaskModal = false,
       this.manageTaskModalType = ManageTaskModalType.create,
@@ -436,6 +450,9 @@ class _$ForgeDetailStateImpl extends _ForgeDetailState {
   final bool hasUnsavedChanges;
   @override
   @JsonKey()
+  final bool hasFactoryPropertyChanges;
+  @override
+  @JsonKey()
   final bool showNewAppForm;
   @override
   @JsonKey()
@@ -454,7 +471,7 @@ class _$ForgeDetailStateImpl extends _ForgeDetailState {
 
   @override
   String toString() {
-    return 'ForgeDetailState(factoryName: $factoryName, pricePerDemo: $pricePerDemo, uploadLimitValue: $uploadLimitValue, uploadLimitType: $uploadLimitType, factoryStatus: $factoryStatus, factory: $factory, viewModeTasks: $viewModeTasks, error: $error, apps: $apps, isUpdateFactoryStatusSuccess: $isUpdateFactoryStatusSuccess, isUpdatePoolSuccess: $isUpdatePoolSuccess, isRefreshBalanceSuccess: $isRefreshBalanceSuccess, hasUnsavedChanges: $hasUnsavedChanges, showNewAppForm: $showNewAppForm, showManageTaskModal: $showManageTaskModal, manageTaskModalType: $manageTaskModalType, newAppName: $newAppName, newAppDomain: $newAppDomain, editingTaskAppIdx: $editingTaskAppIdx, editingTaskIdx: $editingTaskIdx)';
+    return 'ForgeDetailState(factoryName: $factoryName, pricePerDemo: $pricePerDemo, uploadLimitValue: $uploadLimitValue, uploadLimitType: $uploadLimitType, factoryStatus: $factoryStatus, factory: $factory, viewModeTasks: $viewModeTasks, error: $error, apps: $apps, isUpdateFactoryStatusSuccess: $isUpdateFactoryStatusSuccess, isUpdatePoolSuccess: $isUpdatePoolSuccess, isRefreshBalanceSuccess: $isRefreshBalanceSuccess, hasUnsavedChanges: $hasUnsavedChanges, hasFactoryPropertyChanges: $hasFactoryPropertyChanges, showNewAppForm: $showNewAppForm, showManageTaskModal: $showManageTaskModal, manageTaskModalType: $manageTaskModalType, newAppName: $newAppName, newAppDomain: $newAppDomain, editingTaskAppIdx: $editingTaskAppIdx, editingTaskIdx: $editingTaskIdx)';
   }
 
   @override
@@ -488,6 +505,9 @@ class _$ForgeDetailStateImpl extends _ForgeDetailState {
                 other.isRefreshBalanceSuccess == isRefreshBalanceSuccess) &&
             (identical(other.hasUnsavedChanges, hasUnsavedChanges) ||
                 other.hasUnsavedChanges == hasUnsavedChanges) &&
+            (identical(other.hasFactoryPropertyChanges,
+                    hasFactoryPropertyChanges) ||
+                other.hasFactoryPropertyChanges == hasFactoryPropertyChanges) &&
             (identical(other.showNewAppForm, showNewAppForm) ||
                 other.showNewAppForm == showNewAppForm) &&
             (identical(other.showManageTaskModal, showManageTaskModal) ||
@@ -520,6 +540,7 @@ class _$ForgeDetailStateImpl extends _ForgeDetailState {
         isUpdatePoolSuccess,
         isRefreshBalanceSuccess,
         hasUnsavedChanges,
+        hasFactoryPropertyChanges,
         showNewAppForm,
         showManageTaskModal,
         manageTaskModalType,
@@ -554,6 +575,7 @@ abstract class _ForgeDetailState extends ForgeDetailState {
       final bool isUpdatePoolSuccess,
       final bool isRefreshBalanceSuccess,
       final bool hasUnsavedChanges,
+      final bool hasFactoryPropertyChanges,
       final bool showNewAppForm,
       final bool showManageTaskModal,
       final ManageTaskModalType manageTaskModalType,
@@ -589,6 +611,8 @@ abstract class _ForgeDetailState extends ForgeDetailState {
   bool get isRefreshBalanceSuccess;
   @override
   bool get hasUnsavedChanges;
+  @override
+  bool get hasFactoryPropertyChanges;
   @override
   bool get showNewAppForm;
   @override

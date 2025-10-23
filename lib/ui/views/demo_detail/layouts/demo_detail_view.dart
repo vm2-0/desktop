@@ -113,7 +113,9 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
             _currentVideoId = videoId;
           });
           // Store videoId in the provider for access from other widgets
-          ref.read(demoDetailNotifierProvider.notifier).setCurrentVideoId(videoId);
+          ref
+              .read(demoDetailNotifierProvider.notifier)
+              .setCurrentVideoId(videoId);
         },
       );
       _lastVideoSource = videoSource;
@@ -467,6 +469,7 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
                       prompt: widget.trainingParams?['prompt'],
                       appParam: widget.trainingParams?['appParam'],
                       poolId: widget.trainingParams?['poolId'],
+                      taskId: widget.trainingParams?['taskId'],
                       onRecordingCompleted: (recordingId) async {
                         await ref
                             .read(demoDetailNotifierProvider.notifier)

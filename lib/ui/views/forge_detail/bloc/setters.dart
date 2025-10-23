@@ -6,7 +6,10 @@ import 'package:riverpod/riverpod.dart';
 
 mixin ForgeDetailSetters on AutoDisposeNotifier<ForgeDetailState> {
   void setFactory(Factory factory) {
-    state = state.copyWith(factory: factory, hasUnsavedChanges: true);
+    state = state.copyWith(
+      factory: factory,
+      hasFactoryPropertyChanges: false, // Reset property changes when setting new factory
+    );
   }
 
   void setViewModeTasks(ViewModeTasks viewModeTasks) {
@@ -19,12 +22,28 @@ mixin ForgeDetailSetters on AutoDisposeNotifier<ForgeDetailState> {
 
   void setFactoryName(String factoryName) {
     if (state.factoryName == factoryName) return;
-    state = state.copyWith(factoryName: factoryName);
+    
+    // Check if this is different from the original factory value
+    final factory = state.factory;
+    final hasChanges = factory != null && factoryName != factory.name;
+    
+    state = state.copyWith(
+      factoryName: factoryName,
+      hasFactoryPropertyChanges: hasChanges || _hasOtherFactoryPropertyChanges(),
+    );
   }
 
   void setPricePerDemo(double pricePerDemo) {
     if (state.pricePerDemo == pricePerDemo) return;
-    state = state.copyWith(pricePerDemo: pricePerDemo);
+    
+    // Check if this is different from the original factory value
+    final factory = state.factory;
+    final hasChanges = factory != null && pricePerDemo != factory.pricePerDemo;
+    
+    state = state.copyWith(
+      pricePerDemo: pricePerDemo,
+      hasFactoryPropertyChanges: hasChanges || _hasOtherFactoryPropertyChanges(),
+    );
   }
 
   void setUploadLimitValue(int uploadLimitValue) {
@@ -44,7 +63,15 @@ mixin ForgeDetailSetters on AutoDisposeNotifier<ForgeDetailState> {
 
   void setFactoryStatus(FactoryStatus factoryStatus) {
     if (state.factoryStatus == factoryStatus) return;
-    state = state.copyWith(factoryStatus: factoryStatus);
+    
+    // Check if this is different from the original factory value
+    final factory = state.factory;
+    final hasChanges = factory != null && factoryStatus != factory.status;
+    
+    state = state.copyWith(
+      factoryStatus: factoryStatus,
+      hasFactoryPropertyChanges: hasChanges || _hasOtherFactoryPropertyChanges(),
+    );
   }
 
   void setIsUpdateFactoryStatusSuccess(bool isUpdateFactoryStatusSuccess) {
@@ -104,5 +131,15 @@ mixin ForgeDetailSetters on AutoDisposeNotifier<ForgeDetailState> {
     
     final updatedFactory = currentFactory.copyWith(balance: newBalance);
     state = state.copyWith(factory: updatedFactory);
+  }
+  
+  /// Check if there are changes in other factory properties (excluding the one being set)
+  bool _hasOtherFactoryPropertyChanges() {
+    final factory = state.factory;
+    if (factory == null) return false;
+    
+    return state.factoryName != factory.name ||
+           state.pricePerDemo != factory.pricePerDemo ||
+           state.factoryStatus != factory.status;
   }
 }

@@ -18,6 +18,7 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$TrainingSessionState {
   String? get prompt => throw _privateConstructorUsedError;
   Factory? get factory => throw _privateConstructorUsedError;
+  FactoryTask? get factoryTask => throw _privateConstructorUsedError;
   Demonstration? get recordedDemonstration =>
       throw _privateConstructorUsedError;
   Demonstration? get recordingDemonstration =>
@@ -51,6 +52,7 @@ abstract class $TrainingSessionStateCopyWith<$Res> {
   $Res call(
       {String? prompt,
       Factory? factory,
+      FactoryTask? factoryTask,
       Demonstration? recordedDemonstration,
       Demonstration? recordingDemonstration,
       bool recordingProcessing,
@@ -67,6 +69,7 @@ abstract class $TrainingSessionStateCopyWith<$Res> {
       bool hasGivenUp});
 
   $FactoryCopyWith<$Res>? get factory;
+  $FactoryTaskCopyWith<$Res>? get factoryTask;
   $DemonstrationCopyWith<$Res>? get recordedDemonstration;
   $DemonstrationCopyWith<$Res>? get recordingDemonstration;
   $TypingMessageCopyWith<$Res>? get typingMessage;
@@ -91,6 +94,7 @@ class _$TrainingSessionStateCopyWithImpl<$Res,
   $Res call({
     Object? prompt = freezed,
     Object? factory = freezed,
+    Object? factoryTask = freezed,
     Object? recordedDemonstration = freezed,
     Object? recordingDemonstration = freezed,
     Object? recordingProcessing = null,
@@ -115,6 +119,10 @@ class _$TrainingSessionStateCopyWithImpl<$Res,
           ? _value.factory
           : factory // ignore: cast_nullable_to_non_nullable
               as Factory?,
+      factoryTask: freezed == factoryTask
+          ? _value.factoryTask
+          : factoryTask // ignore: cast_nullable_to_non_nullable
+              as FactoryTask?,
       recordedDemonstration: freezed == recordedDemonstration
           ? _value.recordedDemonstration
           : recordedDemonstration // ignore: cast_nullable_to_non_nullable
@@ -192,6 +200,20 @@ class _$TrainingSessionStateCopyWithImpl<$Res,
   /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
+  $FactoryTaskCopyWith<$Res>? get factoryTask {
+    if (_value.factoryTask == null) {
+      return null;
+    }
+
+    return $FactoryTaskCopyWith<$Res>(_value.factoryTask!, (value) {
+      return _then(_value.copyWith(factoryTask: value) as $Val);
+    });
+  }
+
+  /// Create a copy of TrainingSessionState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
   $DemonstrationCopyWith<$Res>? get recordedDemonstration {
     if (_value.recordedDemonstration == null) {
       return null;
@@ -257,6 +279,7 @@ abstract class _$$TrainingSessionStateImplCopyWith<$Res>
   $Res call(
       {String? prompt,
       Factory? factory,
+      FactoryTask? factoryTask,
       Demonstration? recordedDemonstration,
       Demonstration? recordingDemonstration,
       bool recordingProcessing,
@@ -274,6 +297,8 @@ abstract class _$$TrainingSessionStateImplCopyWith<$Res>
 
   @override
   $FactoryCopyWith<$Res>? get factory;
+  @override
+  $FactoryTaskCopyWith<$Res>? get factoryTask;
   @override
   $DemonstrationCopyWith<$Res>? get recordedDemonstration;
   @override
@@ -299,6 +324,7 @@ class __$$TrainingSessionStateImplCopyWithImpl<$Res>
   $Res call({
     Object? prompt = freezed,
     Object? factory = freezed,
+    Object? factoryTask = freezed,
     Object? recordedDemonstration = freezed,
     Object? recordingDemonstration = freezed,
     Object? recordingProcessing = null,
@@ -323,6 +349,10 @@ class __$$TrainingSessionStateImplCopyWithImpl<$Res>
           ? _value.factory
           : factory // ignore: cast_nullable_to_non_nullable
               as Factory?,
+      factoryTask: freezed == factoryTask
+          ? _value.factoryTask
+          : factoryTask // ignore: cast_nullable_to_non_nullable
+              as FactoryTask?,
       recordedDemonstration: freezed == recordedDemonstration
           ? _value.recordedDemonstration
           : recordedDemonstration // ignore: cast_nullable_to_non_nullable
@@ -389,6 +419,7 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
   const _$TrainingSessionStateImpl(
       {this.prompt,
       this.factory,
+      this.factoryTask,
       this.recordedDemonstration,
       this.recordingDemonstration,
       this.recordingProcessing = false,
@@ -410,6 +441,8 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
   final String? prompt;
   @override
   final Factory? factory;
+  @override
+  final FactoryTask? factoryTask;
   @override
   final Demonstration? recordedDemonstration;
   @override
@@ -456,7 +489,7 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
 
   @override
   String toString() {
-    return 'TrainingSessionState(prompt: $prompt, factory: $factory, recordedDemonstration: $recordedDemonstration, recordingDemonstration: $recordingDemonstration, recordingProcessing: $recordingProcessing, showUploadConfirmModal: $showUploadConfirmModal, currentRecordingId: $currentRecordingId, isUploading: $isUploading, originalWindowSize: $originalWindowSize, recordingState: $recordingState, chatMessages: $chatMessages, typingMessage: $typingMessage, isWaitingForResponse: $isWaitingForResponse, app: $app, scrollToBottomNonce: $scrollToBottomNonce, hasGivenUp: $hasGivenUp)';
+    return 'TrainingSessionState(prompt: $prompt, factory: $factory, factoryTask: $factoryTask, recordedDemonstration: $recordedDemonstration, recordingDemonstration: $recordingDemonstration, recordingProcessing: $recordingProcessing, showUploadConfirmModal: $showUploadConfirmModal, currentRecordingId: $currentRecordingId, isUploading: $isUploading, originalWindowSize: $originalWindowSize, recordingState: $recordingState, chatMessages: $chatMessages, typingMessage: $typingMessage, isWaitingForResponse: $isWaitingForResponse, app: $app, scrollToBottomNonce: $scrollToBottomNonce, hasGivenUp: $hasGivenUp)';
   }
 
   @override
@@ -466,6 +499,8 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
             other is _$TrainingSessionStateImpl &&
             (identical(other.prompt, prompt) || other.prompt == prompt) &&
             (identical(other.factory, factory) || other.factory == factory) &&
+            (identical(other.factoryTask, factoryTask) ||
+                other.factoryTask == factoryTask) &&
             (identical(other.recordedDemonstration, recordedDemonstration) ||
                 other.recordedDemonstration == recordedDemonstration) &&
             (identical(other.recordingDemonstration, recordingDemonstration) ||
@@ -500,6 +535,7 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
       runtimeType,
       prompt,
       factory,
+      factoryTask,
       recordedDemonstration,
       recordingDemonstration,
       recordingProcessing,
@@ -530,6 +566,7 @@ abstract class _TrainingSessionState extends TrainingSessionState {
   const factory _TrainingSessionState(
       {final String? prompt,
       final Factory? factory,
+      final FactoryTask? factoryTask,
       final Demonstration? recordedDemonstration,
       final Demonstration? recordingDemonstration,
       final bool recordingProcessing,
@@ -550,6 +587,8 @@ abstract class _TrainingSessionState extends TrainingSessionState {
   String? get prompt;
   @override
   Factory? get factory;
+  @override
+  FactoryTask? get factoryTask;
   @override
   Demonstration? get recordedDemonstration;
   @override

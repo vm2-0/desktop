@@ -1,6 +1,7 @@
 import 'package:clones_desktop/domain/app_info.dart';
 import 'package:clones_desktop/domain/models/demonstration/demonstration.dart';
 import 'package:clones_desktop/domain/models/factory/factory.dart';
+import 'package:clones_desktop/domain/models/factory/factory_task.dart';
 import 'package:clones_desktop/domain/models/message/message.dart';
 import 'package:clones_desktop/domain/models/message/typing_message.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,7 @@ class TrainingSessionState with _$TrainingSessionState {
   const factory TrainingSessionState({
     String? prompt,
     Factory? factory,
+    FactoryTask? factoryTask,
     Demonstration? recordedDemonstration,
     Demonstration? recordingDemonstration,
     @Default(false) bool recordingProcessing,

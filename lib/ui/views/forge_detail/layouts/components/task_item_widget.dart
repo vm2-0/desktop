@@ -41,6 +41,7 @@ class TaskItemWidget extends StatelessWidget {
                   style: theme.textTheme.bodyMedium,
                 ),
                 TaskLimitsWidget(
+                  factory: factory,
                   task: task,
                   factoryToken: factory.token,
                 ),

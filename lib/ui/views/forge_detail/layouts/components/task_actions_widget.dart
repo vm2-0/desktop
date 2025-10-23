@@ -64,6 +64,7 @@ class TaskActionsWidget extends ConsumerWidget {
                 'prompt': task.prompt,
                 'appParam': appParam,
                 'poolId': forgeId,
+                'taskId': task.id,
               },
             );
           },
