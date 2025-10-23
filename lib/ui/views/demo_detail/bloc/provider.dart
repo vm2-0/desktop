@@ -9,7 +9,9 @@ import 'package:clones_desktop/application/tauri_api.dart';
 import 'package:clones_desktop/application/upload/provider.dart';
 import 'package:clones_desktop/application/upload/state.dart';
 import 'package:clones_desktop/domain/models/message/sft_message.dart';
+import 'package:clones_desktop/domain/models/recording/api_recording.dart';
 import 'package:clones_desktop/domain/models/recording/recording_event.dart';
+import 'package:clones_desktop/domain/models/submission/submission_status.dart';
 import 'package:clones_desktop/domain/models/video_clip.dart';
 import 'package:clones_desktop/ui/components/video_player/video_source.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/state.dart';
@@ -76,6 +78,7 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
 
       state = state.copyWith(
         recording: recording,
+        userAccessType: 'owner',
       );
 
       // Now load other data separately to avoid one failure stopping others
@@ -88,6 +91,85 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     state = state.copyWith(isLoading: false);
   }
 
+  Future<void> loadPoolSubmission(String submissionId, String factoryAddress) async {
+    state = state.copyWith(
+      isLoading: true,
+      events: [],
+      sftMessages: [],
+      eventTypes: {},
+      enabledEventTypes: {},
+      startTime: 0,
+      videoSource: null,
+      clips: [],
+      selectedClipIds: {},
+      clipboardClip: null,
+      deletedClipsHistory: [],
+      currentAxTreeEvent: null,
+    );
+
+    // Start pre-upload animation when recording is loaded
+    startPreUploadAnimation();
+
+    try {
+      // Try to find the PoolSubmission and convert it to ApiRecording
+      final factorySubmissions = await ref.read(getFactorySubmissionsProvider(factoryAddress).future);
+      final poolSubmission = factorySubmissions.firstWhereOrNull((s) => s.id == submissionId);
+      
+      if (poolSubmission != null) {
+        // Convert PoolSubmission to SubmissionStatus format for ApiRecording
+        final submissionStatus = SubmissionStatus(
+          id: poolSubmission.id,
+          meta: poolSubmission.meta,
+          status: poolSubmission.status,
+          createdAt: poolSubmission.createdAt,
+          updatedAt: poolSubmission.updatedAt,
+          gradeResult: poolSubmission.gradeResult,
+          maxReward: poolSubmission.maxReward,
+          reward: poolSubmission.reward,
+          clampedScore: poolSubmission.clampedScore?.toInt(),
+          claimAuthorization: poolSubmission.claimAuthorization,
+        );
+
+        // Convert to ApiRecording format
+        final recording = ApiRecording(
+          id: poolSubmission.meta.id,
+          timestamp: poolSubmission.meta.timestamp,
+          durationSeconds: poolSubmission.meta.durationSeconds,
+          status: poolSubmission.meta.status,
+          title: poolSubmission.meta.title,
+          description: poolSubmission.meta.description,
+          platform: poolSubmission.meta.platform,
+          arch: poolSubmission.meta.arch,
+          version: poolSubmission.meta.version,
+          locale: poolSubmission.meta.locale,
+          primaryMonitor: poolSubmission.meta.primaryMonitor,
+          demonstration: poolSubmission.meta.demonstration,
+          submission: submissionStatus,
+          location: 'cloud',
+        );
+
+        state = state.copyWith(
+          recording: recording,
+          userAccessType: 'factory_creator',
+        );
+
+        // Load other data
+        await loadEvents(submissionId);
+        await loadSftData(submissionId);
+        await initializeVideoPlayer(submissionId);
+      } else {
+        // If not found, try with the regular loadRecording method
+        await loadRecording(submissionId);
+      }
+    } catch (_) {
+      // Fallback to regular loadRecording if pool submission fails
+      try {
+        await loadRecording(submissionId);
+      } catch (_) {}
+    }
+    state = state.copyWith(isLoading: false);
+  }
+
   Future<void> initializeVideoPlayer(String recordingId) async {
     // Clear any existing video state first
     state = state.copyWith(
@@ -95,9 +177,14 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     );
 
     // Get fresh recording data to avoid stale state
-    final recordings = await ref.read(mergedRecordingsProvider.future);
-    final recording =
-        recordings.firstWhereOrNull((element) => element.id == recordingId);
+    // First check if we have a recording in current state (for factory submissions)
+    var recording = state.recording;
+    
+    // If not, get from merged recordings (for regular recordings)
+    if (recording == null) {
+      final recordings = await ref.read(mergedRecordingsProvider.future);
+      recording = recordings.firstWhereOrNull((element) => element.id == recordingId);
+    }
 
     // Check if the recording is local or cloud
     if (recording?.location == 'local') {

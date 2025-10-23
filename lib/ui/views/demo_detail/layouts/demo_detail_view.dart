@@ -52,8 +52,9 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
       vsync: this,
     );
 
-    // Set modal state immediately if no recordingId
-    if (widget.recordingId == null) {
+    // Set modal state immediately if no recordingId and not a factory submission
+    if (widget.recordingId == null &&
+        widget.trainingParams?['isFactorySubmission'] != true) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref
             .read(demoDetailNotifierProvider.notifier)
@@ -66,6 +67,15 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
         await ref
             .read(demoDetailNotifierProvider.notifier)
             .loadRecording(widget.recordingId!);
+      } else if (widget.trainingParams?['isFactorySubmission'] == true) {
+        final submissionId = widget.trainingParams?['submissionId'] as String?;
+        final factoryAddress =
+            widget.trainingParams?['factoryAddress'] as String?;
+        if (submissionId != null && factoryAddress != null) {
+          await ref
+              .read(demoDetailNotifierProvider.notifier)
+              .loadPoolSubmission(submissionId, factoryAddress);
+        }
       }
     });
   }
@@ -170,6 +180,8 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
 
     final showTrainingSessionModal = demoDetailState.showTrainingSessionModal;
     final recording = demoDetailState.recording;
+    final userAccessType = demoDetailState.userAccessType;
+    final isFactoryCreator = userAccessType == 'factory_creator';
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -191,17 +203,19 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
                                 submission,
                                 recording,
                                 showTrainingSessionModal,
+                                isFactoryCreator,
                               );
                             }
                             return _buildMobileLayout(
                               submission,
                               recording,
                               showTrainingSessionModal,
+                              isFactoryCreator,
                             );
                           },
                         ),
                       ),
-                      if (!_videoFullscreen) ...[
+                      if (!_videoFullscreen && !isFactoryCreator) ...[
                         const SizedBox(height: 10),
                         AnimatedOpacity(
                           opacity: 1 - _animationController.value,
@@ -227,6 +241,7 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
     dynamic submission,
     dynamic recording,
     bool showTrainingSessionModal,
+    bool isFactoryCreator,
   ) {
     if (_videoFullscreen) {
       return AnimatedContainer(
@@ -303,7 +318,7 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
                                 const DemoDetailSteps(),
                                 const SizedBox(height: 20),
                               ],
-                              if (submission != null) ...[
+                              if (submission != null && !isFactoryCreator) ...[
                                 const DemoDetailRewards(),
                                 const SizedBox(height: 20),
                               ],
@@ -318,11 +333,13 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
             ],
           ),
         ),
-        const SizedBox(width: 20),
-        Expanded(
-          flex: 3,
-          child: _buildEditorTabs(),
-        ),
+        if (!isFactoryCreator) ...[
+          const SizedBox(width: 20),
+          Expanded(
+            flex: 3,
+            child: _buildEditorTabs(isFactoryCreator),
+          ),
+        ],
       ],
     );
   }
@@ -331,6 +348,7 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
     dynamic submission,
     dynamic recording,
     bool showTrainingSessionModal,
+    bool isFactoryCreator,
   ) {
     if (_videoFullscreen) {
       return AnimatedContainer(
@@ -397,26 +415,29 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
               child: const DemoDetailSubmissionResult(),
             ),
           const SizedBox(height: 20),
-          AnimatedOpacity(
-            opacity: 1 - _animationController.value,
-            duration: const Duration(milliseconds: 300),
-            child: const DemoDetailRewards(),
-          ),
-          const SizedBox(height: 20),
-          AnimatedOpacity(
-            opacity: 1 - _animationController.value,
-            duration: const Duration(milliseconds: 300),
-            child: SizedBox(
-              height: 500,
-              child: _buildEditorTabs(),
+          if (!isFactoryCreator) ...[
+            AnimatedOpacity(
+              opacity: 1 - _animationController.value,
+              duration: const Duration(milliseconds: 300),
+              child: const DemoDetailRewards(),
             ),
-          ),
+            const SizedBox(height: 20),
+          ],
+          if (!isFactoryCreator)
+            AnimatedOpacity(
+              opacity: 1 - _animationController.value,
+              duration: const Duration(milliseconds: 300),
+              child: SizedBox(
+                height: 500,
+                child: _buildEditorTabs(isFactoryCreator),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildEditorTabs() {
+  Widget _buildEditorTabs(bool isFactoryCreator) {
     return CardWidget(
       child: DefaultTabController(
         length: 2,

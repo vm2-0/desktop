@@ -64,7 +64,7 @@ The application uses **Flutter with Go Router** for navigation and follows **Cle
 **Factory Detail Sub-navigation**:
 - `/forge/:id/general` → ForgeFactoryGeneralTab
 - `/forge/:id/tasks` → ForgeFactoryTasksTab  
-- `/forge/:id/uploads` → ForgeFactoryUploadsTab
+- `/forge/:id/demonstrations` → ForgeFactoryUploadsTab
 
 #### 2.1 FORGE FACTORY DETAIL SHELL
 **File**: `lib/ui/views/forge_detail/layouts/forge_factory_detail_shell.dart`

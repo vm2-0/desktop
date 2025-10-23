@@ -119,7 +119,7 @@ class VideoControllerImpl with VideoControllerMixin {
   Future<String> _prepareVideoFile() async {
     return switch (source) {
       FileVideoSource(path: final path) => path,
-      AssetVideoSource(path: final path) => 
+      AssetVideoSource(path: final path) =>
         // For assets, we need to get the full path
         // This might need adjustment based on how assets are bundled
         path,
@@ -254,5 +254,3 @@ class VideoControllerImpl with VideoControllerMixin {
     }
   }
 }
-
-

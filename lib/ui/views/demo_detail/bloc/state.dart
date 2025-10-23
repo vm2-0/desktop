@@ -57,6 +57,7 @@ class DemoDetailState with _$DemoDetailState {
     @Default(false) bool showThirdMessage,
     @Default(0) int currentTypingIndex,
     @Default(0) int currentMessageIndex,
+    String? userAccessType, // 'owner' or 'factory_creator'
   }) = _DemoDetailState;
   const DemoDetailState._();
 }
