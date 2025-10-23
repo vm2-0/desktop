@@ -77,6 +77,11 @@ class ForgeDetailNotifier extends _$ForgeDetailNotifier
   Future<void> updateFactory() async {
     setIsUpdatePoolSuccess(false);
     try {
+      // First save factory apps if there are unsaved changes
+      if (state.hasUnsavedChanges) {
+        await saveFactoryApps();
+      }
+      
       var updatedFactory = await ref.read(
         updateFactoryProvider(
           factoryId: state.factory?.id ?? '',
@@ -92,7 +97,9 @@ class ForgeDetailNotifier extends _$ForgeDetailNotifier
           updatedFactory.copyWith(balance: state.factory?.balance ?? 0);
 
       setFactory(updatedFactory);
-      setIsUpdateFactoryStatusSuccess(true);
+      setIsUpdatePoolSuccess(true);
+      // Reset factory property changes after successful save
+      state = state.copyWith(hasFactoryPropertyChanges: false);
     } catch (e) {
       setError(e.toString());
     }

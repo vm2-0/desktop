@@ -20,6 +20,7 @@ FactoryTask _$FactoryTaskFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$FactoryTask {
+  @JsonKey(name: '_id')
   String? get id => throw _privateConstructorUsedError;
   String get prompt => throw _privateConstructorUsedError;
   int? get uploadLimit => throw _privateConstructorUsedError;
@@ -43,7 +44,7 @@ abstract class $FactoryTaskCopyWith<$Res> {
       _$FactoryTaskCopyWithImpl<$Res, FactoryTask>;
   @useResult
   $Res call(
-      {String? id,
+      {@JsonKey(name: '_id') String? id,
       String prompt,
       int? uploadLimit,
       double? rewardLimit,
@@ -105,7 +106,7 @@ abstract class _$$FactoryTaskImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String? id,
+      {@JsonKey(name: '_id') String? id,
       String prompt,
       int? uploadLimit,
       double? rewardLimit,
@@ -160,7 +161,7 @@ class __$$FactoryTaskImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$FactoryTaskImpl implements _FactoryTask {
   const _$FactoryTaskImpl(
-      {this.id,
+      {@JsonKey(name: '_id') this.id,
       required this.prompt,
       this.uploadLimit,
       this.rewardLimit,
@@ -170,6 +171,7 @@ class _$FactoryTaskImpl implements _FactoryTask {
       _$$FactoryTaskImplFromJson(json);
 
   @override
+  @JsonKey(name: '_id')
   final String? id;
   @override
   final String prompt;
@@ -223,7 +225,7 @@ class _$FactoryTaskImpl implements _FactoryTask {
 
 abstract class _FactoryTask implements FactoryTask {
   const factory _FactoryTask(
-      {final String? id,
+      {@JsonKey(name: '_id') final String? id,
       required final String prompt,
       final int? uploadLimit,
       final double? rewardLimit,
@@ -233,6 +235,7 @@ abstract class _FactoryTask implements FactoryTask {
       _$FactoryTaskImpl.fromJson;
 
   @override
+  @JsonKey(name: '_id')
   String? get id;
   @override
   String get prompt;

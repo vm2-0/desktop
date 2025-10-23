@@ -9,7 +9,7 @@ part 'factory_task.g.dart';
 @freezed
 class FactoryTask with _$FactoryTask {
   const factory FactoryTask({
-    String? id,
+    @JsonKey(name: '_id') String? id,
     required String prompt,
     int? uploadLimit,
     double? rewardLimit,

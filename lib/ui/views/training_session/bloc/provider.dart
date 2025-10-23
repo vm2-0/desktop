@@ -17,7 +17,6 @@ import 'package:clones_desktop/ui/views/training_session/bloc/setters.dart';
 import 'package:clones_desktop/ui/views/training_session/bloc/state.dart';
 import 'package:clones_desktop/utils/env.dart';
 import 'package:clones_desktop/utils/window_alignment.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
@@ -46,20 +45,18 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
           ),
         );
 
-        if (!kIsWeb) {
-          unawaited(
-            FlutterWindowManager.resizeWindow(
-              kRecordOverlaySize.width,
-              kRecordOverlaySize.height,
-            ),
-          );
+        unawaited(
+          FlutterWindowManager.resizeWindow(
+            kRecordOverlaySize.width,
+            kRecordOverlaySize.height,
+          ),
+        );
 
-          unawaited(
-            FlutterWindowManager.setWindowPosition(
-              WindowAlignment.topRight,
-            ),
-          );
-        }
+        unawaited(
+          FlutterWindowManager.setWindowPosition(
+            WindowAlignment.topRight,
+          ),
+        );
 
         await ref
             .read(tauriApiClientProvider)

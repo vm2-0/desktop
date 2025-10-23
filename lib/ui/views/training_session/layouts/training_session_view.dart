@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:ui';
 
 import 'package:clones_desktop/application/factory.dart';
+import 'package:clones_desktop/application/tasks.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/domain/app_info.dart';
 import 'package:clones_desktop/domain/models/message/message.dart';
@@ -27,11 +28,13 @@ class TrainingSessionView extends ConsumerStatefulWidget {
     this.prompt,
     this.appParam,
     this.poolId,
+    this.taskId,
     this.onRecordingCompleted,
   });
   final String? prompt;
   final String? appParam;
   final String? poolId;
+  final String? taskId;
   final Function(String recordingId)? onRecordingCompleted;
 
   @override
@@ -64,6 +67,20 @@ class _TrainingSessionViewState extends ConsumerState<TrainingSessionView> {
         ref
             .read(trainingSessionNotifierProvider.notifier)
             .setPrompt(widget.prompt);
+      }
+      if (widget.taskId != null) {
+        final factoryTasks = await ref.read(
+          getTasksForFactoryProvider(
+            filter: {
+              'poolId': widget.poolId,
+            },
+          ).future,
+        );
+        final factoryTask =
+            factoryTasks.firstWhere((task) => task.id == widget.taskId);
+        ref
+            .read(trainingSessionNotifierProvider.notifier)
+            .setFactoryTask(factoryTask);
       }
       await ref.read(trainingSessionNotifierProvider.notifier).initialMessage();
     });

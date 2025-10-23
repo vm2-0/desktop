@@ -7,8 +7,6 @@ import 'package:clones_desktop/ui/views/forge_detail/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/components/forge_factory_general_tab_factory_address.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/components/forge_factory_general_tab_factory_name.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/components/forge_factory_general_tab_factory_upload_limit.dart';
-import 'package:clones_desktop/ui/views/forge_detail/layouts/components/forge_factory_general_tab_price_per_demo.dart';
-import 'package:clones_desktop/ui/views/forge_detail/layouts/components/forge_factory_general_tab_stat_demo_price.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/components/forge_factory_general_tab_stat_pool_balance.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/components/forge_factory_general_tab_stat_session_completed.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/components/forge_factory_header.dart';
@@ -46,8 +44,6 @@ class ForgeFactoryGeneralTab extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   ForgeFactoryGeneralTabFactoryName(),
-                  SizedBox(width: 20),
-                  ForgeFactoryGeneralTabPricePerDemo(),
                 ],
               ),
             ),
@@ -124,7 +120,6 @@ class ForgeFactoryGeneralTab extends ConsumerWidget {
         spacing: 20,
         children: [
           ForgeFactoryGeneralTabStatSessionCompleted(),
-          ForgeFactoryGeneralTabStatDemoPrice(),
           ForgeFactoryGeneralTabStatPoolBalance(),
         ],
       ),

@@ -26,6 +26,7 @@ class ForgeDetailState with _$ForgeDetailState {
     @Default(false) bool isUpdatePoolSuccess,
     @Default(false) bool isRefreshBalanceSuccess,
     @Default(false) bool hasUnsavedChanges,
+    @Default(false) bool hasFactoryPropertyChanges,
     @Default(false) bool showNewAppForm,
     @Default(false) bool showManageTaskModal,
     @Default(ManageTaskModalType.create)
@@ -36,4 +37,9 @@ class ForgeDetailState with _$ForgeDetailState {
     int? editingTaskIdx,
   }) = _ForgeDetailState;
   const ForgeDetailState._();
+  
+  /// Check if there are any unsaved changes (apps or factory properties)
+  bool get hasAnyUnsavedChanges {
+    return hasUnsavedChanges || hasFactoryPropertyChanges;
+  }
 }

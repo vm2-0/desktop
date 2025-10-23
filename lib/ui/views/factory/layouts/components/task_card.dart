@@ -43,8 +43,9 @@ class TaskCard extends ConsumerWidget {
     }
 
     final tokenSymbol = factory.token.symbol;
-    final rewardText =
-        '${factory.pricePerDemo.toStringAsFixedLowValue(2, 5)} $tokenSymbol';
+    final rewardText = task.rewardLimit != null
+        ? '${task.rewardLimit?.toStringAsFixedLowValue(2, 5)} $tokenSymbol'
+        : '${factory.pricePerDemo.toStringAsFixedLowValue(2, 5)} $tokenSymbol';
 
     Future<void> onTap(BuildContext context) async {
       // Check if farming is locked without referral code
@@ -70,6 +71,7 @@ class TaskCard extends ConsumerWidget {
           'prompt': task.prompt,
           'appParam': appParam,
           'poolId': factory.id,
+          'taskId': task.id,
         },
       );
     }
