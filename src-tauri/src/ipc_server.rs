@@ -6,11 +6,92 @@ use axum::{
     Router,
 };
 use http::header::{ACCEPT, CONTENT_TYPE};
+#[cfg(target_os = "macos")]
+use nix::errno::Errno;
+#[cfg(target_os = "macos")]
+use objc::runtime::Object;
+#[cfg(target_os = "macos")]
+use objc::{class, msg_send, sel, sel_impl};
+#[cfg(windows)]
+use windows::Win32::Foundation::{CloseHandle, HANDLE};
+#[cfg(windows)]
+use windows::Win32::System::Threading::{
+    OpenProcess, WaitForSingleObject, INFINITE, PROCESS_SYNCHRONIZE,
+};
 
+#[cfg(target_os = "macos")]
+use core_foundation::base::TCFType;
+#[cfg(target_os = "macos")]
+use core_foundation::string::{CFString, CFStringRef};
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
+use std::time::Duration;
 use tauri::{AppHandle, Manager};
 use tower_http::cors::{Any, CorsLayer};
+#[cfg(target_os = "macos")]
+type IOPMAssertionID = u32;
+#[cfg(target_os = "macos")]
+type IOReturn = i32;
+#[cfg(target_os = "macos")]
+#[link(name = "IOKit", kind = "framework")]
+extern "C" {
+    fn IOPMAssertionCreateWithName(
+        assertion_type: CFStringRef,
+        assertion_level: u32,
+        assertion_name: CFStringRef,
+        assertion_id: *mut IOPMAssertionID,
+    ) -> IOReturn;
+    fn IOPMAssertionRelease(assertion_id: IOPMAssertionID) -> IOReturn;
+}
+#[cfg(target_os = "macos")]
+const K_IOPM_ASSERTION_LEVEL_ON: u32 = 255; // kIOPMAssertionLevelOn
+#[cfg(target_os = "macos")]
+struct MacSleepAssertion {
+    id: IOPMAssertionID,
+}
+#[cfg(target_os = "macos")]
+impl MacSleepAssertion {
+    fn prevent_user_idle_system_sleep(name: &str) -> Option<Self> {
+        unsafe {
+            let assertion_type = CFString::new("PreventUserIdleSystemSleep");
+            let assertion_name = CFString::new(name);
+            let mut id: IOPMAssertionID = 0;
+            let ret = IOPMAssertionCreateWithName(
+                assertion_type.as_concrete_TypeRef(),
+                K_IOPM_ASSERTION_LEVEL_ON,
+                assertion_name.as_concrete_TypeRef(),
+                &mut id as *mut IOPMAssertionID,
+            );
+            if ret == 0 {
+                // kIOReturnSuccess
+                Some(MacSleepAssertion { id })
+            } else {
+                log::warn!("[Power] IOPMAssertionCreateWithName failed: {}", ret);
+                None
+            }
+        }
+    }
+}
+#[cfg(target_os = "macos")]
+impl Drop for MacSleepAssertion {
+    fn drop(&mut self) {
+        unsafe {
+            let ret = IOPMAssertionRelease(self.id);
+            if ret != 0 {
+                log::warn!("[Power] IOPMAssertionRelease failed: {}", ret);
+            }
+        }
+    }
+}
+
+// Constants for heartbeat monitoring configuration
+const HEARTBEAT_CHECK_INTERVAL_SECONDS: u64 = 5;
+const READY_SIGNAL_TIMEOUT_SECONDS: u64 = 30;
+
+// Import heartbeat utilities
+use crate::utils::heartbeat::{
+    check_flutter_heartbeat_simple, check_flutter_ready_signal, get_flutter_heartbeat_path_stable,
+};
 
 // Import business logic from the local `core` module
 use crate::core::record::{self, Demonstration};
@@ -44,6 +125,8 @@ use crate::DeepLinkState;
 pub struct AppState {
     pub app_handle: AppHandle,
 }
+
+// (macOS App Nap guard intentionally not implemented yet due to async Send constraints)
 
 // Structure for the write_recording_file request
 #[derive(Deserialize)]
@@ -139,7 +222,17 @@ pub struct ProcessRecordingQuery {
 
 // Main function to start the server
 pub async fn init(app_handle: AppHandle) {
-    let state = AppState { app_handle };
+    #[cfg(target_os = "macos")]
+    unsafe {
+        mac_appnap::begin();
+    }
+    #[cfg(target_os = "macos")]
+    {
+        spawn_caffeinate_guard();
+    }
+    let state = AppState {
+        app_handle: app_handle.clone(),
+    };
 
     let cors = CorsLayer::new()
         .allow_methods([Method::GET, Method::POST, Method::DELETE])
@@ -259,6 +352,12 @@ pub async fn init(app_handle: AppHandle) {
         match tokio::net::TcpListener::bind(addr).await {
             Ok(listener) => {
                 log::info!("[IPC Server] Successfully bound to {}", addr);
+
+                // Start simple heartbeat monitoring
+                start_heartbeat_monitoring(app_handle.clone());
+                // Start parent lifecycle guard to exit when Flutter dies
+                start_parent_lifecycle_guard();
+
                 if let Err(e) = axum::serve(listener, app.into_make_service()).await {
                     log::error!("[IPC Server] Server error: {}", e);
                 }
@@ -268,6 +367,277 @@ pub async fn init(app_handle: AppHandle) {
             }
         }
     });
+}
+
+/// Start simple heartbeat monitoring in background
+fn start_heartbeat_monitoring(app_handle: AppHandle) {
+    // Check if development mode is enabled
+    let is_dev_mode = std::env::var("CLONES_DEV_MODE")
+        .map(|v| v == "true" || v == "1")
+        .unwrap_or(false);
+
+    if is_dev_mode {
+        log::info!("[Heartbeat] Development mode - skipping heartbeat monitoring");
+        return;
+    }
+
+    // Use stable heartbeat path independent of Flutter PID
+    let heartbeat_path = get_flutter_heartbeat_path_stable();
+    log::info!(
+        "[Heartbeat] Starting heartbeat monitoring at: {}",
+        heartbeat_path.display()
+    );
+    // Start supervised heartbeat monitoring that restarts on panic
+    start_supervised_heartbeat_monitoring(app_handle.clone(), heartbeat_path);
+}
+
+/// Start supervised heartbeat monitoring that automatically restarts on panic
+fn start_supervised_heartbeat_monitoring(
+    app_handle: AppHandle,
+    heartbeat_path: std::path::PathBuf,
+) {
+    tokio::spawn(async move {
+        loop {
+            log::info!("[Heartbeat] Starting heartbeat monitoring task");
+
+            let app_for_cleanup = app_handle.clone();
+            let heartbeat_path_clone = heartbeat_path.clone();
+
+            let monitoring_handle = tokio::spawn(async move {
+                // Prevent system idle sleep while monitoring (macOS)
+                #[cfg(target_os = "macos")]
+                let _sleep_assertion =
+                    MacSleepAssertion::prevent_user_idle_system_sleep("Clones Agent Monitoring");
+                // Wait for Flutter ready signal (with timeout)
+                log::info!(
+                    "[Heartbeat] Waiting for Flutter ready signal (timeout: {}s)...",
+                    READY_SIGNAL_TIMEOUT_SECONDS
+                );
+                let mut ready_timeout = READY_SIGNAL_TIMEOUT_SECONDS;
+                while ready_timeout > 0 && !check_flutter_ready_signal(&heartbeat_path_clone) {
+                    tokio::time::sleep(Duration::from_secs(1)).await;
+                    ready_timeout -= 1;
+                }
+
+                if ready_timeout == 0 {
+                    // Instead of exiting, continue monitoring and keep waiting for Flutter to appear later
+                    log::warn!("[Heartbeat] Timeout waiting for Flutter ready signal - continuing to wait in background");
+                }
+
+                log::info!("[Heartbeat] Flutter ready signal received, starting heartbeat monitoring (check interval: {}s)", 
+                          HEARTBEAT_CHECK_INTERVAL_SECONDS);
+
+                let mut interval =
+                    tokio::time::interval(Duration::from_secs(HEARTBEAT_CHECK_INTERVAL_SECONDS));
+                let mut check_count = 0u64;
+                // Track wall time to detect sleep/wake gaps and apply a post-wake grace window
+                let mut last_wall = std::time::SystemTime::now();
+                let mut grace_deadline: Option<std::time::SystemTime> = None;
+
+                loop {
+                    interval.tick().await;
+                    check_count += 1;
+
+                    // Detect significant wall-clock jumps (system sleep/wake)
+                    let wall_now = std::time::SystemTime::now();
+                    if let Ok(elapsed) = wall_now.duration_since(last_wall) {
+                        // Threshold: 3x the check interval → likely a suspend
+                        let threshold = Duration::from_secs(HEARTBEAT_CHECK_INTERVAL_SECONDS * 3);
+                        if elapsed > threshold {
+                            let grace = Duration::from_secs(20);
+                            grace_deadline = Some(wall_now + grace);
+                            log::info!(
+                                "[Heartbeat] Detected possible system wake (gap: {:?}). Applying grace: {:?}",
+                                elapsed,
+                                grace
+                            );
+                        }
+                    }
+                    last_wall = wall_now;
+
+                    // Log every 12 checks (1 minute) to show monitoring is alive
+                    if check_count % 12 == 0 {
+                        log::debug!(
+                            "[Heartbeat] Monitoring alive - check #{} completed",
+                            check_count
+                        );
+                    }
+
+                    // During grace window after wake, skip failure checks
+                    if let Some(deadline) = grace_deadline {
+                        if wall_now < deadline {
+                            continue;
+                        } else {
+                            grace_deadline = None;
+                        }
+                    }
+
+                    if !check_flutter_heartbeat_simple(&heartbeat_path_clone) {
+                        // Flutter stopped or sleeping: perform cleanup, then continue waiting for it to come back
+                        log::warn!("[Heartbeat] Flutter heartbeat failed - performing cleanup & waiting for return");
+
+                        if let Err(e) = cleanup_before_exit(&app_for_cleanup) {
+                            log::error!("[Heartbeat] Cleanup failed: {}", e);
+                        } else {
+                            log::info!("[Heartbeat] Cleanup completed successfully");
+                        }
+
+                        // Placeholder: release anti-App Nap guard during idle wait on macOS
+
+                        // After cleanup, block until ready signal or heartbeat reappears
+                        loop {
+                            if check_flutter_ready_signal(&heartbeat_path_clone)
+                                || check_flutter_heartbeat_simple(&heartbeat_path_clone)
+                            {
+                                log::info!("[Heartbeat] Flutter returned - resuming monitoring");
+                                // Placeholder: re-acquire anti-App Nap guard after resume on macOS
+                                break;
+                            }
+                            tokio::time::sleep(Duration::from_secs(1)).await;
+                        }
+                    }
+                }
+            });
+
+            // Wait for the monitoring task to complete or panic
+            match monitoring_handle.await {
+                Ok(_) => {
+                    log::info!(
+                        "[Heartbeat] Monitoring task completed normally - exiting supervision"
+                    );
+                    break;
+                }
+                Err(e) if e.is_panic() => {
+                    log::error!(
+                        "[Heartbeat] CRITICAL: Monitoring task panicked! Details: {:?}",
+                        e
+                    );
+                    log::error!(
+                        "[Heartbeat] Restarting monitoring immediately to prevent zombie agent"
+                    );
+
+                    // Brief delay before restart to prevent tight loop
+                    tokio::time::sleep(Duration::from_millis(100)).await;
+                    // Continue the loop to restart monitoring
+                }
+                Err(e) => {
+                    log::warn!(
+                        "[Heartbeat] Monitoring task was cancelled: {} - exiting supervision",
+                        e
+                    );
+                    break;
+                }
+            }
+        }
+    });
+}
+
+// --- macOS: Disable App Nap using NSProcessInfo.beginActivity for agent lifetime ---
+#[cfg(target_os = "macos")]
+#[allow(unexpected_cfgs)]
+mod mac_appnap {
+    use super::*;
+    use core::sync::atomic::{AtomicBool, Ordering};
+    static ENGAGED: AtomicBool = AtomicBool::new(false);
+
+    pub unsafe fn begin() {
+        if ENGAGED.swap(true, Ordering::SeqCst) {
+            return;
+        }
+        let ns_process_info: *mut Object = msg_send![class!(NSProcessInfo), processInfo];
+        if ns_process_info.is_null() {
+            return;
+        }
+        // NSActivityUserInitiated | NSActivityLatencyCritical
+        let options: u64 = 0x00FF_FFFF_u64 | 0xFF00_0000_u64;
+        let reason_c = std::ffi::CString::new("Clones Agent Monitoring").unwrap();
+        let ns_string: *mut Object =
+            msg_send![class!(NSString), stringWithUTF8String: reason_c.as_ptr()];
+        let _: *mut Object =
+            msg_send![ns_process_info, beginActivityWithOptions: options reason: ns_string];
+        log::info!("[Power] NSProcessInfo.beginActivity engaged (App Nap disabled)");
+    }
+}
+
+// macOS: robust external sleep guard using `caffeinate` tied to this PID
+#[cfg(target_os = "macos")]
+fn spawn_caffeinate_guard() {
+    let pid = std::process::id().to_string();
+    let result = std::process::Command::new("/usr/bin/caffeinate")
+        .args(["-dims", "-w", &pid])
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .spawn();
+    match result {
+        Ok(_) => log::info!("[Power] caffeinate guard started for PID {}", pid),
+        Err(e) => log::warn!("[Power] Failed to start caffeinate guard: {}", e),
+    }
+}
+
+/// Perform graceful cleanup before agent shutdown
+fn cleanup_before_exit(app_handle: &AppHandle) -> Result<(), String> {
+    log::info!("[Cleanup] Starting graceful cleanup before agent shutdown");
+
+    // Force kill any active recorder and cleanup recording state
+    crate::core::record::force_kill_active_recorder(app_handle);
+    log::info!("[Cleanup] Active recorder cleanup completed");
+
+    // Log shutdown reason for debugging
+    log::info!("[Cleanup] Agent shutdown due to Flutter heartbeat failure");
+
+    Ok(())
+}
+
+/// Start a cross-platform guard that exits the agent when the Flutter parent process dies
+fn start_parent_lifecycle_guard() {
+    let ppid = std::env::var("FLUTTER_PARENT_PID")
+        .ok()
+        .and_then(|s| s.parse::<u32>().ok());
+    let Some(parent_pid) = ppid else {
+        log::info!("[Lifecycle] No FLUTTER_PARENT_PID provided - skipping parent guard");
+        return;
+    };
+
+    #[cfg(target_os = "macos")]
+    {
+        log::info!(
+            "[Lifecycle] Starting macOS parent guard for PID {}",
+            parent_pid
+        );
+        tokio::spawn(async move {
+            loop {
+                // kill(pid, 0) → 0 si existe, -1 avec ESRCH si inexistant
+                let rc = unsafe { libc::kill(parent_pid as i32, 0) };
+                let last = Errno::last_raw();
+                let alive = rc == 0 || last != Errno::ESRCH as i32;
+                if !alive {
+                    log::info!("[Lifecycle] Parent PID {} gone - exiting agent", parent_pid);
+                    std::process::exit(0);
+                }
+                tokio::time::sleep(Duration::from_secs(1)).await;
+            }
+        });
+    }
+
+    #[cfg(windows)]
+    {
+        log::info!(
+            "[Lifecycle] Starting Windows parent guard for PID {}",
+            parent_pid
+        );
+        std::thread::spawn(move || unsafe {
+            let handle: HANDLE = OpenProcess(PROCESS_SYNCHRONIZE, false.into(), parent_pid);
+            if handle.0 == 0 {
+                log::info!("[Lifecycle] Parent not found - exiting agent");
+                std::process::exit(0);
+            }
+            let _ = WaitForSingleObject(handle, INFINITE);
+            let _ = CloseHandle(handle);
+            log::info!("[Lifecycle] Parent exited - exiting agent");
+            std::process::exit(0);
+        });
+    }
 }
 
 // Handler to list recordings

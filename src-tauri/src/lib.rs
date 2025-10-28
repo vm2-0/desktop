@@ -9,12 +9,9 @@ pub mod ipc_server;
 mod services;
 mod tools;
 pub mod utils;
-use std::sync::{Arc, Mutex};
 use tauri::Listener;
 
 use utils::permissions::{has_ax_perms, has_record_perms, request_ax_perms, request_record_perms};
-use utils::heartbeat;
-use utils::pid_monitor;
 
 use crate::commands::general::{greet, list_apps, take_screenshot};
 use crate::commands::record::{
@@ -31,7 +28,7 @@ use crate::commands::transaction::{
 };
 use crate::core::record::force_kill_active_recorder;
 // State to hold the latest deep link URL
-pub struct DeepLinkState(pub Arc<Mutex<Option<String>>>);
+pub struct DeepLinkState(pub std::sync::Arc<std::sync::Mutex<Option<String>>>);
 
 
 
@@ -64,7 +61,7 @@ pub fn setup_builder() -> tauri::Builder<tauri::Wry> {
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
-        .manage(DeepLinkState(Arc::new(Mutex::new(None))))
+        .manage(DeepLinkState(std::sync::Arc::new(std::sync::Mutex::new(None))))
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             greet,
@@ -134,35 +131,12 @@ pub fn run() {
                 log::info!("[Monitor] Development mode detected - skipping Flutter lifecycle monitoring");
                 log::info!("[Monitor] Agent will run independently until manually stopped");
             } else {
-                // Start hybrid monitoring system in background (production mode only)
-                let app_for_monitoring = app.handle().clone();
-                tauri::async_runtime::spawn(async move {
-                    // Try to get Flutter PID for OS-level monitoring
-                    if let Ok(ppid_str) = std::env::var("FLUTTER_PARENT_PID") {
-                        if let Ok(flutter_pid) = ppid_str.parse::<u32>() {
-                            log::info!("[Monitor] Starting hybrid monitoring for Flutter PID: {}", flutter_pid);
-                            
-                            // Start OS-level PID monitor (primary)
-                            let app_for_pid = app_for_monitoring.clone();
-                            tauri::async_runtime::spawn(async move {
-                                pid_monitor::start_parent_process_monitor(flutter_pid, app_for_pid).await;
-                            });
-                            
-                            // Start heartbeat monitor (fallback)
-                            let app_for_heartbeat = app_for_monitoring.clone();
-                            tauri::async_runtime::spawn(async move {
-                                heartbeat::start_flutter_heartbeat_monitor(flutter_pid, app_for_heartbeat).await;
-                            });
-                            
-                            return;
-                        }
-                    }
-                    
-                    // Fallback to heartbeat-only monitoring
-                    log::info!("[Monitor] No Flutter PID provided - using heartbeat-only monitoring");
-                    heartbeat::auto_detect_and_monitor_flutter(app_for_monitoring).await;
-                });
+                // Note: Heartbeat monitoring is now handled in IPC server
+                log::info!("[Monitor] Production mode - heartbeat monitoring will start with IPC server");
             }
+
+            // Note: Removed periodic status logging (was spamming logs every 3s)
+            // Agent health is now monitored via heartbeat system
 
             let app_handle = app.handle();
             let listen_handle = app_handle.clone();
