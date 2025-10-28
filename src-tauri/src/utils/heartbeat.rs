@@ -29,7 +29,7 @@ pub fn get_flutter_heartbeat_path_stable() -> PathBuf {
         // EXACT same logic as Flutter: TEMP -> TMP -> fallback
         let temp_dir = std::env::var("TEMP")
             .or_else(|_| std::env::var("TMP"))
-            .unwrap_or_else(|| WINDOWS_TEMP_FALLBACK.to_string());
+            .unwrap_or_else(|_| WINDOWS_TEMP_FALLBACK.to_string());
         PathBuf::from(format!(r"{}\clones-flutter.heartbeat", temp_dir))
     }
 

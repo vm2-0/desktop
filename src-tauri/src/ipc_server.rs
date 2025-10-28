@@ -506,7 +506,14 @@ fn start_parent_lifecycle_guard(app_handle: AppHandle) {
             parent_pid
         );
         std::thread::spawn(move || unsafe {
-            let handle: HANDLE = OpenProcess(PROCESS_SYNCHRONIZE, false.into(), parent_pid);
+            let handle: HANDLE = match OpenProcess(PROCESS_SYNCHRONIZE, false, parent_pid) {
+                Ok(h) => h,
+                Err(_) => {
+                    log::info!("[Lifecycle] Parent not found - exiting agent");
+                    let _ = cleanup_before_exit(&app_handle);
+                    std::process::exit(0);
+                }
+            };
             if handle.0 == 0 {
                 log::info!("[Lifecycle] Parent not found - exiting agent");
                 let _ = cleanup_before_exit(&app_handle);
