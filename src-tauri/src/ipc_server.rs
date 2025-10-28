@@ -356,7 +356,7 @@ pub async fn init(app_handle: AppHandle) {
                 // Start simple heartbeat monitoring
                 start_heartbeat_monitoring(app_handle.clone());
                 // Start parent lifecycle guard to exit when Flutter dies
-                start_parent_lifecycle_guard();
+                start_parent_lifecycle_guard(app_handle.clone());
 
                 if let Err(e) = axum::serve(listener, app.into_make_service()).await {
                     log::error!("[IPC Server] Server error: {}", e);
@@ -590,7 +590,7 @@ fn cleanup_before_exit(app_handle: &AppHandle) -> Result<(), String> {
 }
 
 /// Start a cross-platform guard that exits the agent when the Flutter parent process dies
-fn start_parent_lifecycle_guard() {
+fn start_parent_lifecycle_guard(app_handle: AppHandle) {
     let ppid = std::env::var("FLUTTER_PARENT_PID")
         .ok()
         .and_then(|s| s.parse::<u32>().ok());
@@ -613,6 +613,7 @@ fn start_parent_lifecycle_guard() {
                 let alive = rc == 0 || last != Errno::ESRCH as i32;
                 if !alive {
                     log::info!("[Lifecycle] Parent PID {} gone - exiting agent", parent_pid);
+                    let _ = cleanup_before_exit(&app_handle);
                     std::process::exit(0);
                 }
                 tokio::time::sleep(Duration::from_secs(1)).await;
@@ -630,11 +631,13 @@ fn start_parent_lifecycle_guard() {
             let handle: HANDLE = OpenProcess(PROCESS_SYNCHRONIZE, false.into(), parent_pid);
             if handle.0 == 0 {
                 log::info!("[Lifecycle] Parent not found - exiting agent");
+                let _ = cleanup_before_exit(&app_handle);
                 std::process::exit(0);
             }
             let _ = WaitForSingleObject(handle, INFINITE);
             let _ = CloseHandle(handle);
             log::info!("[Lifecycle] Parent exited - exiting agent");
+            let _ = cleanup_before_exit(&app_handle);
             std::process::exit(0);
         });
     }
