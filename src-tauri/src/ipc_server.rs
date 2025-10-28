@@ -20,7 +20,6 @@ use std::net::SocketAddr;
 use std::time::Duration;
 use tauri::{AppHandle, Manager};
 use tower_http::cors::{Any, CorsLayer};
-// Removed IOKit assertion code
 
 // Constants for heartbeat monitoring configuration
 const HEARTBEAT_CHECK_INTERVAL_SECONDS: u64 = 5;
@@ -63,8 +62,6 @@ use crate::DeepLinkState;
 pub struct AppState {
     pub app_handle: AppHandle,
 }
-
-// (macOS App Nap guard intentionally not implemented yet due to async Send constraints)
 
 // Structure for the write_recording_file request
 #[derive(Deserialize)]
@@ -409,8 +406,6 @@ fn start_supervised_heartbeat_monitoring(
                             log::info!("[Heartbeat] Cleanup completed successfully");
                         }
 
-                        // Placeholder: release anti-App Nap guard during idle wait on macOS
-
                         // After cleanup, block until ready signal or heartbeat reappears
                         loop {
                             if check_flutter_ready_signal(&heartbeat_path_clone)
@@ -459,8 +454,6 @@ fn start_supervised_heartbeat_monitoring(
     });
 }
 
-// Removed mac_appnap module and caffeinate guard
-
 /// Perform graceful cleanup before agent shutdown
 fn cleanup_before_exit(app_handle: &AppHandle) -> Result<(), String> {
     log::info!("[Cleanup] Starting graceful cleanup before agent shutdown");
@@ -493,7 +486,6 @@ fn start_parent_lifecycle_guard(app_handle: AppHandle) {
         );
         tokio::spawn(async move {
             loop {
-                // kill(pid, 0) → 0 si existe, -1 avec ESRCH si inexistant
                 let rc = unsafe { libc::kill(parent_pid as i32, 0) };
                 let last = Errno::last_raw();
                 let alive = rc == 0 || last != Errno::ESRCH as i32;
