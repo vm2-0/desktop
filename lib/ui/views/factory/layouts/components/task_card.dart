@@ -43,9 +43,12 @@ class TaskCard extends ConsumerWidget {
     }
 
     final tokenSymbol = factory.token.symbol;
-    final rewardText = task.rewardLimit != null
-        ? '${task.rewardLimit?.toStringAsFixedLowValue(2, 5)} $tokenSymbol'
-        : '${factory.pricePerDemo.toStringAsFixedLowValue(2, 5)} $tokenSymbol';
+
+    final rewardAmount =
+        task.rewardLimit != null ? task.rewardLimit! : factory.pricePerDemo;
+
+    final rewardText =
+        '${rewardAmount.toStringAsFixedLowValue(2, 5)} $tokenSymbol';
 
     Future<void> onTap(BuildContext context) async {
       // Check if farming is locked without referral code
@@ -84,7 +87,8 @@ class TaskCard extends ConsumerWidget {
             padding: CardPadding.small,
             variant: CardVariant.secondary,
             child: InkWell(
-              onTap: () async => onTap(context),
+              onTap: () async =>
+                  factory.balance >= rewardAmount ? onTap(context) : null,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -127,11 +131,20 @@ class TaskCard extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  BtnPrimary(
-                    widthExpanded: true,
-                    onTap: () async => onTap(context),
-                    buttonText: 'Start Training',
-                  ),
+                  if (factory.balance >= rewardAmount)
+                    BtnPrimary(
+                      widthExpanded: true,
+                      onTap: () async => onTap(context),
+                      buttonText: 'Start Training',
+                    )
+                  else
+                    const BtnPrimary(
+                      widthExpanded: true,
+                      isLocked: true,
+                      btnPrimaryType: BtnPrimaryType.outlinePrimary,
+                      onTap: null,
+                      buttonText: 'Insufficient funds',
+                    )
                 ],
               ),
             ),
@@ -143,7 +156,9 @@ class TaskCard extends ConsumerWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: ClonesColors.rewardInfo.withValues(alpha: 0.3),
+              color: factory.balance >= rewardAmount
+                  ? ClonesColors.rewardInfo.withValues(alpha: 0.3)
+                  : ClonesColors.rewardInfo.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
@@ -159,7 +174,9 @@ class TaskCard extends ConsumerWidget {
             child: Text(
               rewardText,
               style: theme.textTheme.bodySmall!.copyWith(
-                color: ClonesColors.rewardInfo,
+                color: factory.balance >= rewardAmount
+                    ? ClonesColors.rewardInfo
+                    : Colors.white.withValues(alpha: 0.4),
               ),
             ),
           ),

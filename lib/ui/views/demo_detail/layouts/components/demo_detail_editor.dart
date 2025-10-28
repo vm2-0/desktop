@@ -77,7 +77,7 @@ class _MessageCardState extends State<_MessageCard>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // Required for AutomaticKeepAliveClientMixin
+    super.build(context);
 
     final theme = Theme.of(context);
 
@@ -85,45 +85,6 @@ class _MessageCardState extends State<_MessageCard>
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Stack(
         children: [
-          Positioned(
-            top: 0,
-            left: 0,
-            child: GestureDetector(
-              onTap: widget.onSeekToTimestamp != null
-                  ? () {
-                      final relativeTime =
-                          widget.message.timestamp - widget.startTime;
-                      widget.onSeekToTimestamp!(relativeTime);
-                    }
-                  : null,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: widget.isInDeletedZone
-                      ? Colors.redAccent.withValues(alpha: 0.4)
-                      : ClonesColors.secondaryText.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(16),
-                  border: widget.isInDeletedZone
-                      ? Border.all(color: Colors.redAccent)
-                      : null,
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF000000).withAlpha(60),
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: SelectableText(
-                  formatTimeMs(widget.message.timestamp),
-                  style: theme.textTheme.bodySmall,
-                ),
-              ),
-            ),
-          ),
           Padding(
             padding: const EdgeInsets.all(5),
             child: Container(
@@ -200,6 +161,45 @@ class _MessageCardState extends State<_MessageCard>
                         );
                       }(),
                   ],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 0,
+            left: 0,
+            child: GestureDetector(
+              onTap: widget.onSeekToTimestamp != null
+                  ? () {
+                      final relativeTime =
+                          widget.message.timestamp - widget.startTime;
+                      widget.onSeekToTimestamp!(relativeTime);
+                    }
+                  : null,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: widget.isInDeletedZone
+                      ? Colors.redAccent.withValues(alpha: 0.4)
+                      : ClonesColors.secondaryText.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(16),
+                  border: widget.isInDeletedZone
+                      ? Border.all(color: Colors.redAccent)
+                      : null,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF000000).withAlpha(60),
+                      blurRadius: 6,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: SelectableText(
+                  formatTimeMs(widget.message.timestamp),
+                  style: theme.textTheme.bodySmall,
                 ),
               ),
             ),
@@ -345,7 +345,8 @@ class DemoDetailEditor extends ConsumerWidget {
                     messagesInDeletedZones.contains(chatItem.messageIndex),
                 messageIndex: chatItem.messageIndex!,
                 onSeekToTimestamp: videoSeekCallback != null
-                    ? (timestampMs) => videoSeekCallback(Duration(milliseconds: timestampMs))
+                    ? (timestampMs) =>
+                        videoSeekCallback(Duration(milliseconds: timestampMs))
                     : null,
               );
             },

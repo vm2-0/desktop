@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:clones_desktop/assets.dart';
 import 'package:flutter/material.dart';
 
@@ -35,26 +37,31 @@ class CardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
-      child: Container(
-        padding: _getPadding(),
-        decoration: BoxDecoration(
-          color: variant == CardVariant.primary
-              ? ClonesColors.primary.withValues(alpha: 0.1)
-              : variant == CardVariant.secondary
-                  ? ClonesColors.secondary.withValues(alpha: 0.1)
-                  : variant == CardVariant.black
-                      ? Colors.black.withValues(alpha: 0.5)
-                      : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: variant == CardVariant.primary
-                ? ClonesColors.primary.withValues(alpha: 0.2)
-                : variant == CardVariant.secondary
-                    ? ClonesColors.secondary.withValues(alpha: 0.2)
-                    : Colors.white.withValues(alpha: 0.1),
+      child: ClipRRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            padding: _getPadding(),
+            decoration: BoxDecoration(
+              color: variant == CardVariant.primary
+                  ? ClonesColors.primary.withValues(alpha: 0.1)
+                  : variant == CardVariant.secondary
+                      ? ClonesColors.secondary.withValues(alpha: 0.1)
+                      : variant == CardVariant.black
+                          ? Colors.black.withValues(alpha: 0.5)
+                          : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: variant == CardVariant.primary
+                    ? ClonesColors.primary.withValues(alpha: 0.2)
+                    : variant == CardVariant.secondary
+                        ? ClonesColors.secondary.withValues(alpha: 0.2)
+                        : Colors.white.withValues(alpha: 0.1),
+              ),
+            ),
+            child: child,
           ),
         ),
-        child: child,
       ),
     );
   }

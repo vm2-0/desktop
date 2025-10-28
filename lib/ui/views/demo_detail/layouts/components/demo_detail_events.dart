@@ -99,14 +99,16 @@ class DemoDetailEvents extends ConsumerWidget {
             final eventColor = ClonesColors.getEventTypeColor(type);
             return OutlinedButton(
               style: OutlinedButton.styleFrom(
-                backgroundColor: isEnabled 
-                    ? eventColor.withValues(alpha: 0.2) 
+                backgroundColor: isEnabled
+                    ? eventColor.withValues(alpha: 0.2)
                     : Colors.transparent,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
                 side: BorderSide(
-                  color: isEnabled ? eventColor : eventColor.withValues(alpha: 0.5),
+                  color: isEnabled
+                      ? eventColor
+                      : eventColor.withValues(alpha: 0.5),
                   width: 0.1,
                 ),
                 padding: const EdgeInsets.symmetric(
@@ -143,6 +145,55 @@ class DemoDetailEvents extends ConsumerWidget {
 
               return Stack(
                 children: [
+                  Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Container(
+                      decoration: isInDeletedZone
+                          ? BoxDecoration(
+                              color: Colors.redAccent.withValues(alpha: 0.12),
+                              border: Border.all(
+                                color: Colors.redAccent.withValues(alpha: 0.3),
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            )
+                          : null,
+                      child: CardWidget(
+                        padding: CardPadding.small,
+                        variant: CardVariant.secondary,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: InputEventDisplay(
+                                    eventData: event.data,
+                                    eventType: event.event,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            BtnPrimary(
+                              btnPrimaryType: BtnPrimaryType.outlinePrimary,
+                              onTap: () async {
+                                await Clipboard.setData(
+                                  ClipboardData(text: jsonEncode(event.data)),
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Data copied!'),
+                                  ),
+                                );
+                              },
+                              buttonText: 'Copy',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                   Positioned(
                     top: 0,
                     right: 0,
@@ -223,55 +274,6 @@ class DemoDetailEvents extends ConsumerWidget {
                                 ? Colors.redAccent
                                 : ClonesColors.getEventTypeColor(event.event),
                           ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: Container(
-                      decoration: isInDeletedZone
-                          ? BoxDecoration(
-                              color: Colors.redAccent.withValues(alpha: 0.12),
-                              border: Border.all(
-                                color: Colors.redAccent.withValues(alpha: 0.3),
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                            )
-                          : null,
-                      child: CardWidget(
-                        padding: CardPadding.small,
-                        variant: CardVariant.secondary,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            const SizedBox(height: 10),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: InputEventDisplay(
-                                    eventData: event.data,
-                                    eventType: event.event,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            BtnPrimary(
-                              btnPrimaryType: BtnPrimaryType.outlinePrimary,
-                              onTap: () async {
-                                await Clipboard.setData(
-                                  ClipboardData(text: jsonEncode(event.data)),
-                                );
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Data copied!'),
-                                  ),
-                                );
-                              },
-                              buttonText: 'Copy',
-                            ),
-                          ],
                         ),
                       ),
                     ),
