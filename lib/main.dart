@@ -3,7 +3,6 @@ import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:clones_desktop/application/agent/agent_launcher.dart';
-import 'package:clones_desktop/application/agent/heartbeat_monitor.dart';
 import 'package:clones_desktop/application/deeplink_provider.dart';
 import 'package:clones_desktop/application/route_provider.dart';
 import 'package:clones_desktop/assets.dart';
@@ -160,17 +159,15 @@ Future<void> main(List<String> args) async {
   // Initialize window manager for desktop platforms
   if (!kIsWeb && (Platform.isMacOS || Platform.isWindows || Platform.isLinux)) {
     await windowManager.ensureInitialized();
-    await windowManager.setPreventClose(true);
-    windowManager.addListener(CloseListener());
     const windowOptions = WindowOptions(
       size: Size(1440, 900),
       center: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.black,
       skipTaskbar: false,
       titleBarStyle: TitleBarStyle.normal,
     );
 
-    windowManager.waitUntilReadyToShow(windowOptions, () async {
+    await windowManager.waitUntilReadyToShow(windowOptions, () async {
       await windowManager.show();
       await windowManager.focus();
     });
@@ -184,37 +181,11 @@ Future<void> main(List<String> args) async {
   try {
     await AgentLauncher().ensureStarted();
   } catch (e) {
-    debugPrint('Failed to start agent: $e');
+    developer.log('Failed to start agent: $e', name: 'AgentLauncher');
     // Continue anyway - failures will be handled by individual API calls
   }
 
-  // Register shutdown handlers to clean up the agent
-  if (!kIsWeb) {
-    ProcessSignal.sigint.watch().listen((_) => _shutdown());
-    ProcessSignal.sigterm.watch().listen((_) => _shutdown());
-  }
-
-  // Initialize app lifecycle management for cleanup
-  AppLifecycleManager.initialize();
-
   runApp(const ProviderScope(child: ClonesApp()));
-}
-
-/// Graceful shutdown handler
-Future<void> _shutdown() async {
-  debugPrint('Shutting down application...');
-  try {
-    // Stop agent and cleanup heartbeat
-    await AgentLauncher().stop();
-    debugPrint('Agent shutdown completed');
-  } catch (e) {
-    debugPrint('Error during agent shutdown: $e');
-  }
-
-  // Force cleanup if not already done
-  AppLifecycleManager._forceCleanup();
-
-  exit(0);
 }
 
 class ClonesApp extends ConsumerStatefulWidget {
@@ -224,12 +195,10 @@ class ClonesApp extends ConsumerStatefulWidget {
   ConsumerState<ClonesApp> createState() => _ClonesAppState();
 }
 
-class _ClonesAppState extends ConsumerState<ClonesApp>
-    with WidgetsBindingObserver {
+class _ClonesAppState extends ConsumerState<ClonesApp> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     _router.routeInformationProvider.addListener(_updateRoute);
     // Set initial route
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -249,7 +218,10 @@ class _ClonesAppState extends ConsumerState<ClonesApp>
         // Use native Sparkle updater on macOS for better performance and UX
         await _initializeSparkleUpdater();
       } else {
-        debugPrint('Native updaters for Windows/Linux not yet implemented');
+        developer.log(
+          'Native updaters for Windows/Linux not yet implemented',
+          name: 'AppLifecycleManager',
+        );
       }
     }
   }
@@ -282,8 +254,6 @@ class _ClonesAppState extends ConsumerState<ClonesApp>
 
       await sparkle.initialize(
         appcastUrl: appcastUrl,
-        automaticallyChecksForUpdates: true,
-        automaticallyDownloadsUpdates: false,
       );
 
       developer.log(
@@ -342,22 +312,8 @@ class _ClonesAppState extends ConsumerState<ClonesApp>
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     _router.routeInformationProvider.removeListener(_updateRoute);
-    // Stop the agent when the app is disposed
-    AgentLauncher().stop();
     super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-
-    if (state == AppLifecycleState.detached) {
-      // App is being terminated - kill the agent
-      debugPrint('App lifecycle: detached - stopping agent');
-      AgentLauncher().stop();
-    }
   }
 
   @override
@@ -451,54 +407,5 @@ class _ClonesAppState extends ConsumerState<ClonesApp>
       debugShowCheckedModeBanner: false,
       routerConfig: _router,
     );
-  }
-}
-
-class CloseListener with WindowListener {
-  @override
-  Future<void> onWindowClose() async {
-    debugPrint('Window close requested - starting cleanup');
-    if (await windowManager.isPreventClose()) {
-      await _shutdown();
-    }
-  }
-}
-
-/// Lifecycle listener for additional cleanup scenarios
-class AppLifecycleManager with WidgetsBindingObserver {
-  static bool _cleanupCalled = false;
-
-  static void initialize() {
-    WidgetsBinding.instance.addObserver(AppLifecycleManager());
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    debugPrint('App lifecycle state changed: $state');
-    // IMPORTANT: On Windows desktop, AppLifecycleState.detached is unreliable
-    // and can be triggered even when the app is still running normally.
-    // Only cleanup on detached for mobile platforms where it's more reliable.
-    // On desktop, rely on the window close handler instead.
-    if (state == AppLifecycleState.detached &&
-        !_cleanupCalled &&
-        !kIsWeb &&
-        (Platform.isIOS || Platform.isAndroid)) {
-      debugPrint('App detached - forcing cleanup');
-      _forceCleanup();
-    }
-  }
-
-  static void _forceCleanup() {
-    if (_cleanupCalled) return;
-    _cleanupCalled = true;
-
-    debugPrint('Force cleanup: stopping heartbeat');
-
-    // Force cleanup heartbeat synchronously
-    try {
-      HeartbeatMonitor().stopFlutterHeartbeat();
-    } catch (e) {
-      debugPrint('Error during force cleanup: $e');
-    }
   }
 }

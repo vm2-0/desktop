@@ -2,7 +2,7 @@ name: clones_desktop
 description: "A desktop application for contributing to the world's largest dataset for multimodal computer-use agents."
 publish_to: 'none'
 
-version: 0.2.46+46
+version: 0.2.77+77
 
 environment:
   sdk: ">=3.6.0 <4.0.0"
@@ -22,7 +22,6 @@ dependencies:
   flutter_launcher_icons: ^0.14.4
   flutter_riverpod: ^2.6.1
   flutter_svg: ^2.0.10+1
-  
   font_awesome_flutter: ^10.6.0
   freezed_annotation: ^2.4.4
   go_router: ^13.2.0

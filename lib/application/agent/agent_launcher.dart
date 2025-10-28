@@ -1,7 +1,8 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'dart:io';
 
-import 'package:clones_desktop/application/agent/heartbeat_monitor.dart';
+import 'package:clones_desktop/application/agent/heartbeat_writer.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:process/process.dart';
@@ -25,11 +26,10 @@ class AgentLauncher {
 
     // Quick check if agent already running (e.g., launched via VSCode)
     if (await _isAgentAlive()) {
-      debugPrint(
-        'Agent already running - starting heartbeat for existing agent',
+      developer.log(
+        'Agent already running - no lifecycle monitoring',
+        name: 'AgentLauncher',
       );
-      // CRUCIAL: Always start heartbeat even if agent already exists
-      await HeartbeatMonitor().startFlutterHeartbeat();
       return;
     }
 
@@ -46,26 +46,22 @@ class AgentLauncher {
       final executableFile = File(executable);
       final stat = executableFile.statSync();
       if ((stat.mode & _ownerExecutePermission) == 0) {
-        debugPrint('Making agent executable: $executable');
+        developer.log(
+          'Making agent executable: $executable',
+          name: 'AgentLauncher',
+        );
         await Process.run('chmod', ['+x', executable]);
       }
 
       final flutterPid = pid;
-      debugPrint('Flutter PID: $flutterPid');
-
-      // Get the Flutter heartbeat path that will be used
-      final flutterHeartbeatPath =
-          await HeartbeatMonitor.getFlutterHeartbeatPathForPid(flutterPid);
-
       final env = <String, String>{
         'PRIMARY_LOGGER': 'true',
         'RUST_LOG': 'info',
-        'FLUTTER_PARENT_PID': flutterPid.toString(),
-        'FLUTTER_HEARTBEAT_PATH': flutterHeartbeatPath,
+        'FLUTTER_PARENT_PID': '$flutterPid',
       };
 
-      debugPrint('Starting Tauri agent: $executable');
-      debugPrint('Environment variables: $env');
+      developer.log('Starting Tauri agent: $executable', name: 'AgentLauncher');
+      developer.log('Environment variables: $env', name: 'AgentLauncher');
 
       // Determine working directory:
       // 1. For development (repo root exists), use repo root
@@ -84,20 +80,22 @@ class AgentLauncher {
         workingDir = Directory.current.path;
       }
 
-      debugPrint('Starting agent with process manager: $executable');
-      debugPrint(
+      developer.log(
+        'Starting agent with process manager: $executable',
+        name: 'AgentLauncher',
+      );
+      developer.log(
         'Working directory: $workingDir (repo root: ${repoRoot != null}, platform: ${Platform.operatingSystem})',
+        name: 'AgentLauncher',
       );
 
       // On Windows in release mode, use normal mode (not detached) with hidden console
       // The console window fix in main.cpp prevents windows from appearing
       // On other platforms, use ProcessManager for better process management
-      const useDetachedMode =
-          false; // Detached mode breaks stdio, use hidden console instead
-
       if (Platform.isWindows) {
-        debugPrint(
+        developer.log(
           'Using Process.start for Windows (normal mode with hidden console)',
+          name: 'AgentLauncher',
         );
         _agentProcess = await Process.start(
           executable,
@@ -107,9 +105,7 @@ class AgentLauncher {
             ...Platform.environment, // Preserve existing environment
             ...env, // Add our custom variables
           },
-          mode: useDetachedMode
-              ? ProcessStartMode.detached
-              : ProcessStartMode.normal,
+          mode: ProcessStartMode.detached,
         );
       } else {
         // macOS/Linux: use ProcessManager
@@ -118,50 +114,55 @@ class AgentLauncher {
             [executable],
             workingDirectory: workingDir,
             environment: env,
+            mode: ProcessStartMode.detached,
           );
         } catch (e) {
-          debugPrint(
+          developer.log(
             'ProcessManager.start failed ($e), trying Process.start fallback',
+            name: 'AgentLauncher',
           );
           _agentProcess = await Process.start(
             executable,
             [],
             workingDirectory: workingDir,
             environment: env,
+            mode: ProcessStartMode.detached,
           );
         }
       }
 
       final agentPid = _agentProcess!.pid;
-      debugPrint('Agent started with PID: $agentPid');
-
-      // Start Flutter heartbeat writer (agent will monitor this)
-      await HeartbeatMonitor().startFlutterHeartbeat();
-
-      debugPrint(
-        'Flutter heartbeat file for agent to monitor: $flutterHeartbeatPath',
+      developer.log(
+        'Agent started with PID: $agentPid (standalone mode)',
+        name: 'AgentLauncher',
       );
 
-      // Capture agent output for debugging
-      _agentProcess!.stdout.transform(systemEncoding.decoder).listen(
-        (line) {
-          debugPrint('[Agent stdout] $line');
-        },
-        onError: (e) {
-          debugPrint('[Agent stdout error] $e');
-        },
-      );
+      // Capture agent output only in debug builds to avoid coupling I/O in release
+      if (kDebugMode) {
+        _agentProcess!.stdout.transform(systemEncoding.decoder).listen(
+          (line) {
+            developer.log('[Agent stdout] $line', name: 'AgentLauncher');
+          },
+          onError: (e) {
+            developer.log('[Agent stdout error] $e', name: 'AgentLauncher');
+          },
+        );
 
-      _agentProcess!.stderr.transform(systemEncoding.decoder).listen(
-        (line) {
-          debugPrint('[Agent stderr] $line');
-        },
-        onError: (e) {
-          debugPrint('[Agent stderr error] $e');
-        },
-      );
+        _agentProcess!.stderr.transform(systemEncoding.decoder).listen(
+          (line) {
+            developer.log('[Agent stderr] $line', name: 'AgentLauncher');
+          },
+          onError: (e) {
+            developer.log('[Agent stderr error] $e', name: 'AgentLauncher');
+          },
+        );
+      }
 
       await _waitUntilAlive(timeout: const Duration(seconds: 8));
+
+      // Start heartbeat writing once agent is confirmed alive
+      HeartbeatWriter().startHeartbeat();
+      developer.log('Heartbeat writer started', name: 'AgentLauncher');
     } finally {
       _starting = false;
     }
@@ -174,11 +175,14 @@ class AgentLauncher {
       final res = await http.get(uri).timeout(const Duration(seconds: 2));
       final isAlive = res.statusCode == 200;
       if (isAlive) {
-        debugPrint('Agent health check: ✓ alive');
+        developer.log('Agent health check: ✓ alive', name: 'AgentLauncher');
       }
       return isAlive;
     } catch (e) {
-      debugPrint('Agent health check: ✗ not responding ($e)');
+      developer.log(
+        'Agent health check: ✗ not responding ($e)',
+        name: 'AgentLauncher',
+      );
       return false;
     }
   }
@@ -218,7 +222,7 @@ class AgentLauncher {
       ]);
     }
     for (final path in packagedCandidates) {
-      debugPrint(
+      developer.log(
         'Checking packaged agent path: $path (exists: ${File(path).existsSync()})',
       );
       if (File(path).existsSync()) return path;
@@ -242,8 +246,9 @@ class AgentLauncher {
     }
     for (final rel in repoCandidates) {
       final path = _abspath(rel);
-      debugPrint(
+      developer.log(
         'Checking agent path: $path (exists: ${File(path).existsSync()})',
+        name: 'AgentLauncher',
       );
       if (File(path).existsSync()) return path;
     }
@@ -259,16 +264,18 @@ class AgentLauncher {
     final repoRoot = _findRepoRoot();
     if (repoRoot != null) {
       final fromRepo = File('$repoRoot/$relative').path;
-      debugPrint(
+      developer.log(
         'Trying repo-relative path: $fromRepo (exists: ${File(fromRepo).existsSync()})',
+        name: 'AgentLauncher',
       );
       if (File(fromRepo).existsSync()) return fromRepo;
     }
 
     // Try current working directory as fallback
     final fromCwd = File('${Directory.current.path}/$relative').path;
-    debugPrint(
+    developer.log(
       'Trying cwd-relative path: $fromCwd (exists: ${File(fromCwd).existsSync()})',
+      name: 'AgentLauncher',
     );
     if (File(fromCwd).existsSync()) return fromCwd;
 
@@ -283,7 +290,10 @@ class AgentLauncher {
 
     // First try from current working directory
     final current = Directory.current;
-    debugPrint('Starting repo root search from current dir: ${current.path}');
+    developer.log(
+      'Starting repo root search from current dir: ${current.path}',
+      name: 'AgentLauncher',
+    );
 
     var foundRoot = _searchUpForRepoMarkers(current);
     if (foundRoot != null) {
@@ -295,8 +305,9 @@ class AgentLauncher {
     // This handles cases where the app is launched from a different working directory
     if (!kIsWeb) {
       final executableDir = File(Platform.resolvedExecutable).parent;
-      debugPrint(
+      developer.log(
         'Trying repo root search from executable dir: ${executableDir.path}',
+        name: 'AgentLauncher',
       );
       foundRoot = _searchUpForRepoMarkers(executableDir);
       if (foundRoot != null) {
@@ -305,7 +316,7 @@ class AgentLauncher {
       }
     }
 
-    debugPrint('No repo root found');
+    developer.log('No repo root found', name: 'AgentLauncher');
     return null;
   }
 
@@ -314,16 +325,25 @@ class AgentLauncher {
 
     // Search up the directory tree for project markers
     while (current.path != current.parent.path) {
-      debugPrint('Checking directory: ${current.path}');
+      developer.log(
+        'Checking directory: ${current.path}',
+        name: 'AgentLauncher',
+      );
 
       // Check for Flutter project markers
       final hasPubspec = File('${current.path}/pubspec.yaml').existsSync();
       final hasTauri = Directory('${current.path}/src-tauri').existsSync();
 
-      debugPrint('  pubspec.yaml: $hasPubspec, src-tauri/: $hasTauri');
+      developer.log(
+        '  pubspec.yaml: $hasPubspec, src-tauri/: $hasTauri',
+        name: 'AgentLauncher',
+      );
 
       if (hasPubspec && hasTauri) {
-        debugPrint('Found repo root: ${current.path}');
+        developer.log(
+          'Found repo root: ${current.path}',
+          name: 'AgentLauncher',
+        );
         return current.path;
       }
       current = current.parent;
@@ -332,37 +352,24 @@ class AgentLauncher {
     return null;
   }
 
-  /// Stops the Tauri agent process
+  /// Stops the Tauri agent process - simplified version
   Future<void> stop() async {
-    debugPrint('Stopping agent...');
+    developer.log(
+      'Force stopping agent (no lifecycle monitoring)',
+      name: 'AgentLauncher',
+    );
 
-    // Stop Flutter heartbeat writer (agent will detect and exit)
-    await HeartbeatMonitor().stopFlutterHeartbeat();
+    // Stop heartbeat writing
+    HeartbeatWriter().stopHeartbeat();
+    developer.log('Heartbeat writer stopped', name: 'AgentLauncher');
 
     if (_agentProcess != null) {
       try {
-        // Wait briefly for agent to detect heartbeat stop and exit gracefully
-        try {
-          final exitCode =
-              await _agentProcess!.exitCode.timeout(const Duration(seconds: 3));
-          debugPrint('Agent exited gracefully with code: $exitCode');
-        } on TimeoutException {
-          // If agent doesn't exit gracefully, force kill
-          debugPrint('Agent timeout - force killing');
-          _agentProcess!.kill();
-
-          try {
-            final exitCode = await _agentProcess!.exitCode
-                .timeout(const Duration(seconds: 2));
-            debugPrint('Agent force killed with code: $exitCode');
-          } on TimeoutException {
-            debugPrint('Agent unresponsive - using SIGKILL');
-            _agentProcess!.kill(ProcessSignal.sigkill);
-          }
-        }
-      } catch (e) {
-        debugPrint('Error stopping agent: $e');
+        // Immediate SIGKILL - no graceful shutdown attempts
         _agentProcess!.kill(ProcessSignal.sigkill);
+        developer.log('Agent force killed with SIGKILL', name: 'AgentLauncher');
+      } catch (e) {
+        developer.log('Error force killing agent: $e', name: 'AgentLauncher');
       } finally {
         _agentProcess = null;
       }
