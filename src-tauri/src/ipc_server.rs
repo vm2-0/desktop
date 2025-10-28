@@ -8,10 +8,6 @@ use axum::{
 use http::header::{ACCEPT, CONTENT_TYPE};
 #[cfg(target_os = "macos")]
 use nix::errno::Errno;
-#[cfg(target_os = "macos")]
-use objc::runtime::Object;
-#[cfg(target_os = "macos")]
-use objc::{class, msg_send, sel, sel_impl};
 #[cfg(windows)]
 use windows::Win32::Foundation::{CloseHandle, HANDLE};
 #[cfg(windows)]
@@ -19,70 +15,12 @@ use windows::Win32::System::Threading::{
     OpenProcess, WaitForSingleObject, INFINITE, PROCESS_SYNCHRONIZE,
 };
 
-#[cfg(target_os = "macos")]
-use core_foundation::base::TCFType;
-#[cfg(target_os = "macos")]
-use core_foundation::string::{CFString, CFStringRef};
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use std::time::Duration;
 use tauri::{AppHandle, Manager};
 use tower_http::cors::{Any, CorsLayer};
-#[cfg(target_os = "macos")]
-type IOPMAssertionID = u32;
-#[cfg(target_os = "macos")]
-type IOReturn = i32;
-#[cfg(target_os = "macos")]
-#[link(name = "IOKit", kind = "framework")]
-extern "C" {
-    fn IOPMAssertionCreateWithName(
-        assertion_type: CFStringRef,
-        assertion_level: u32,
-        assertion_name: CFStringRef,
-        assertion_id: *mut IOPMAssertionID,
-    ) -> IOReturn;
-    fn IOPMAssertionRelease(assertion_id: IOPMAssertionID) -> IOReturn;
-}
-#[cfg(target_os = "macos")]
-const K_IOPM_ASSERTION_LEVEL_ON: u32 = 255; // kIOPMAssertionLevelOn
-#[cfg(target_os = "macos")]
-struct MacSleepAssertion {
-    id: IOPMAssertionID,
-}
-#[cfg(target_os = "macos")]
-impl MacSleepAssertion {
-    fn prevent_user_idle_system_sleep(name: &str) -> Option<Self> {
-        unsafe {
-            let assertion_type = CFString::new("PreventUserIdleSystemSleep");
-            let assertion_name = CFString::new(name);
-            let mut id: IOPMAssertionID = 0;
-            let ret = IOPMAssertionCreateWithName(
-                assertion_type.as_concrete_TypeRef(),
-                K_IOPM_ASSERTION_LEVEL_ON,
-                assertion_name.as_concrete_TypeRef(),
-                &mut id as *mut IOPMAssertionID,
-            );
-            if ret == 0 {
-                // kIOReturnSuccess
-                Some(MacSleepAssertion { id })
-            } else {
-                log::warn!("[Power] IOPMAssertionCreateWithName failed: {}", ret);
-                None
-            }
-        }
-    }
-}
-#[cfg(target_os = "macos")]
-impl Drop for MacSleepAssertion {
-    fn drop(&mut self) {
-        unsafe {
-            let ret = IOPMAssertionRelease(self.id);
-            if ret != 0 {
-                log::warn!("[Power] IOPMAssertionRelease failed: {}", ret);
-            }
-        }
-    }
-}
+// Removed IOKit assertion code
 
 // Constants for heartbeat monitoring configuration
 const HEARTBEAT_CHECK_INTERVAL_SECONDS: u64 = 5;
@@ -222,14 +160,6 @@ pub struct ProcessRecordingQuery {
 
 // Main function to start the server
 pub async fn init(app_handle: AppHandle) {
-    #[cfg(target_os = "macos")]
-    unsafe {
-        mac_appnap::begin();
-    }
-    #[cfg(target_os = "macos")]
-    {
-        spawn_caffeinate_guard();
-    }
     let state = AppState {
         app_handle: app_handle.clone(),
     };
@@ -404,10 +334,7 @@ fn start_supervised_heartbeat_monitoring(
             let heartbeat_path_clone = heartbeat_path.clone();
 
             let monitoring_handle = tokio::spawn(async move {
-                // Prevent system idle sleep while monitoring (macOS)
-                #[cfg(target_os = "macos")]
-                let _sleep_assertion =
-                    MacSleepAssertion::prevent_user_idle_system_sleep("Clones Agent Monitoring");
+                // Monitoring loop start
                 // Wait for Flutter ready signal (with timeout)
                 log::info!(
                     "[Heartbeat] Waiting for Flutter ready signal (timeout: {}s)...",
@@ -532,48 +459,7 @@ fn start_supervised_heartbeat_monitoring(
     });
 }
 
-// --- macOS: Disable App Nap using NSProcessInfo.beginActivity for agent lifetime ---
-#[cfg(target_os = "macos")]
-#[allow(unexpected_cfgs)]
-mod mac_appnap {
-    use super::*;
-    use core::sync::atomic::{AtomicBool, Ordering};
-    static ENGAGED: AtomicBool = AtomicBool::new(false);
-
-    pub unsafe fn begin() {
-        if ENGAGED.swap(true, Ordering::SeqCst) {
-            return;
-        }
-        let ns_process_info: *mut Object = msg_send![class!(NSProcessInfo), processInfo];
-        if ns_process_info.is_null() {
-            return;
-        }
-        // NSActivityUserInitiated | NSActivityLatencyCritical
-        let options: u64 = 0x00FF_FFFF_u64 | 0xFF00_0000_u64;
-        let reason_c = std::ffi::CString::new("Clones Agent Monitoring").unwrap();
-        let ns_string: *mut Object =
-            msg_send![class!(NSString), stringWithUTF8String: reason_c.as_ptr()];
-        let _: *mut Object =
-            msg_send![ns_process_info, beginActivityWithOptions: options reason: ns_string];
-        log::info!("[Power] NSProcessInfo.beginActivity engaged (App Nap disabled)");
-    }
-}
-
-// macOS: robust external sleep guard using `caffeinate` tied to this PID
-#[cfg(target_os = "macos")]
-fn spawn_caffeinate_guard() {
-    let pid = std::process::id().to_string();
-    let result = std::process::Command::new("/usr/bin/caffeinate")
-        .args(["-dims", "-w", &pid])
-        .stdin(std::process::Stdio::null())
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .spawn();
-    match result {
-        Ok(_) => log::info!("[Power] caffeinate guard started for PID {}", pid),
-        Err(e) => log::warn!("[Power] Failed to start caffeinate guard: {}", e),
-    }
-}
+// Removed mac_appnap module and caffeinate guard
 
 /// Perform graceful cleanup before agent shutdown
 fn cleanup_before_exit(app_handle: &AppHandle) -> Result<(), String> {

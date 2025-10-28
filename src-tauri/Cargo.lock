@@ -990,7 +990,6 @@ dependencies = [
  "macos-accessibility-client",
  "multiinput",
  "nix 0.29.0",
- "objc",
  "once_cell",
  "rdev",
  "reqwest",
