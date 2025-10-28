@@ -3,6 +3,7 @@ import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/domain/models/factory/factory.dart';
 import 'package:clones_desktop/domain/models/factory/factory_task.dart';
 import 'package:clones_desktop/domain/models/factory/factory_token.dart';
+import 'package:clones_desktop/ui/components/design_widget/message_box/message_box.dart';
 import 'package:clones_desktop/utils/format_num.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,10 +22,12 @@ class TaskLimitsWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final rewardAmount =
+        task.rewardLimit != null ? task.rewardLimit! : factory.pricePerDemo;
     final priceUSD = ref.watch(
       convertTokenPriceProvider(
         factoryToken.symbol,
-        task.rewardLimit != null ? task.rewardLimit! : factory.pricePerDemo,
+        rewardAmount,
       ),
     );
     final theme = Theme.of(context);
@@ -36,9 +39,7 @@ class TaskLimitsWidget extends ConsumerWidget {
           child: Row(
             children: [
               Text(
-                task.rewardLimit != null
-                    ? 'Max reward per demo: ${task.rewardLimit?.toStringAsFixedLowValue(4, 5)} ${factoryToken.symbol}'
-                    : 'Max reward per demo: ${factory.pricePerDemo.toStringAsFixedLowValue(4, 5)} ${factoryToken.symbol}',
+                'Max reward per demo: ${rewardAmount.toStringAsFixedLowValue(4, 5)} ${factoryToken.symbol}',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: ClonesColors.rewardInfo,
                 ),
@@ -85,6 +86,17 @@ class TaskLimitsWidget extends ConsumerWidget {
                 color: Colors.red,
               ),
               overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        if (factory.balance < rewardAmount)
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: MessageBox(
+              messageBoxType: MessageBoxType.warning,
+              content: Text(
+                'Factory balance is less than the reward amount. This task will not be available for users to complete.',
+                style: theme.textTheme.bodySmall,
+              ),
             ),
           ),
       ],
