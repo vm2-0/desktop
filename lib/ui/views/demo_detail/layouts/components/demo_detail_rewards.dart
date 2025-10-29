@@ -8,6 +8,7 @@ import 'package:clones_desktop/domain/models/submission/submission_status.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:clones_desktop/ui/components/design_widget/message_box/message_box.dart';
+import 'package:clones_desktop/ui/components/usd_price.dart';
 import 'package:clones_desktop/ui/components/wallet_not_connected.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
 import 'package:clones_desktop/utils/env.dart';
@@ -89,11 +90,23 @@ class DemoDetailRewards extends ConsumerWidget {
                         'Total Reward:',
                         style: theme.textTheme.bodyMedium,
                       ),
-                      Text(
-                        '${reward.toStringAsFixed(4)} \$$tokenSymbol',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: ClonesColors.getScoreColor(score),
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            '${reward.toStringAsFixed(4)} \$$tokenSymbol',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: ClonesColors.getScoreColor(score),
+                            ),
+                          ),
+                          UsdPrice(
+                            amount: reward,
+                            symbol: tokenSymbol,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: ClonesColors.getScoreColor(score),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -109,9 +122,19 @@ class DemoDetailRewards extends ConsumerWidget {
                             'Platform Fee (${feePercentage.toStringAsFixed(1)}%):',
                             style: theme.textTheme.bodyMedium,
                           ),
-                          Text(
-                            '${(reward * feeMultiplier).toStringAsFixed(4)} \$$tokenSymbol',
-                            style: theme.textTheme.bodyMedium,
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '${(reward * feeMultiplier).toStringAsFixed(4)} \$$tokenSymbol',
+                                style: theme.textTheme.bodyMedium,
+                              ),
+                              UsdPrice(
+                                amount: reward * feeMultiplier,
+                                symbol: tokenSymbol,
+                                style: theme.textTheme.bodySmall,
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -123,11 +146,23 @@ class DemoDetailRewards extends ConsumerWidget {
                             'You Receive:',
                             style: theme.textTheme.bodyMedium,
                           ),
-                          Text(
-                            '${(reward * netMultiplier).toStringAsFixed(4)} \$$tokenSymbol',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: ClonesColors.getScoreColor(score),
-                            ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '${(reward * netMultiplier).toStringAsFixed(4)} \$$tokenSymbol',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: ClonesColors.getScoreColor(score),
+                                ),
+                              ),
+                              UsdPrice(
+                                amount: reward * netMultiplier,
+                                symbol: tokenSymbol,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: ClonesColors.getScoreColor(score),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -150,11 +185,23 @@ class DemoDetailRewards extends ConsumerWidget {
                         'Max Reward:',
                         style: theme.textTheme.bodyMedium,
                       ),
-                      Text(
-                        '${maxReward.toStringAsFixed(4)} \$$tokenSymbol',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: ClonesColors.getScoreColor(100),
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            '${maxReward.toStringAsFixed(4)} \$$tokenSymbol',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: ClonesColors.getScoreColor(100),
+                            ),
+                          ),
+                          UsdPrice(
+                            amount: maxReward,
+                            symbol: tokenSymbol,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: ClonesColors.getScoreColor(100),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

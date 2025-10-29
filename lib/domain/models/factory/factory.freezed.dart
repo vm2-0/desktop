@@ -21,7 +21,6 @@ Factory _$FactoryFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$Factory {
 // Core identity
-  @JsonKey(name: '_id')
   String get id => throw _privateConstructorUsedError;
   String get poolAddress => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
@@ -62,7 +61,7 @@ abstract class $FactoryCopyWith<$Res> {
       _$FactoryCopyWithImpl<$Res, Factory>;
   @useResult
   $Res call(
-      {@JsonKey(name: '_id') String id,
+      {String id,
       String poolAddress,
       String name,
       String? description,
@@ -228,7 +227,7 @@ abstract class _$$FactoryImplCopyWith<$Res> implements $FactoryCopyWith<$Res> {
   @override
   @useResult
   $Res call(
-      {@JsonKey(name: '_id') String id,
+      {String id,
       String poolAddress,
       String name,
       String? description,
@@ -366,7 +365,7 @@ class __$$FactoryImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$FactoryImpl implements _Factory {
   const _$FactoryImpl(
-      {@JsonKey(name: '_id') required this.id,
+      {required this.id,
       required this.poolAddress,
       required this.name,
       this.description,
@@ -392,7 +391,6 @@ class _$FactoryImpl implements _Factory {
 
 // Core identity
   @override
-  @JsonKey(name: '_id')
   final String id;
   @override
   final String poolAddress;
@@ -541,7 +539,7 @@ class _$FactoryImpl implements _Factory {
 
 abstract class _Factory implements Factory {
   const factory _Factory(
-      {@JsonKey(name: '_id') required final String id,
+      {required final String id,
       required final String poolAddress,
       required final String name,
       final String? description,
@@ -564,7 +562,6 @@ abstract class _Factory implements Factory {
 
 // Core identity
   @override
-  @JsonKey(name: '_id')
   String get id;
   @override
   String get poolAddress;

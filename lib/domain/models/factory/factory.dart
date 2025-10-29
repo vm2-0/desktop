@@ -53,7 +53,7 @@ extension FactoryStatusExtension on FactoryStatus {
 class Factory with _$Factory {
   const factory Factory({
     // Core identity
-    @JsonKey(name: '_id') required String id,
+    required String id,
     required String poolAddress,
     required String name,
     String? description,

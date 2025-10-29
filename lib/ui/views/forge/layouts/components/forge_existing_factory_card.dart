@@ -4,7 +4,7 @@ import 'package:clones_desktop/domain/models/factory/factory.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:clones_desktop/ui/components/factory_status_badge.dart';
-import 'package:decimal/decimal.dart';
+import 'package:clones_desktop/ui/components/usd_price.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -57,7 +57,6 @@ class ForgeExistingFactoryCard extends ConsumerWidget {
                 _getBalanceText(factoryBalanceAsync, theme),
               ],
             ),
-            _demoProgress(context, factoryBalanceAsync),
             const SizedBox(height: 8),
             _viewDetailsButton(),
           ],
@@ -72,11 +71,27 @@ class ForgeExistingFactoryCard extends ConsumerWidget {
   ) {
     return factoryBalanceAsync.when(
       data: (balance) {
-        return Text(
-          '${balance.toStringAsFixed(3)} ${factory.token.symbol}',
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: balance == 0 ? ClonesColors.error : ClonesColors.secondary,
-          ),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              '${balance.toStringAsFixed(3)} ${factory.token.symbol}',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color:
+                    balance == 0 ? ClonesColors.error : ClonesColors.secondary,
+              ),
+            ),
+            UsdPrice(
+              amount: balance,
+              symbol: factory.token.symbol,
+              withParentheses: false,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontSize: 10,
+                color:
+                    balance == 0 ? ClonesColors.error : ClonesColors.secondary,
+              ),
+            ),
+          ],
         );
       },
       loading: () => const SizedBox.square(
@@ -91,115 +106,6 @@ class ForgeExistingFactoryCard extends ConsumerWidget {
           color: ClonesColors.error,
         ),
       ),
-    );
-  }
-
-  Widget _demoProgress(
-    BuildContext context,
-    AsyncValue<double> factoryBalanceAsync,
-  ) {
-    final pricePerDemo = factory.pricePerDemo;
-    final balance = factoryBalanceAsync.maybeWhen(
-      data: (value) => value,
-      orElse: () => factory.balance,
-    );
-    final possibleDemos = (pricePerDemo > 0)
-        ? (Decimal.parse(
-                  balance.toString(),
-                ) /
-                Decimal.parse(pricePerDemo.toString()))
-            .toDouble()
-            .floor()
-        : 0;
-
-    final demoPercentage = possibleDemos > 0
-        ? (factory.demonstrations / possibleDemos * 100).clamp(0, 100)
-        : 0;
-
-    if (pricePerDemo == 0) {
-      return const SizedBox.shrink();
-    }
-
-    return Column(
-      children: [
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Flexible(
-              child: Text(
-                'Sessions completed',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: ClonesColors.secondaryText,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w300,
-                ),
-              ),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              '${factory.demonstrations} / $possibleDemos',
-              style: TextStyle(
-                color: ClonesColors.secondaryText,
-                fontSize: 12,
-                fontWeight: FontWeight.w300,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Stack(
-          children: [
-            Container(
-              height: 4,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    ClonesColors.primary.withValues(alpha: 0.3),
-                    ClonesColors.secondary.withValues(alpha: 0.3),
-                    ClonesColors.tertiary.withValues(alpha: 0.3),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ),
-            if (factory.demonstrations >= possibleDemos)
-              FractionallySizedBox(
-                widthFactor: demoPercentage / 100,
-                child: Container(
-                  height: 5,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        ClonesColors.rewardInfo.withValues(alpha: 0.3),
-                        ClonesColors.rewardInfo,
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-              )
-            else
-              FractionallySizedBox(
-                widthFactor: demoPercentage / 100,
-                child: Container(
-                  height: 5,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        ClonesColors.secondary.withValues(alpha: 0.3),
-                        ClonesColors.secondary,
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ],
     );
   }
 

@@ -8,7 +8,7 @@ part of 'factory.dart';
 
 _$FactoryImpl _$$FactoryImplFromJson(Map<String, dynamic> json) =>
     _$FactoryImpl(
-      id: json['_id'] as String,
+      id: json['id'] as String,
       poolAddress: json['poolAddress'] as String,
       name: json['name'] as String,
       description: json['description'] as String?,
@@ -39,7 +39,7 @@ _$FactoryImpl _$$FactoryImplFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$$FactoryImplToJson(_$FactoryImpl instance) =>
     <String, dynamic>{
-      '_id': instance.id,
+      'id': instance.id,
       'poolAddress': instance.poolAddress,
       'name': instance.name,
       'description': instance.description,

@@ -1,9 +1,9 @@
 import 'package:clones_desktop/application/factory_funds_modal/provider.dart';
 import 'package:clones_desktop/application/factory_withdraw_modal/provider.dart';
-import 'package:clones_desktop/application/token_price_provider.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
+import 'package:clones_desktop/ui/components/usd_price.dart';
 import 'package:clones_desktop/ui/views/forge_detail/bloc/provider.dart';
 import 'package:clones_desktop/utils/format_num.dart';
 import 'package:flutter/material.dart';
@@ -19,9 +19,6 @@ class ForgeFactoryGeneralTabStatPoolBalance extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
-    final priceUSD = ref.watch(
-      convertTokenPriceProvider(factory.token.symbol, factory.balance),
-    );
     final theme = Theme.of(context);
     return Expanded(
       child: CardWidget(
@@ -107,13 +104,9 @@ class ForgeFactoryGeneralTabStatPoolBalance extends ConsumerWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                priceUSD.when(
-                  data: (price) => Text(
-                    '(\$${price.toStringAsFixedLowValue(2, 5)})',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  error: (error, stackTrace) => const SizedBox.shrink(),
-                  loading: () => const SizedBox.shrink(),
+                UsdPrice(
+                  amount: factory.balance,
+                  symbol: factory.token.symbol,
                 ),
                 const SizedBox(height: 5),
                 Text(

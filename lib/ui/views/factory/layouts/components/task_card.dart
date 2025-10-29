@@ -13,6 +13,7 @@ import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:clones_desktop/ui/views/demo_detail/layouts/components/referral_required_dialog.dart';
 import 'package:clones_desktop/ui/views/demo_detail/layouts/demo_detail_view.dart';
+import 'package:clones_desktop/application/coin_price.dart';
 import 'package:clones_desktop/utils/fav_tools.dart';
 import 'package:clones_desktop/utils/format_num.dart';
 import 'package:flutter/material.dart';
@@ -24,10 +25,12 @@ class TaskCard extends ConsumerWidget {
     super.key,
     required this.task,
     required this.app,
+    this.currencyMode = 'crypto',
   });
 
   final FactoryTask task;
   final FactoryApp app;
+  final String currencyMode;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -47,8 +50,14 @@ class TaskCard extends ConsumerWidget {
     final rewardAmount =
         task.rewardLimit != null ? task.rewardLimit! : factory.pricePerDemo;
 
-    final rewardText =
-        '${rewardAmount.toStringAsFixedLowValue(2, 5)} $tokenSymbol';
+    final String rewardText;
+    if (currencyMode == 'fiat') {
+      final priceUSD = ref.watch(coinPriceNotifierProvider(tokenSymbol));
+      final usdAmount = rewardAmount * priceUSD;
+      rewardText = '\$${usdAmount.toStringAsFixedLowValue(2, 5)}';
+    } else {
+      rewardText = '${rewardAmount.toStringAsFixedLowValue(2, 5)} $tokenSymbol';
+    }
 
     Future<void> onTap(BuildContext context) async {
       // Check if farming is locked without referral code
@@ -144,7 +153,7 @@ class TaskCard extends ConsumerWidget {
                       btnPrimaryType: BtnPrimaryType.outlinePrimary,
                       onTap: null,
                       buttonText: 'Insufficient funds',
-                    )
+                    ),
                 ],
               ),
             ),

@@ -3,6 +3,7 @@ import 'package:clones_desktop/application/claim_reward_modal/provider.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
+import 'package:clones_desktop/ui/components/usd_price.dart';
 import 'package:clones_desktop/utils/format_num.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -96,9 +97,19 @@ class ClaimRewardModal extends ConsumerWidget {
                                     'Total Reward:',
                                     style: theme.textTheme.bodyMedium,
                                   ),
-                                  Text(
-                                    '${formatNumberWithSeparator(modalState.rewardAmount)} ${modalState.tokenSymbol}',
-                                    style: theme.textTheme.bodyMedium,
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        '${formatNumberWithSeparator(modalState.rewardAmount)} ${modalState.tokenSymbol}',
+                                        style: theme.textTheme.bodyMedium,
+                                      ),
+                                      UsdPrice(
+                                        amount: modalState.rewardAmount,
+                                        symbol: modalState.tokenSymbol ?? '',
+                                        style: theme.textTheme.bodySmall,
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
@@ -113,11 +124,23 @@ class ClaimRewardModal extends ConsumerWidget {
                                       color: ClonesColors.secondaryText,
                                     ),
                                   ),
-                                  Text(
-                                    '${formatNumberWithSeparator(modalState.rewardAmount * feeMultiplier)} ${modalState.tokenSymbol}',
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: ClonesColors.secondaryText,
-                                    ),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        '${formatNumberWithSeparator(modalState.rewardAmount * feeMultiplier)} ${modalState.tokenSymbol}',
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(
+                                          color: ClonesColors.secondaryText,
+                                        ),
+                                      ),
+                                      UsdPrice(
+                                        amount: modalState.rewardAmount *
+                                            feeMultiplier,
+                                        symbol: modalState.tokenSymbol ?? '',
+                                        style: theme.textTheme.bodySmall,
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
@@ -131,11 +154,28 @@ class ClaimRewardModal extends ConsumerWidget {
                                     style:
                                         theme.textTheme.bodyMedium?.copyWith(),
                                   ),
-                                  Text(
-                                    '${formatNumberWithSeparator(modalState.rewardAmount * netMultiplier)} ${modalState.tokenSymbol}',
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: ClonesColors.getScoreColor(100),
-                                    ),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        '${formatNumberWithSeparator(modalState.rewardAmount * netMultiplier)} ${modalState.tokenSymbol}',
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(
+                                          color:
+                                              ClonesColors.getScoreColor(100),
+                                        ),
+                                      ),
+                                      UsdPrice(
+                                        amount: modalState.rewardAmount *
+                                            netMultiplier,
+                                        symbol: modalState.tokenSymbol ?? '',
+                                        style:
+                                            theme.textTheme.bodySmall?.copyWith(
+                                          color:
+                                              ClonesColors.getScoreColor(100),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
