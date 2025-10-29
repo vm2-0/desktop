@@ -96,7 +96,11 @@ class FactoryHistoryView extends ConsumerWidget {
             padding: const EdgeInsets.all(10),
             itemCount: factoryHistory.recordings.length,
             itemBuilder: (context, index) {
-              return RecordingCard(recording: factoryHistory.recordings[index]);
+              return RecordingCard(
+                recording: factoryHistory.recordings[index],
+                demonstrationReward:
+                    factoryHistory.recordings[index].demonstration?.reward,
+              );
             },
           ),
         );

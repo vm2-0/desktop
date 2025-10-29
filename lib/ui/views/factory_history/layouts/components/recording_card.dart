@@ -1,9 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:clones_desktop/application/factory.dart';
 import 'package:clones_desktop/application/recording.dart';
 import 'package:clones_desktop/application/tauri_api.dart';
 import 'package:clones_desktop/application/upload/provider.dart';
 import 'package:clones_desktop/application/upload/state.dart';
 import 'package:clones_desktop/assets.dart';
+import 'package:clones_desktop/domain/models/demonstration/demonstration_reward.dart';
 import 'package:clones_desktop/domain/models/recording/api_recording.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
@@ -29,9 +31,14 @@ bool _isAlreadyClaimed(ApiRecording recording) {
 }
 
 class RecordingCard extends ConsumerWidget {
-  const RecordingCard({super.key, required this.recording});
+  const RecordingCard({
+    super.key,
+    required this.recording,
+    this.demonstrationReward,
+  });
 
   final ApiRecording recording;
+  final DemonstrationReward? demonstrationReward;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -359,6 +366,21 @@ class RecordingCard extends ConsumerWidget {
     final isCompleted = uploadItem?.uploadStatus == UploadStatus.done;
     const isQueued = false; // Not in UploadStatus enum
     final theme = Theme.of(context);
+
+    final factoryId = recording.demonstration?.poolId ??
+        recording.submission?.meta.demonstration.poolId;
+    if (factoryId == null) {
+      return const SizedBox.shrink();
+    }
+
+    final factory =
+        ref.watch(getFactoryProvider(factoryId: factoryId)).valueOrNull;
+    if (factory == null) {
+      return const SizedBox.shrink();
+    }
+
+    final tokenSymbol = factory.token.symbol;
+
     return Row(
       children: [
         if (recording.status == 'completed' &&
@@ -382,7 +404,7 @@ class RecordingCard extends ConsumerWidget {
                 : isQueued
                     ? 'Queued'
                     : maxReward > 0
-                        ? 'Upload for ${maxReward.toStringAsFixed(2)} Tokens'
+                        ? 'Upload for ${maxReward.toStringAsFixed(2)} $tokenSymbol'
                         : 'Upload Recording',
           ),
         if (recording.submission == null)

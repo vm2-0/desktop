@@ -30,6 +30,7 @@ class _AvailableTasksState extends ConsumerState<AvailableTasks> {
   final TextEditingController _minPriceController = TextEditingController();
   final TextEditingController _maxPriceController = TextEditingController();
   bool _showFilters = false;
+  String _currencyMode = 'crypto';
 
   @override
   void initState() {
@@ -216,7 +217,11 @@ class _AvailableTasksState extends ConsumerState<AvailableTasks> {
                   itemBuilder: (context, index) {
                     final app = tasks[index]['app']! as FactoryApp;
                     final task = tasks[index]['task']! as FactoryTask;
-                    return TaskCard(app: app, task: task);
+                    return TaskCard(
+                      app: app,
+                      task: task,
+                      currencyMode: _currencyMode,
+                    );
                   },
                 );
               },
@@ -258,22 +263,69 @@ class _AvailableTasksState extends ConsumerState<AvailableTasks> {
               ),
             ],
           ),
-          TextButton.icon(
-            onPressed: () {
-              setState(() {
-                _showFilters = !_showFilters;
-              });
-            },
-            icon: Icon(
-              _showFilters ? Icons.keyboard_arrow_up : Icons.filter_list,
-              color: ClonesColors.secondary,
-            ),
-            label: Text(
-              'Filters',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: ClonesColors.secondary,
+          Row(
+            children: [
+              TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _showFilters = !_showFilters;
+                  });
+                },
+                icon: Icon(
+                  _showFilters ? Icons.keyboard_arrow_up : Icons.filter_list,
+                  color: ClonesColors.secondary,
+                ),
+                label: Text(
+                  'Filters',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: ClonesColors.secondary,
+                  ),
+                ),
               ),
-            ),
+              Row(
+                children: [
+                  Text(
+                    'Crypto',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: _currencyMode == 'crypto'
+                          ? ClonesColors.secondary
+                          : ClonesColors.secondary.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Transform.scale(
+                    scale: 0.7,
+                    child: Switch(
+                      value: _currencyMode == 'fiat',
+                      onChanged: (bool value) {
+                        setState(() {
+                          _currencyMode = value ? 'fiat' : 'crypto';
+                        });
+                      },
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      activeThumbColor: ClonesColors.secondary,
+                      inactiveThumbColor:
+                          ClonesColors.secondary.withValues(alpha: 0.6),
+                      inactiveTrackColor:
+                          ClonesColors.secondary.withValues(alpha: 0.2),
+                      activeTrackColor:
+                          ClonesColors.secondary.withValues(alpha: 0.4),
+                      trackOutlineColor:
+                          WidgetStateProperty.all(Colors.transparent),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Fiat',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: _currencyMode == 'fiat'
+                          ? ClonesColors.secondary
+                          : ClonesColors.secondary.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
       ),

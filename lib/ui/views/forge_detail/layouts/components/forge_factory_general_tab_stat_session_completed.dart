@@ -1,7 +1,6 @@
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/views/forge_detail/bloc/provider.dart';
-import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -14,24 +13,6 @@ class ForgeFactoryGeneralTabStatSessionCompleted extends ConsumerWidget {
 
     if (forgeDetail.factory == null) return const SizedBox.shrink();
 
-    final pricePerDemo = forgeDetail.factory!.pricePerDemo;
-    final possibleDemos = (pricePerDemo > 0)
-        ? (Decimal.parse(
-                  forgeDetail.factory!.balance.toString(),
-                ) /
-                Decimal.parse(pricePerDemo.toString()))
-            .toDouble()
-            .floor()
-        : 0;
-
-    final demoPercentage = possibleDemos > 0
-        ? (forgeDetail.factory!.demonstrations / possibleDemos * 100)
-            .clamp(0, 100)
-        : 0;
-
-    if (pricePerDemo == 0) {
-      return const SizedBox.shrink();
-    }
     final theme = Theme.of(context);
 
     return Expanded(
@@ -53,7 +34,7 @@ class ForgeFactoryGeneralTabStatSessionCompleted extends ConsumerWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              '${forgeDetail.factory!.demonstrations} / $possibleDemos',
+              forgeDetail.factory!.demonstrations.toString(),
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -63,63 +44,6 @@ class ForgeFactoryGeneralTabStatSessionCompleted extends ConsumerWidget {
               'Sessions completed',
               style: theme.textTheme.bodySmall,
             ),
-            const SizedBox(height: 10),
-            if (possibleDemos == 0)
-              Text(
-                'You need to fund your factory',
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: ClonesColors.error),
-              )
-            else
-              Stack(
-                children: [
-                  Container(
-                    height: 4,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          ClonesColors.primary.withValues(alpha: 0.3),
-                          ClonesColors.secondary.withValues(alpha: 0.3),
-                          ClonesColors.tertiary.withValues(alpha: 0.3),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                  ),
-                  if (forgeDetail.factory!.demonstrations >= possibleDemos)
-                    FractionallySizedBox(
-                      widthFactor: demoPercentage / 100,
-                      child: Container(
-                        height: 5,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              ClonesColors.rewardInfo.withValues(alpha: 0.3),
-                              ClonesColors.rewardInfo,
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      ),
-                    )
-                  else
-                    FractionallySizedBox(
-                      widthFactor: demoPercentage / 100,
-                      child: Container(
-                        height: 5,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              ClonesColors.secondary.withValues(alpha: 0.3),
-                              ClonesColors.secondary,
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
           ],
         ),
       ),

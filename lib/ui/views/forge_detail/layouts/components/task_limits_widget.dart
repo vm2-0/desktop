@@ -1,9 +1,9 @@
-import 'package:clones_desktop/application/token_price_provider.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/domain/models/factory/factory.dart';
 import 'package:clones_desktop/domain/models/factory/factory_task.dart';
 import 'package:clones_desktop/domain/models/factory/factory_token.dart';
 import 'package:clones_desktop/ui/components/design_widget/message_box/message_box.dart';
+import 'package:clones_desktop/ui/components/usd_price.dart';
 import 'package:clones_desktop/utils/format_num.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,12 +24,7 @@ class TaskLimitsWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final rewardAmount =
         task.rewardLimit != null ? task.rewardLimit! : factory.pricePerDemo;
-    final priceUSD = ref.watch(
-      convertTokenPriceProvider(
-        factoryToken.symbol,
-        rewardAmount,
-      ),
-    );
+
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,18 +39,15 @@ class TaskLimitsWidget extends ConsumerWidget {
                   color: ClonesColors.rewardInfo,
                 ),
               ),
-              priceUSD.when(
-                data: (price) => Padding(
-                  padding: const EdgeInsets.only(left: 4),
-                  child: Text(
-                    '(\$${price.toStringAsFixedLowValue(2, 5)})',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: ClonesColors.rewardInfo,
-                    ),
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: UsdPrice(
+                  amount: rewardAmount,
+                  symbol: factoryToken.symbol,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: ClonesColors.rewardInfo,
                   ),
                 ),
-                error: (error, stackTrace) => const SizedBox.shrink(),
-                loading: () => const SizedBox.shrink(),
               ),
             ],
           ),

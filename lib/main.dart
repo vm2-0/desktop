@@ -6,7 +6,6 @@ import 'package:clones_desktop/application/agent/agent_launcher.dart';
 import 'package:clones_desktop/application/deeplink_provider.dart';
 import 'package:clones_desktop/application/route_provider.dart';
 import 'package:clones_desktop/assets.dart';
-import 'package:clones_desktop/infrastructure/flutter_window_manager.dart';
 import 'package:clones_desktop/infrastructure/sparkle_updater.dart';
 import 'package:clones_desktop/ui/main_layout.dart';
 import 'package:clones_desktop/ui/views/demo_detail/layouts/demo_detail_view.dart';
@@ -22,7 +21,6 @@ import 'package:clones_desktop/ui/views/leaderboards/layouts/leaderboards_view.d
 import 'package:clones_desktop/ui/views/record_overlay/layouts/record_overlay_view.dart';
 import 'package:clones_desktop/ui/views/referral/layouts/referral_view.dart';
 import 'package:clones_desktop/utils/env.dart';
-import 'package:clones_desktop/utils/window_alignment.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -202,9 +200,6 @@ class _ClonesAppState extends ConsumerState<ClonesApp> {
     _router.routeInformationProvider.addListener(_updateRoute);
     // Set initial route
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (kIsWeb) {
-        _initializeWindow();
-      }
       _updateRoute();
       _checkForUpdates();
     });
@@ -278,25 +273,6 @@ class _ClonesAppState extends ConsumerState<ClonesApp> {
         level: 1000,
       );
     }
-  }
-
-  Future<void> _initializeWindow() async {
-    final displays = await FlutterWindowManager.getDisplaysSize();
-    final smallestDisplay = displays.reduce((a, b) {
-      final areaA = a.width * a.height;
-      final areaB = b.width * b.height;
-      return areaA < areaB ? a : b;
-    });
-    await FlutterWindowManager.resizeWindow(
-      smallestDisplay.width,
-      smallestDisplay.height,
-    );
-
-    await FlutterWindowManager.setWindowPosition(
-      WindowAlignment.topCenter,
-    );
-
-    await FlutterWindowManager.setWindowResizable(true);
   }
 
   void _updateRoute() {

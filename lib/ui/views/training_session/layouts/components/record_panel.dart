@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:clones_desktop/application/token_price_provider.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:clones_desktop/ui/components/design_widget/text/app_text.dart';
+import 'package:clones_desktop/ui/components/usd_price.dart';
 import 'package:clones_desktop/ui/views/record_overlay/layouts/record_overlay_view.dart';
 import 'package:clones_desktop/ui/views/training_session/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/training_session/bloc/state.dart';
@@ -36,13 +36,6 @@ class _RecordPanelState extends ConsumerState<RecordPanel> {
     final rewardText =
         'Up to: ${rewardAmount?.toStringAsFixedLowValue(2, 5)} ${trainingSession.factory?.token.symbol ?? ''}';
 
-    final tokenPrice = ref.watch(
-      convertTokenPriceProvider(
-        trainingSession.factory?.token.symbol ?? '',
-        rewardAmount ?? 0,
-      ),
-    );
-
     return Stack(
       children: [
         Column(
@@ -74,15 +67,15 @@ class _RecordPanelState extends ConsumerState<RecordPanel> {
                           color: ClonesColors.secondary,
                         ),
                       ),
-                      tokenPrice.when(
-                        data: (price) => Text(
-                          '(\$${price.toStringAsFixedLowValue(2, 5)})',
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4),
+                        child: UsdPrice(
+                          amount: rewardAmount ?? 0,
+                          symbol: trainingSession.factory?.token.symbol ?? '',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: ClonesColors.secondary,
                           ),
                         ),
-                        error: (error, stackTrace) => const SizedBox.shrink(),
-                        loading: () => const SizedBox.shrink(),
                       ),
                     ],
                   ),
