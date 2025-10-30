@@ -55,7 +55,7 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
 
             if (balance < fundingAmountDouble) {
               setError(
-                'Insufficient $tokenSymbol balance. You have $balance \$$tokenSymbol but need $fundingAmountDouble \$$tokenSymbol',
+                'Insufficient $tokenSymbol balance. You have $balance $tokenSymbol but need $fundingAmountDouble $tokenSymbol',
               );
               return;
             }

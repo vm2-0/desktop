@@ -212,8 +212,11 @@ class TauriApiClient {
 
   // --- Recording Actions ---
 
-  Future<void> processRecording(String recordingId,
-      {String? connectToken, required String backendUrl}) async {
+  Future<void> processRecording(
+    String recordingId, {
+    String? connectToken,
+    required String backendUrl,
+  }) async {
     final headers = <String, String>{'Content-Type': 'application/json'};
     if (connectToken != null) {
       headers['x-connect-token'] = connectToken;

@@ -8,7 +8,6 @@ import 'package:clones_desktop/domain/models/submission/submission_status.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:clones_desktop/ui/components/design_widget/message_box/message_box.dart';
-import 'package:clones_desktop/ui/components/usd_price.dart';
 import 'package:clones_desktop/ui/components/wallet_not_connected.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
 import 'package:clones_desktop/utils/env.dart';
@@ -90,23 +89,11 @@ class DemoDetailRewards extends ConsumerWidget {
                         'Total Reward:',
                         style: theme.textTheme.bodyMedium,
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            '${reward.toStringAsFixed(4)} \$$tokenSymbol',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: ClonesColors.getScoreColor(score),
-                            ),
-                          ),
-                          UsdPrice(
-                            amount: reward,
-                            symbol: tokenSymbol,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: ClonesColors.getScoreColor(score),
-                            ),
-                          ),
-                        ],
+                      Text(
+                        '${reward.toStringAsFixed(4)} $tokenSymbol',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: ClonesColors.getScoreColor(score),
+                        ),
                       ),
                     ],
                   ),
@@ -122,19 +109,9 @@ class DemoDetailRewards extends ConsumerWidget {
                             'Platform Fee (${feePercentage.toStringAsFixed(1)}%):',
                             style: theme.textTheme.bodyMedium,
                           ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                '${(reward * feeMultiplier).toStringAsFixed(4)} \$$tokenSymbol',
-                                style: theme.textTheme.bodyMedium,
-                              ),
-                              UsdPrice(
-                                amount: reward * feeMultiplier,
-                                symbol: tokenSymbol,
-                                style: theme.textTheme.bodySmall,
-                              ),
-                            ],
+                          Text(
+                            '${(reward * feeMultiplier).toStringAsFixed(4)} $tokenSymbol',
+                            style: theme.textTheme.bodyMedium,
                           ),
                         ],
                       ),
@@ -146,23 +123,11 @@ class DemoDetailRewards extends ConsumerWidget {
                             'You Receive:',
                             style: theme.textTheme.bodyMedium,
                           ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                '${(reward * netMultiplier).toStringAsFixed(4)} \$$tokenSymbol',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: ClonesColors.getScoreColor(score),
-                                ),
-                              ),
-                              UsdPrice(
-                                amount: reward * netMultiplier,
-                                symbol: tokenSymbol,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: ClonesColors.getScoreColor(score),
-                                ),
-                              ),
-                            ],
+                          Text(
+                            '${(reward * netMultiplier).toStringAsFixed(4)} $tokenSymbol',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: ClonesColors.getScoreColor(score),
+                            ),
                           ),
                         ],
                       ),
@@ -185,23 +150,11 @@ class DemoDetailRewards extends ConsumerWidget {
                         'Max Reward:',
                         style: theme.textTheme.bodyMedium,
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            '${maxReward.toStringAsFixed(4)} \$$tokenSymbol',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: ClonesColors.getScoreColor(100),
-                            ),
-                          ),
-                          UsdPrice(
-                            amount: maxReward,
-                            symbol: tokenSymbol,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: ClonesColors.getScoreColor(100),
-                            ),
-                          ),
-                        ],
+                      Text(
+                        '${maxReward.toStringAsFixed(4)} $tokenSymbol',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: ClonesColors.getScoreColor(100),
+                        ),
                       ),
                     ],
                   ),
@@ -393,32 +346,32 @@ class DemoDetailRewards extends ConsumerWidget {
                     const SizedBox(height: 8),
                     if (netAmount != null && feeAmount != null) ...[
                       Text(
-                        'Total Reward: ${grossAmount.toStringAsFixed(3)} \$$tokenSymbol',
+                        'Total Reward: ${grossAmount.toStringAsFixed(3)} $tokenSymbol',
                         style: theme.textTheme.bodySmall,
                       ),
                       Text(
-                        'Platform Fee: ${feeAmount.toStringAsFixed(3)} \$$tokenSymbol',
+                        'Platform Fee: ${feeAmount.toStringAsFixed(3)} $tokenSymbol',
                         style: theme.textTheme.bodySmall,
                       ),
                       if (farmerReferrerAmount != null &&
                           farmerReferrerAddress != null)
                         Text(
-                          'Farmer Referrer: ${farmerReferrerAmount.toStringAsFixed(3)} \$$tokenSymbol (${farmerReferrerAddress.shortAddress()})',
+                          'Farmer Referrer: ${farmerReferrerAmount.toStringAsFixed(3)} $tokenSymbol (${farmerReferrerAddress.shortAddress()})',
                           style: theme.textTheme.bodySmall,
                         ),
                       if (factoryReferrerAmount != null &&
                           factoryReferrerAddress != null)
                         Text(
-                          'Factory Referrer: ${factoryReferrerAmount.toStringAsFixed(3)} \$$tokenSymbol (${factoryReferrerAddress.shortAddress()})',
+                          'Factory Referrer: ${factoryReferrerAmount.toStringAsFixed(3)} $tokenSymbol (${factoryReferrerAddress.shortAddress()})',
                           style: theme.textTheme.bodySmall,
                         ),
                       Text(
-                        'You Received: ${netAmount.toStringAsFixed(3)} \$$tokenSymbol',
+                        'You Received: ${netAmount.toStringAsFixed(3)} $tokenSymbol',
                         style: theme.textTheme.bodySmall,
                       ),
                     ] else ...[
                       Text(
-                        'You claimed ${grossAmount.toStringAsFixed(3)} \$$tokenSymbol',
+                        'You claimed ${grossAmount.toStringAsFixed(3)} $tokenSymbol',
                         style: theme.textTheme.bodySmall,
                       ),
                       Text(

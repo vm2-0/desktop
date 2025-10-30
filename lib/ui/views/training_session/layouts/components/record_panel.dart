@@ -65,7 +65,7 @@ class _RecordPanelState extends ConsumerState<RecordPanel> {
                   Padding(
                     padding: const EdgeInsets.only(left: 4),
                     child: UsdPrice(
-                      amount: rewardAmount ?? 0,
+                      amount: rewardAmount,
                       symbol: trainingSession.factory?.token.symbol ?? '',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: ClonesColors.secondary,
