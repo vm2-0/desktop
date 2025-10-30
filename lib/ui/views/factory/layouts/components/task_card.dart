@@ -96,8 +96,9 @@ class TaskCard extends ConsumerWidget {
             padding: CardPadding.small,
             variant: CardVariant.secondary,
             child: InkWell(
-              onTap: () async =>
-                  factory.balance >= rewardAmount ? onTap(context) : null,
+              onTap: factory.balance >= rewardAmount
+                  ? () async => onTap(context)
+                  : null,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
