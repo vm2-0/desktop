@@ -22,10 +22,6 @@ FactoryFilter _$FactoryFilterFromJson(Map<String, dynamic> json) {
 mixin _$FactoryFilter {
   String? get poolId => throw _privateConstructorUsedError;
   @JsonKey(includeIfNull: false)
-  int? get minReward => throw _privateConstructorUsedError;
-  @JsonKey(includeIfNull: false)
-  int? get maxReward => throw _privateConstructorUsedError;
-  @JsonKey(includeIfNull: false)
   String? get query => throw _privateConstructorUsedError;
   @JsonKey(includeIfNull: false)
   List<String>? get categories => throw _privateConstructorUsedError;
@@ -50,8 +46,6 @@ abstract class $FactoryFilterCopyWith<$Res> {
   @useResult
   $Res call(
       {String? poolId,
-      @JsonKey(includeIfNull: false) int? minReward,
-      @JsonKey(includeIfNull: false) int? maxReward,
       @JsonKey(includeIfNull: false) String? query,
       @JsonKey(includeIfNull: false) List<String>? categories,
       @JsonKey(includeIfNull: false) bool? hideAdult});
@@ -73,8 +67,6 @@ class _$FactoryFilterCopyWithImpl<$Res, $Val extends FactoryFilter>
   @override
   $Res call({
     Object? poolId = freezed,
-    Object? minReward = freezed,
-    Object? maxReward = freezed,
     Object? query = freezed,
     Object? categories = freezed,
     Object? hideAdult = freezed,
@@ -84,14 +76,6 @@ class _$FactoryFilterCopyWithImpl<$Res, $Val extends FactoryFilter>
           ? _value.poolId
           : poolId // ignore: cast_nullable_to_non_nullable
               as String?,
-      minReward: freezed == minReward
-          ? _value.minReward
-          : minReward // ignore: cast_nullable_to_non_nullable
-              as int?,
-      maxReward: freezed == maxReward
-          ? _value.maxReward
-          : maxReward // ignore: cast_nullable_to_non_nullable
-              as int?,
       query: freezed == query
           ? _value.query
           : query // ignore: cast_nullable_to_non_nullable
@@ -118,8 +102,6 @@ abstract class _$$FactoryFilterImplCopyWith<$Res>
   @useResult
   $Res call(
       {String? poolId,
-      @JsonKey(includeIfNull: false) int? minReward,
-      @JsonKey(includeIfNull: false) int? maxReward,
       @JsonKey(includeIfNull: false) String? query,
       @JsonKey(includeIfNull: false) List<String>? categories,
       @JsonKey(includeIfNull: false) bool? hideAdult});
@@ -139,8 +121,6 @@ class __$$FactoryFilterImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? poolId = freezed,
-    Object? minReward = freezed,
-    Object? maxReward = freezed,
     Object? query = freezed,
     Object? categories = freezed,
     Object? hideAdult = freezed,
@@ -150,14 +130,6 @@ class __$$FactoryFilterImplCopyWithImpl<$Res>
           ? _value.poolId
           : poolId // ignore: cast_nullable_to_non_nullable
               as String?,
-      minReward: freezed == minReward
-          ? _value.minReward
-          : minReward // ignore: cast_nullable_to_non_nullable
-              as int?,
-      maxReward: freezed == maxReward
-          ? _value.maxReward
-          : maxReward // ignore: cast_nullable_to_non_nullable
-              as int?,
       query: freezed == query
           ? _value.query
           : query // ignore: cast_nullable_to_non_nullable
@@ -179,8 +151,6 @@ class __$$FactoryFilterImplCopyWithImpl<$Res>
 class _$FactoryFilterImpl implements _FactoryFilter {
   const _$FactoryFilterImpl(
       {this.poolId,
-      @JsonKey(includeIfNull: false) this.minReward,
-      @JsonKey(includeIfNull: false) this.maxReward,
       @JsonKey(includeIfNull: false) this.query,
       @JsonKey(includeIfNull: false) final List<String>? categories,
       @JsonKey(includeIfNull: false) this.hideAdult})
@@ -191,12 +161,6 @@ class _$FactoryFilterImpl implements _FactoryFilter {
 
   @override
   final String? poolId;
-  @override
-  @JsonKey(includeIfNull: false)
-  final int? minReward;
-  @override
-  @JsonKey(includeIfNull: false)
-  final int? maxReward;
   @override
   @JsonKey(includeIfNull: false)
   final String? query;
@@ -217,7 +181,7 @@ class _$FactoryFilterImpl implements _FactoryFilter {
 
   @override
   String toString() {
-    return 'FactoryFilter(poolId: $poolId, minReward: $minReward, maxReward: $maxReward, query: $query, categories: $categories, hideAdult: $hideAdult)';
+    return 'FactoryFilter(poolId: $poolId, query: $query, categories: $categories, hideAdult: $hideAdult)';
   }
 
   @override
@@ -226,10 +190,6 @@ class _$FactoryFilterImpl implements _FactoryFilter {
         (other.runtimeType == runtimeType &&
             other is _$FactoryFilterImpl &&
             (identical(other.poolId, poolId) || other.poolId == poolId) &&
-            (identical(other.minReward, minReward) ||
-                other.minReward == minReward) &&
-            (identical(other.maxReward, maxReward) ||
-                other.maxReward == maxReward) &&
             (identical(other.query, query) || other.query == query) &&
             const DeepCollectionEquality()
                 .equals(other._categories, _categories) &&
@@ -239,8 +199,8 @@ class _$FactoryFilterImpl implements _FactoryFilter {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, poolId, minReward, maxReward,
-      query, const DeepCollectionEquality().hash(_categories), hideAdult);
+  int get hashCode => Object.hash(runtimeType, poolId, query,
+      const DeepCollectionEquality().hash(_categories), hideAdult);
 
   /// Create a copy of FactoryFilter
   /// with the given fields replaced by the non-null parameter values.
@@ -261,8 +221,6 @@ class _$FactoryFilterImpl implements _FactoryFilter {
 abstract class _FactoryFilter implements FactoryFilter {
   const factory _FactoryFilter(
           {final String? poolId,
-          @JsonKey(includeIfNull: false) final int? minReward,
-          @JsonKey(includeIfNull: false) final int? maxReward,
           @JsonKey(includeIfNull: false) final String? query,
           @JsonKey(includeIfNull: false) final List<String>? categories,
           @JsonKey(includeIfNull: false) final bool? hideAdult}) =
@@ -273,12 +231,6 @@ abstract class _FactoryFilter implements FactoryFilter {
 
   @override
   String? get poolId;
-  @override
-  @JsonKey(includeIfNull: false)
-  int? get minReward;
-  @override
-  @JsonKey(includeIfNull: false)
-  int? get maxReward;
   @override
   @JsonKey(includeIfNull: false)
   String? get query;

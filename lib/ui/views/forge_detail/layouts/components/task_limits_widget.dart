@@ -22,8 +22,7 @@ class TaskLimitsWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rewardAmount =
-        task.rewardLimit != null ? task.rewardLimit! : factory.pricePerDemo;
+    final rewardAmount = task.rewardLimit ?? 0.0;
 
     final theme = Theme.of(context);
     return Column(

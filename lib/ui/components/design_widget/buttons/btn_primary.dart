@@ -2,7 +2,7 @@ import 'package:clones_desktop/assets.dart';
 import 'package:flutter/material.dart';
 import 'package:gradient_borders/box_borders/gradient_box_border.dart';
 
-enum BtnPrimaryType { primary, outlinePrimary, dark }
+enum BtnPrimaryType { primary, outlinePrimary, dark, important }
 
 class BtnPrimary extends StatelessWidget {
   const BtnPrimary({
@@ -108,6 +108,11 @@ class BtnPrimary extends StatelessWidget {
       case BtnPrimaryType.dark:
         return BoxDecoration(
           color: Colors.black,
+          borderRadius: BorderRadius.circular(8),
+        );
+      case BtnPrimaryType.important:
+        return BoxDecoration(
+          color: ClonesColors.important,
           borderRadius: BorderRadius.circular(8),
         );
     }

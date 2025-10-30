@@ -81,7 +81,7 @@ class ForgeDetailNotifier extends _$ForgeDetailNotifier
       if (state.hasUnsavedChanges) {
         await saveFactoryApps();
       }
-      
+
       var updatedFactory = await ref.read(
         updateFactoryProvider(
           factoryId: state.factory?.id ?? '',
@@ -90,7 +90,6 @@ class ForgeDetailNotifier extends _$ForgeDetailNotifier
           description: state.factory?.description ?? '',
           skills: state.factory?.skills ?? [],
           status: state.factoryStatus,
-          pricePerDemo: state.pricePerDemo,
         ).future,
       );
       updatedFactory =

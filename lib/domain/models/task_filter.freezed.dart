@@ -21,8 +21,6 @@ TaskFilter _$TaskFilterFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$TaskFilter {
   String? get poolId => throw _privateConstructorUsedError;
-  int? get minReward => throw _privateConstructorUsedError;
-  int? get maxReward => throw _privateConstructorUsedError;
   List<String>? get categories => throw _privateConstructorUsedError;
   String? get query => throw _privateConstructorUsedError;
   bool get hideAdult => throw _privateConstructorUsedError;
@@ -45,8 +43,6 @@ abstract class $TaskFilterCopyWith<$Res> {
   @useResult
   $Res call(
       {String? poolId,
-      int? minReward,
-      int? maxReward,
       List<String>? categories,
       String? query,
       bool hideAdult});
@@ -68,8 +64,6 @@ class _$TaskFilterCopyWithImpl<$Res, $Val extends TaskFilter>
   @override
   $Res call({
     Object? poolId = freezed,
-    Object? minReward = freezed,
-    Object? maxReward = freezed,
     Object? categories = freezed,
     Object? query = freezed,
     Object? hideAdult = null,
@@ -79,14 +73,6 @@ class _$TaskFilterCopyWithImpl<$Res, $Val extends TaskFilter>
           ? _value.poolId
           : poolId // ignore: cast_nullable_to_non_nullable
               as String?,
-      minReward: freezed == minReward
-          ? _value.minReward
-          : minReward // ignore: cast_nullable_to_non_nullable
-              as int?,
-      maxReward: freezed == maxReward
-          ? _value.maxReward
-          : maxReward // ignore: cast_nullable_to_non_nullable
-              as int?,
       categories: freezed == categories
           ? _value.categories
           : categories // ignore: cast_nullable_to_non_nullable
@@ -113,8 +99,6 @@ abstract class _$$TaskFilterImplCopyWith<$Res>
   @useResult
   $Res call(
       {String? poolId,
-      int? minReward,
-      int? maxReward,
       List<String>? categories,
       String? query,
       bool hideAdult});
@@ -134,8 +118,6 @@ class __$$TaskFilterImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? poolId = freezed,
-    Object? minReward = freezed,
-    Object? maxReward = freezed,
     Object? categories = freezed,
     Object? query = freezed,
     Object? hideAdult = null,
@@ -145,14 +127,6 @@ class __$$TaskFilterImplCopyWithImpl<$Res>
           ? _value.poolId
           : poolId // ignore: cast_nullable_to_non_nullable
               as String?,
-      minReward: freezed == minReward
-          ? _value.minReward
-          : minReward // ignore: cast_nullable_to_non_nullable
-              as int?,
-      maxReward: freezed == maxReward
-          ? _value.maxReward
-          : maxReward // ignore: cast_nullable_to_non_nullable
-              as int?,
       categories: freezed == categories
           ? _value._categories
           : categories // ignore: cast_nullable_to_non_nullable
@@ -174,8 +148,6 @@ class __$$TaskFilterImplCopyWithImpl<$Res>
 class _$TaskFilterImpl implements _TaskFilter {
   const _$TaskFilterImpl(
       {this.poolId,
-      this.minReward,
-      this.maxReward,
       final List<String>? categories,
       this.query,
       this.hideAdult = true})
@@ -186,10 +158,6 @@ class _$TaskFilterImpl implements _TaskFilter {
 
   @override
   final String? poolId;
-  @override
-  final int? minReward;
-  @override
-  final int? maxReward;
   final List<String>? _categories;
   @override
   List<String>? get categories {
@@ -208,7 +176,7 @@ class _$TaskFilterImpl implements _TaskFilter {
 
   @override
   String toString() {
-    return 'TaskFilter(poolId: $poolId, minReward: $minReward, maxReward: $maxReward, categories: $categories, query: $query, hideAdult: $hideAdult)';
+    return 'TaskFilter(poolId: $poolId, categories: $categories, query: $query, hideAdult: $hideAdult)';
   }
 
   @override
@@ -217,10 +185,6 @@ class _$TaskFilterImpl implements _TaskFilter {
         (other.runtimeType == runtimeType &&
             other is _$TaskFilterImpl &&
             (identical(other.poolId, poolId) || other.poolId == poolId) &&
-            (identical(other.minReward, minReward) ||
-                other.minReward == minReward) &&
-            (identical(other.maxReward, maxReward) ||
-                other.maxReward == maxReward) &&
             const DeepCollectionEquality()
                 .equals(other._categories, _categories) &&
             (identical(other.query, query) || other.query == query) &&
@@ -230,7 +194,7 @@ class _$TaskFilterImpl implements _TaskFilter {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, poolId, minReward, maxReward,
+  int get hashCode => Object.hash(runtimeType, poolId,
       const DeepCollectionEquality().hash(_categories), query, hideAdult);
 
   /// Create a copy of TaskFilter
@@ -252,8 +216,6 @@ class _$TaskFilterImpl implements _TaskFilter {
 abstract class _TaskFilter implements TaskFilter {
   const factory _TaskFilter(
       {final String? poolId,
-      final int? minReward,
-      final int? maxReward,
       final List<String>? categories,
       final String? query,
       final bool hideAdult}) = _$TaskFilterImpl;
@@ -263,10 +225,6 @@ abstract class _TaskFilter implements TaskFilter {
 
   @override
   String? get poolId;
-  @override
-  int? get minReward;
-  @override
-  int? get maxReward;
   @override
   List<String>? get categories;
   @override

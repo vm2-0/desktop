@@ -72,7 +72,6 @@ class Factory with _$Factory {
     // Economic model
     required FactoryToken token,
     @Default(0.0) double balance,
-    required double pricePerDemo,
 
     // Statistics
     @Default(0) int demonstrations,

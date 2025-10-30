@@ -40,7 +40,6 @@ class _ForgeFactoryDetailState extends ConsumerState<ForgeFactoryDetail> {
         ..setApps(apps)
         ..setFactoryName(widget.factory.name)
         ..setFactoryStatus(widget.factory.status)
-        ..setPricePerDemo(widget.factory.pricePerDemo)
         ..setUploadLimitValue(10)
         ..setUploadLimitType('none')
         ..setFactory(widget.factory);
@@ -170,7 +169,9 @@ class _ForgeFactoryDetailState extends ConsumerState<ForgeFactoryDetail> {
                                 buttonText: 'Refresh Balance',
                                 btnPrimaryType: BtnPrimaryType.outlinePrimary,
                               ),
-                              if (ref.watch(forgeDetailNotifierProvider).hasAnyUnsavedChanges) ...[
+                              if (ref
+                                  .watch(forgeDetailNotifierProvider)
+                                  .hasAnyUnsavedChanges) ...[
                                 const SizedBox(width: 16),
                                 BtnPrimary(
                                   onTap: () {
@@ -181,6 +182,7 @@ class _ForgeFactoryDetailState extends ConsumerState<ForgeFactoryDetail> {
                                         .updateFactory();
                                   },
                                   buttonText: 'Save',
+                                  btnPrimaryType: BtnPrimaryType.important,
                                 ),
                               ],
                               const SizedBox(width: 16),

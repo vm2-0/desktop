@@ -165,7 +165,6 @@ Future<Factory> updateFactory(
   String? description,
   List<String>? skills,
   FactoryStatus? status,
-  double? pricePerDemo,
 }) {
   final repository = ref.read(factoryRepositoryProvider);
   return repository.updateFactory(
@@ -175,7 +174,6 @@ Future<Factory> updateFactory(
     description: description,
     skills: skills,
     status: status,
-    pricePerDemo: pricePerDemo,
   );
 }
 

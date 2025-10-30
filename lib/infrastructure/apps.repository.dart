@@ -28,12 +28,6 @@ class AppsRepositoryImpl {
 
       if (filter != null) {
         if (filter['poolId'] != null) params['pool_id'] = filter['poolId'];
-        if (filter['minReward'] != null) {
-          params['min_reward'] = filter['minReward'];
-        }
-        if (filter['maxReward'] != null) {
-          params['max_reward'] = filter['maxReward'];
-        }
         if (filter['categories'] != null) {
           params['categories'] = filter['categories'].join(',');
         }

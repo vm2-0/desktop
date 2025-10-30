@@ -103,7 +103,6 @@ class FactoriesRepositoryImpl implements FactoriesRepository {
     String? description,
     List<String>? skills,
     FactoryStatus? status,
-    double? pricePerDemo,
   }) async {
     try {
       final updateData = <String, dynamic>{};
@@ -111,7 +110,6 @@ class FactoriesRepositoryImpl implements FactoriesRepository {
       if (description != null) updateData['description'] = description;
       if (skills != null) updateData['skills'] = skills;
       if (status != null) updateData['status'] = status.jsonValue;
-      if (pricePerDemo != null) updateData['pricePerDemo'] = pricePerDemo;
 
       final responseData = await _apiClient.put<Map<String, dynamic>>(
         '/forge/factories/$factoryId',

@@ -8,7 +8,8 @@ mixin ForgeDetailSetters on AutoDisposeNotifier<ForgeDetailState> {
   void setFactory(Factory factory) {
     state = state.copyWith(
       factory: factory,
-      hasFactoryPropertyChanges: false, // Reset property changes when setting new factory
+      hasFactoryPropertyChanges:
+          false, // Reset property changes when setting new factory
     );
   }
 
@@ -22,27 +23,15 @@ mixin ForgeDetailSetters on AutoDisposeNotifier<ForgeDetailState> {
 
   void setFactoryName(String factoryName) {
     if (state.factoryName == factoryName) return;
-    
+
     // Check if this is different from the original factory value
     final factory = state.factory;
     final hasChanges = factory != null && factoryName != factory.name;
-    
+
     state = state.copyWith(
       factoryName: factoryName,
-      hasFactoryPropertyChanges: hasChanges || _hasOtherFactoryPropertyChanges(),
-    );
-  }
-
-  void setPricePerDemo(double pricePerDemo) {
-    if (state.pricePerDemo == pricePerDemo) return;
-    
-    // Check if this is different from the original factory value
-    final factory = state.factory;
-    final hasChanges = factory != null && pricePerDemo != factory.pricePerDemo;
-    
-    state = state.copyWith(
-      pricePerDemo: pricePerDemo,
-      hasFactoryPropertyChanges: hasChanges || _hasOtherFactoryPropertyChanges(),
+      hasFactoryPropertyChanges:
+          hasChanges || _hasOtherFactoryPropertyChanges(),
     );
   }
 
@@ -63,14 +52,15 @@ mixin ForgeDetailSetters on AutoDisposeNotifier<ForgeDetailState> {
 
   void setFactoryStatus(FactoryStatus factoryStatus) {
     if (state.factoryStatus == factoryStatus) return;
-    
+
     // Check if this is different from the original factory value
     final factory = state.factory;
     final hasChanges = factory != null && factoryStatus != factory.status;
-    
+
     state = state.copyWith(
       factoryStatus: factoryStatus,
-      hasFactoryPropertyChanges: hasChanges || _hasOtherFactoryPropertyChanges(),
+      hasFactoryPropertyChanges:
+          hasChanges || _hasOtherFactoryPropertyChanges(),
     );
   }
 
@@ -128,18 +118,17 @@ mixin ForgeDetailSetters on AutoDisposeNotifier<ForgeDetailState> {
   void updateFactoryBalance(double newBalance) {
     final currentFactory = state.factory;
     if (currentFactory == null) return;
-    
+
     final updatedFactory = currentFactory.copyWith(balance: newBalance);
     state = state.copyWith(factory: updatedFactory);
   }
-  
+
   /// Check if there are changes in other factory properties (excluding the one being set)
   bool _hasOtherFactoryPropertyChanges() {
     final factory = state.factory;
     if (factory == null) return false;
-    
+
     return state.factoryName != factory.name ||
-           state.pricePerDemo != factory.pricePerDemo ||
-           state.factoryStatus != factory.status;
+        state.factoryStatus != factory.status;
   }
 }

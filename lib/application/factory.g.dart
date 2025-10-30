@@ -1753,7 +1753,7 @@ class _GetFactoryProviderElement
   String get factoryId => (origin as GetFactoryProvider).factoryId;
 }
 
-String _$updateFactoryHash() => r'57ae3c1b1eedec352a1e508f3057bec27950652f';
+String _$updateFactoryHash() => r'068d9b83e5920981713210160bbda2f4d90e69b4';
 
 /// See also [updateFactory].
 @ProviderFor(updateFactory)
@@ -1772,7 +1772,6 @@ class UpdateFactoryFamily extends Family<AsyncValue<Factory>> {
     String? description,
     List<String>? skills,
     FactoryStatus? status,
-    double? pricePerDemo,
   }) {
     return UpdateFactoryProvider(
       factoryId: factoryId,
@@ -1781,7 +1780,6 @@ class UpdateFactoryFamily extends Family<AsyncValue<Factory>> {
       description: description,
       skills: skills,
       status: status,
-      pricePerDemo: pricePerDemo,
     );
   }
 
@@ -1796,7 +1794,6 @@ class UpdateFactoryFamily extends Family<AsyncValue<Factory>> {
       description: provider.description,
       skills: provider.skills,
       status: provider.status,
-      pricePerDemo: provider.pricePerDemo,
     );
   }
 
@@ -1825,7 +1822,6 @@ class UpdateFactoryProvider extends AutoDisposeFutureProvider<Factory> {
     String? description,
     List<String>? skills,
     FactoryStatus? status,
-    double? pricePerDemo,
   }) : this._internal(
           (ref) => updateFactory(
             ref as UpdateFactoryRef,
@@ -1835,7 +1831,6 @@ class UpdateFactoryProvider extends AutoDisposeFutureProvider<Factory> {
             description: description,
             skills: skills,
             status: status,
-            pricePerDemo: pricePerDemo,
           ),
           from: updateFactoryProvider,
           name: r'updateFactoryProvider',
@@ -1852,7 +1847,6 @@ class UpdateFactoryProvider extends AutoDisposeFutureProvider<Factory> {
           description: description,
           skills: skills,
           status: status,
-          pricePerDemo: pricePerDemo,
         );
 
   UpdateFactoryProvider._internal(
@@ -1868,7 +1862,6 @@ class UpdateFactoryProvider extends AutoDisposeFutureProvider<Factory> {
     required this.description,
     required this.skills,
     required this.status,
-    required this.pricePerDemo,
   }) : super.internal();
 
   final String factoryId;
@@ -1877,7 +1870,6 @@ class UpdateFactoryProvider extends AutoDisposeFutureProvider<Factory> {
   final String? description;
   final List<String>? skills;
   final FactoryStatus? status;
-  final double? pricePerDemo;
 
   @override
   Override overrideWith(
@@ -1898,7 +1890,6 @@ class UpdateFactoryProvider extends AutoDisposeFutureProvider<Factory> {
         description: description,
         skills: skills,
         status: status,
-        pricePerDemo: pricePerDemo,
       ),
     );
   }
@@ -1916,8 +1907,7 @@ class UpdateFactoryProvider extends AutoDisposeFutureProvider<Factory> {
         other.factoryName == factoryName &&
         other.description == description &&
         other.skills == skills &&
-        other.status == status &&
-        other.pricePerDemo == pricePerDemo;
+        other.status == status;
   }
 
   @override
@@ -1929,7 +1919,6 @@ class UpdateFactoryProvider extends AutoDisposeFutureProvider<Factory> {
     hash = _SystemHash.combine(hash, description.hashCode);
     hash = _SystemHash.combine(hash, skills.hashCode);
     hash = _SystemHash.combine(hash, status.hashCode);
-    hash = _SystemHash.combine(hash, pricePerDemo.hashCode);
 
     return _SystemHash.finish(hash);
   }
@@ -1955,9 +1944,6 @@ mixin UpdateFactoryRef on AutoDisposeFutureProviderRef<Factory> {
 
   /// The parameter `status` of this provider.
   FactoryStatus? get status;
-
-  /// The parameter `pricePerDemo` of this provider.
-  double? get pricePerDemo;
 }
 
 class _UpdateFactoryProviderElement
@@ -1976,8 +1962,6 @@ class _UpdateFactoryProviderElement
   List<String>? get skills => (origin as UpdateFactoryProvider).skills;
   @override
   FactoryStatus? get status => (origin as UpdateFactoryProvider).status;
-  @override
-  double? get pricePerDemo => (origin as UpdateFactoryProvider).pricePerDemo;
 }
 
 String _$getFactoriesByCreatorHash() =>

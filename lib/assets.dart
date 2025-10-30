@@ -29,7 +29,6 @@ class Assets {
   static const String editIcon = '${assetIconsFolder}edit_icon.png';
   static const String recordIcon = '${assetIconsFolder}record_icon.png';
   static const String uploadIcon = '${assetIconsFolder}upload_icon.png';
-  static const String robotIcon = '${assetIconsFolder}robot_icon.png';
 
   // Menu
   static const String menuFarm = '${assetMenuFolder}farmer_menu.png';
@@ -85,6 +84,7 @@ class ClonesColors {
   static const Color secondary = Color(0xFF9050FF);
   static const Color tertiary = Color(0xFF5C51FF);
   static const Color error = Color(0xFFFB923C);
+  static const Color important = Color(0xFFFB923C);
 
   static const Color rewardInfo = Color(0xFF10B981);
   static const Color rewardInfoClaimed = Color(0xFF10B981);
