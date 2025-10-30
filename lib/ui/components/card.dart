@@ -38,6 +38,7 @@ class CardWidget extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(

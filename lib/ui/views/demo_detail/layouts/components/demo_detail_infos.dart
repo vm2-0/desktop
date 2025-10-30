@@ -5,11 +5,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-class DemoDetailInfos extends ConsumerWidget {
+class DemoDetailInfos extends ConsumerStatefulWidget {
   const DemoDetailInfos({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DemoDetailInfos> createState() => _DemoDetailInfosState();
+}
+
+class _DemoDetailInfosState extends ConsumerState<DemoDetailInfos> {
+  bool _isInfoGridExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
     final demoDetail = ref.watch(demoDetailNotifierProvider);
     final recording = demoDetail.recording;
 
@@ -30,13 +37,33 @@ class DemoDetailInfos extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      recording.title,
-                      style: theme.textTheme.titleMedium,
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            recording.title,
+                            style: theme.textTheme.titleMedium,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () {
+                            setState(() {
+                              _isInfoGridExpanded = !_isInfoGridExpanded;
+                            });
+                          },
+                          icon: Icon(
+                            _isInfoGridExpanded
+                                ? Icons.expand_less
+                                : Icons.expand_more,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    _buildInfoGrid(context, ref),
+                    if (_isInfoGridExpanded) ...[
+                      const SizedBox(height: 8),
+                      _buildInfoGrid(context, ref),
+                    ],
                   ],
                 ),
               ),
