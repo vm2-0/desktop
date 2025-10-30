@@ -34,8 +34,7 @@ mixin _$Factory {
   List<String> get skills =>
       throw _privateConstructorUsedError; // Economic model
   FactoryToken get token => throw _privateConstructorUsedError;
-  double get balance => throw _privateConstructorUsedError;
-  double get pricePerDemo => throw _privateConstructorUsedError; // Statistics
+  double get balance => throw _privateConstructorUsedError; // Statistics
   int get demonstrations => throw _privateConstructorUsedError; // Configuration
   FactoryUploadLimit? get uploadLimit =>
       throw _privateConstructorUsedError; // Apps & tasks (integrated)
@@ -72,7 +71,6 @@ abstract class $FactoryCopyWith<$Res> {
       List<String> skills,
       FactoryToken token,
       double balance,
-      double pricePerDemo,
       int demonstrations,
       FactoryUploadLimit? uploadLimit,
       List<FactoryApp> apps,
@@ -110,7 +108,6 @@ class _$FactoryCopyWithImpl<$Res, $Val extends Factory>
     Object? skills = null,
     Object? token = null,
     Object? balance = null,
-    Object? pricePerDemo = null,
     Object? demonstrations = null,
     Object? uploadLimit = freezed,
     Object? apps = null,
@@ -162,10 +159,6 @@ class _$FactoryCopyWithImpl<$Res, $Val extends Factory>
       balance: null == balance
           ? _value.balance
           : balance // ignore: cast_nullable_to_non_nullable
-              as double,
-      pricePerDemo: null == pricePerDemo
-          ? _value.pricePerDemo
-          : pricePerDemo // ignore: cast_nullable_to_non_nullable
               as double,
       demonstrations: null == demonstrations
           ? _value.demonstrations
@@ -238,7 +231,6 @@ abstract class _$$FactoryImplCopyWith<$Res> implements $FactoryCopyWith<$Res> {
       List<String> skills,
       FactoryToken token,
       double balance,
-      double pricePerDemo,
       int demonstrations,
       FactoryUploadLimit? uploadLimit,
       List<FactoryApp> apps,
@@ -276,7 +268,6 @@ class __$$FactoryImplCopyWithImpl<$Res>
     Object? skills = null,
     Object? token = null,
     Object? balance = null,
-    Object? pricePerDemo = null,
     Object? demonstrations = null,
     Object? uploadLimit = freezed,
     Object? apps = null,
@@ -329,10 +320,6 @@ class __$$FactoryImplCopyWithImpl<$Res>
           ? _value.balance
           : balance // ignore: cast_nullable_to_non_nullable
               as double,
-      pricePerDemo: null == pricePerDemo
-          ? _value.pricePerDemo
-          : pricePerDemo // ignore: cast_nullable_to_non_nullable
-              as double,
       demonstrations: null == demonstrations
           ? _value.demonstrations
           : demonstrations // ignore: cast_nullable_to_non_nullable
@@ -376,7 +363,6 @@ class _$FactoryImpl implements _Factory {
       final List<String> skills = const [],
       required this.token,
       this.balance = 0.0,
-      required this.pricePerDemo,
       this.demonstrations = 0,
       this.uploadLimit,
       final List<FactoryApp> apps = const [],
@@ -425,8 +411,6 @@ class _$FactoryImpl implements _Factory {
   @override
   @JsonKey()
   final double balance;
-  @override
-  final double pricePerDemo;
 // Statistics
   @override
   @JsonKey()
@@ -459,7 +443,7 @@ class _$FactoryImpl implements _Factory {
 
   @override
   String toString() {
-    return 'Factory(id: $id, poolAddress: $poolAddress, name: $name, description: $description, ownerAddress: $ownerAddress, status: $status, createdAt: $createdAt, updatedAt: $updatedAt, skills: $skills, token: $token, balance: $balance, pricePerDemo: $pricePerDemo, demonstrations: $demonstrations, uploadLimit: $uploadLimit, apps: $apps, searchText: $searchText, expanded: $expanded, isLoading: $isLoading)';
+    return 'Factory(id: $id, poolAddress: $poolAddress, name: $name, description: $description, ownerAddress: $ownerAddress, status: $status, createdAt: $createdAt, updatedAt: $updatedAt, skills: $skills, token: $token, balance: $balance, demonstrations: $demonstrations, uploadLimit: $uploadLimit, apps: $apps, searchText: $searchText, expanded: $expanded, isLoading: $isLoading)';
   }
 
   @override
@@ -483,8 +467,6 @@ class _$FactoryImpl implements _Factory {
             const DeepCollectionEquality().equals(other._skills, _skills) &&
             (identical(other.token, token) || other.token == token) &&
             (identical(other.balance, balance) || other.balance == balance) &&
-            (identical(other.pricePerDemo, pricePerDemo) ||
-                other.pricePerDemo == pricePerDemo) &&
             (identical(other.demonstrations, demonstrations) ||
                 other.demonstrations == demonstrations) &&
             (identical(other.uploadLimit, uploadLimit) ||
@@ -513,7 +495,6 @@ class _$FactoryImpl implements _Factory {
       const DeepCollectionEquality().hash(_skills),
       token,
       balance,
-      pricePerDemo,
       demonstrations,
       uploadLimit,
       const DeepCollectionEquality().hash(_apps),
@@ -550,7 +531,6 @@ abstract class _Factory implements Factory {
       final List<String> skills,
       required final FactoryToken token,
       final double balance,
-      required final double pricePerDemo,
       final int demonstrations,
       final FactoryUploadLimit? uploadLimit,
       final List<FactoryApp> apps,
@@ -582,9 +562,7 @@ abstract class _Factory implements Factory {
   @override
   FactoryToken get token;
   @override
-  double get balance;
-  @override
-  double get pricePerDemo; // Statistics
+  double get balance; // Statistics
   @override
   int get demonstrations; // Configuration
   @override

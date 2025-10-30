@@ -14,7 +14,6 @@ enum ViewModeTasks {
 class ForgeDetailState with _$ForgeDetailState {
   const factory ForgeDetailState({
     @Default('') String factoryName,
-    @Default(1) double pricePerDemo,
     @Default(10) int uploadLimitValue,
     @Default('none') String uploadLimitType,
     @Default(FactoryStatus.error) FactoryStatus? factoryStatus,
@@ -37,7 +36,7 @@ class ForgeDetailState with _$ForgeDetailState {
     int? editingTaskIdx,
   }) = _ForgeDetailState;
   const ForgeDetailState._();
-  
+
   /// Check if there are any unsaved changes (apps or factory properties)
   bool get hasAnyUnsavedChanges {
     return hasUnsavedChanges || hasFactoryPropertyChanges;

@@ -7,8 +7,6 @@ part 'factory_filter.g.dart';
 class FactoryFilter with _$FactoryFilter {
   const factory FactoryFilter({
     String? poolId,
-    @JsonKey(includeIfNull: false) int? minReward,
-    @JsonKey(includeIfNull: false) int? maxReward,
     @JsonKey(includeIfNull: false) String? query,
     @JsonKey(includeIfNull: false) List<String>? categories,
     @JsonKey(includeIfNull: false) bool? hideAdult,

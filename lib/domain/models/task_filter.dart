@@ -7,8 +7,6 @@ part 'task_filter.g.dart';
 class TaskFilter with _$TaskFilter {
   const factory TaskFilter({
     String? poolId,
-    int? minReward,
-    int? maxReward,
     List<String>? categories,
     String? query,
     @Default(true) bool hideAdult,

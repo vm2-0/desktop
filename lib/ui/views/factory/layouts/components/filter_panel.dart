@@ -10,9 +10,6 @@ class FilterPanel extends ConsumerWidget {
     super.key,
     required this.settings,
     required this.searchController,
-    required this.minPriceController,
-    required this.maxPriceController,
-    required this.sortValue,
     required this.onSortChanged,
     required this.allCategories,
     required this.selectedCategories,
@@ -24,9 +21,6 @@ class FilterPanel extends ConsumerWidget {
 
   final FactorySettings settings;
   final TextEditingController searchController;
-  final TextEditingController minPriceController;
-  final TextEditingController maxPriceController;
-  final String sortValue;
   final ValueChanged<String?> onSortChanged;
   final List<String> allCategories;
   final Set<String> selectedCategories;
@@ -83,171 +77,6 @@ class FilterPanel extends ConsumerWidget {
                                         ?.color!
                                         .withValues(alpha: 0.2),
                                   ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                flex: 2,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Price (Min)',
-                            style: theme.textTheme.titleSmall,
-                          ),
-                          const SizedBox(height: 6),
-                          DecoratedBox(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .primaryContainer,
-                                width: 0.5,
-                              ),
-                              gradient:
-                                  ClonesColors.gradientInputFormBackground,
-                            ),
-                            child: TextField(
-                              controller: minPriceController,
-                              onSubmitted: (_) => onApplyFilters(),
-                              style: theme.textTheme.bodyMedium,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 12,
-                                ),
-                                hintText: 'Factory name',
-                                hintStyle: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
-                                      color: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium
-                                          ?.color!
-                                          .withValues(alpha: 0.2),
-                                    ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 25),
-                      child: Text(
-                        'to',
-                        style: theme.textTheme.titleSmall,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Price (Max)',
-                            style: theme.textTheme.titleSmall,
-                          ),
-                          const SizedBox(height: 6),
-                          DecoratedBox(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .primaryContainer,
-                                width: 0.5,
-                              ),
-                              gradient:
-                                  ClonesColors.gradientInputFormBackground,
-                            ),
-                            child: TextField(
-                              controller: maxPriceController,
-                              onSubmitted: (_) => onApplyFilters(),
-                              style: theme.textTheme.bodyMedium,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 12,
-                                ),
-                                hintText: 'Factory name',
-                                hintStyle: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
-                                      color: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium
-                                          ?.color!
-                                          .withValues(alpha: 0.2),
-                                    ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Sort by',
-                      style: theme.textTheme.titleSmall,
-                    ),
-                    const SizedBox(height: 6),
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.primaryContainer,
-                          width: 0.5,
-                        ),
-                        gradient: ClonesColors.gradientInputFormBackground,
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: DropdownButton<String>(
-                          value: sortValue,
-                          isExpanded: true,
-                          underline: const SizedBox(),
-                          dropdownColor: Colors.black.withValues(alpha: 0.9),
-                          style: theme.textTheme.bodyMedium,
-                          items: [
-                            DropdownMenuItem(
-                              value: 'htl',
-                              child: Text(
-                                'High to Low',
-                                style: theme.textTheme.bodyMedium,
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'lth',
-                              child: Text(
-                                'Low to High',
-                                style: theme.textTheme.bodyMedium,
-                              ),
-                            ),
-                          ],
-                          onChanged: onSortChanged,
                         ),
                       ),
                     ),

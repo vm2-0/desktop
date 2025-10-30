@@ -59,10 +59,6 @@ class _AvailableTasksState extends ConsumerState<AvailableTasks> {
   void _applyFilters() {
     final settings = ref.read(factorySettingsNotifierProvider).value ??
         const FactorySettings();
-    final minPrice =
-        int.tryParse(_minPriceController.text) ?? settings.minPrice;
-    final maxPrice =
-        int.tryParse(_maxPriceController.text) ?? settings.maxPrice;
 
     setState(() {
       _filter = FactoryFilter(
@@ -72,8 +68,6 @@ class _AvailableTasksState extends ConsumerState<AvailableTasks> {
         categories: _selectedCategories.isNotEmpty
             ? _selectedCategories.toList()
             : null,
-        minReward: minPrice,
-        maxReward: maxPrice,
         hideAdult: settings.hideAdult,
       );
     });
@@ -121,9 +115,6 @@ class _AvailableTasksState extends ConsumerState<AvailableTasks> {
             FilterPanel(
               settings: factorySettings,
               searchController: _searchController,
-              minPriceController: _minPriceController,
-              maxPriceController: _maxPriceController,
-              sortValue: _sort,
               onSortChanged: (value) {
                 if (value != null) {
                   setState(() {

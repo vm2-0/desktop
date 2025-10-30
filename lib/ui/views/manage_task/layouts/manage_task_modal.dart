@@ -54,9 +54,7 @@ class _ManageTaskModalState extends ConsumerState<ManageTaskModal> {
         ref.read(manageTaskNotifierProvider.notifier)
           ..setPrompt(widget.task!.prompt)
           ..setPricePerDemo(
-            widget.task?.rewardLimit != null
-                ? widget.task!.rewardLimit
-                : widget.factory?.pricePerDemo,
+            widget.task?.rewardLimit,
           )
           ..setUploadLimitValue(widget.task!.uploadLimit);
       }

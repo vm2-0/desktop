@@ -17,7 +17,6 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$ForgeDetailState {
   String get factoryName => throw _privateConstructorUsedError;
-  double get pricePerDemo => throw _privateConstructorUsedError;
   int get uploadLimitValue => throw _privateConstructorUsedError;
   String get uploadLimitType => throw _privateConstructorUsedError;
   FactoryStatus? get factoryStatus => throw _privateConstructorUsedError;
@@ -54,7 +53,6 @@ abstract class $ForgeDetailStateCopyWith<$Res> {
   @useResult
   $Res call(
       {String factoryName,
-      double pricePerDemo,
       int uploadLimitValue,
       String uploadLimitType,
       FactoryStatus? factoryStatus,
@@ -94,7 +92,6 @@ class _$ForgeDetailStateCopyWithImpl<$Res, $Val extends ForgeDetailState>
   @override
   $Res call({
     Object? factoryName = null,
-    Object? pricePerDemo = null,
     Object? uploadLimitValue = null,
     Object? uploadLimitType = null,
     Object? factoryStatus = freezed,
@@ -120,10 +117,6 @@ class _$ForgeDetailStateCopyWithImpl<$Res, $Val extends ForgeDetailState>
           ? _value.factoryName
           : factoryName // ignore: cast_nullable_to_non_nullable
               as String,
-      pricePerDemo: null == pricePerDemo
-          ? _value.pricePerDemo
-          : pricePerDemo // ignore: cast_nullable_to_non_nullable
-              as double,
       uploadLimitValue: null == uploadLimitValue
           ? _value.uploadLimitValue
           : uploadLimitValue // ignore: cast_nullable_to_non_nullable
@@ -228,7 +221,6 @@ abstract class _$$ForgeDetailStateImplCopyWith<$Res>
   @useResult
   $Res call(
       {String factoryName,
-      double pricePerDemo,
       int uploadLimitValue,
       String uploadLimitType,
       FactoryStatus? factoryStatus,
@@ -267,7 +259,6 @@ class __$$ForgeDetailStateImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? factoryName = null,
-    Object? pricePerDemo = null,
     Object? uploadLimitValue = null,
     Object? uploadLimitType = null,
     Object? factoryStatus = freezed,
@@ -293,10 +284,6 @@ class __$$ForgeDetailStateImplCopyWithImpl<$Res>
           ? _value.factoryName
           : factoryName // ignore: cast_nullable_to_non_nullable
               as String,
-      pricePerDemo: null == pricePerDemo
-          ? _value.pricePerDemo
-          : pricePerDemo // ignore: cast_nullable_to_non_nullable
-              as double,
       uploadLimitValue: null == uploadLimitValue
           ? _value.uploadLimitValue
           : uploadLimitValue // ignore: cast_nullable_to_non_nullable
@@ -382,7 +369,6 @@ class __$$ForgeDetailStateImplCopyWithImpl<$Res>
 class _$ForgeDetailStateImpl extends _ForgeDetailState {
   const _$ForgeDetailStateImpl(
       {this.factoryName = '',
-      this.pricePerDemo = 1,
       this.uploadLimitValue = 10,
       this.uploadLimitType = 'none',
       this.factoryStatus = FactoryStatus.error,
@@ -408,9 +394,6 @@ class _$ForgeDetailStateImpl extends _ForgeDetailState {
   @override
   @JsonKey()
   final String factoryName;
-  @override
-  @JsonKey()
-  final double pricePerDemo;
   @override
   @JsonKey()
   final int uploadLimitValue;
@@ -471,7 +454,7 @@ class _$ForgeDetailStateImpl extends _ForgeDetailState {
 
   @override
   String toString() {
-    return 'ForgeDetailState(factoryName: $factoryName, pricePerDemo: $pricePerDemo, uploadLimitValue: $uploadLimitValue, uploadLimitType: $uploadLimitType, factoryStatus: $factoryStatus, factory: $factory, viewModeTasks: $viewModeTasks, error: $error, apps: $apps, isUpdateFactoryStatusSuccess: $isUpdateFactoryStatusSuccess, isUpdatePoolSuccess: $isUpdatePoolSuccess, isRefreshBalanceSuccess: $isRefreshBalanceSuccess, hasUnsavedChanges: $hasUnsavedChanges, hasFactoryPropertyChanges: $hasFactoryPropertyChanges, showNewAppForm: $showNewAppForm, showManageTaskModal: $showManageTaskModal, manageTaskModalType: $manageTaskModalType, newAppName: $newAppName, newAppDomain: $newAppDomain, editingTaskAppIdx: $editingTaskAppIdx, editingTaskIdx: $editingTaskIdx)';
+    return 'ForgeDetailState(factoryName: $factoryName, uploadLimitValue: $uploadLimitValue, uploadLimitType: $uploadLimitType, factoryStatus: $factoryStatus, factory: $factory, viewModeTasks: $viewModeTasks, error: $error, apps: $apps, isUpdateFactoryStatusSuccess: $isUpdateFactoryStatusSuccess, isUpdatePoolSuccess: $isUpdatePoolSuccess, isRefreshBalanceSuccess: $isRefreshBalanceSuccess, hasUnsavedChanges: $hasUnsavedChanges, hasFactoryPropertyChanges: $hasFactoryPropertyChanges, showNewAppForm: $showNewAppForm, showManageTaskModal: $showManageTaskModal, manageTaskModalType: $manageTaskModalType, newAppName: $newAppName, newAppDomain: $newAppDomain, editingTaskAppIdx: $editingTaskAppIdx, editingTaskIdx: $editingTaskIdx)';
   }
 
   @override
@@ -481,8 +464,6 @@ class _$ForgeDetailStateImpl extends _ForgeDetailState {
             other is _$ForgeDetailStateImpl &&
             (identical(other.factoryName, factoryName) ||
                 other.factoryName == factoryName) &&
-            (identical(other.pricePerDemo, pricePerDemo) ||
-                other.pricePerDemo == pricePerDemo) &&
             (identical(other.uploadLimitValue, uploadLimitValue) ||
                 other.uploadLimitValue == uploadLimitValue) &&
             (identical(other.uploadLimitType, uploadLimitType) ||
@@ -528,7 +509,6 @@ class _$ForgeDetailStateImpl extends _ForgeDetailState {
   int get hashCode => Object.hashAll([
         runtimeType,
         factoryName,
-        pricePerDemo,
         uploadLimitValue,
         uploadLimitType,
         factoryStatus,
@@ -563,7 +543,6 @@ class _$ForgeDetailStateImpl extends _ForgeDetailState {
 abstract class _ForgeDetailState extends ForgeDetailState {
   const factory _ForgeDetailState(
       {final String factoryName,
-      final double pricePerDemo,
       final int uploadLimitValue,
       final String uploadLimitType,
       final FactoryStatus? factoryStatus,
@@ -587,8 +566,6 @@ abstract class _ForgeDetailState extends ForgeDetailState {
 
   @override
   String get factoryName;
-  @override
-  double get pricePerDemo;
   @override
   int get uploadLimitValue;
   @override

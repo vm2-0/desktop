@@ -55,7 +55,7 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
 
             if (balance < fundingAmountDouble) {
               setError(
-                'Insufficient $tokenSymbol balance. You have $balance but need $fundingAmountDouble',
+                'Insufficient $tokenSymbol balance. You have $balance \$$tokenSymbol but need $fundingAmountDouble \$$tokenSymbol',
               );
               return;
             }
@@ -144,8 +144,8 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
   }
 
   void updateTaskWithLimits(
-    int appIndex, 
-    int taskIndex, 
+    int appIndex,
+    int taskIndex,
     String prompt,
     double? rewardLimit,
     int? uploadLimit,

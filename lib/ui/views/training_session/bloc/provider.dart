@@ -8,7 +8,6 @@ import 'package:clones_desktop/application/upload/provider.dart';
 import 'package:clones_desktop/application/upload/state.dart';
 import 'package:clones_desktop/domain/models/api/api_error.dart';
 import 'package:clones_desktop/domain/models/demonstration/demonstration.dart';
-import 'package:clones_desktop/domain/models/demonstration/demonstration_reward.dart';
 import 'package:clones_desktop/domain/models/message/message.dart';
 import 'package:clones_desktop/domain/models/message/typing_message.dart';
 import 'package:clones_desktop/infrastructure/flutter_window_manager.dart';
@@ -146,11 +145,6 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
         objectives: demonstration.objectives,
         content: demonstration.content,
         poolId: state.factory?.id,
-        reward: DemonstrationReward(
-          time: 0,
-          maxReward: state.factory?.pricePerDemo ?? 0,
-          token: state.factory?.token,
-        ),
         taskId: state.app?.taskId,
       );
 
