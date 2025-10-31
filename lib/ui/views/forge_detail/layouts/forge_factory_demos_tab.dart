@@ -111,7 +111,7 @@ class _UploadsTable extends ConsumerWidget {
                     label: Text('Date', style: theme.textTheme.titleSmall),
                   ),
                   DataColumn(
-                    label: Text('Quality', style: theme.textTheme.titleSmall),
+                    label: Text('Score', style: theme.textTheme.titleSmall),
                   ),
                   DataColumn(
                     label: Text('Reward', style: theme.textTheme.titleSmall),
@@ -192,7 +192,7 @@ class _UploadsTable extends ConsumerWidget {
             style: theme.textTheme.bodySmall,
           ),
         ),
-        DataCell(_QualityCell(submission: submission)),
+        DataCell(_ScoreCell(submission: submission)),
         DataCell(_RewardCell(submission: submission)),
         DataCell(
           Icon(
@@ -306,8 +306,8 @@ class _StatusCell extends StatelessWidget {
   }
 }
 
-class _QualityCell extends StatelessWidget {
-  const _QualityCell({required this.submission});
+class _ScoreCell extends StatelessWidget {
+  const _ScoreCell({required this.submission});
   final PoolSubmission submission;
 
   @override
@@ -316,15 +316,7 @@ class _QualityCell extends StatelessWidget {
     final score = submission.gradeResult?.score;
     if (score == null) return const Text('-');
 
-    Color color;
-    if (score >= 50) {
-      color = Colors.green;
-    } else if (score >= 25) {
-      color = Colors.orange;
-    } else {
-      color = Colors.red;
-    }
-
+    final color = ClonesColors.getScoreColor(score);
     return Text(
       '${score.toStringAsFixed(0)}%',
       style: theme.textTheme.bodySmall?.copyWith(
