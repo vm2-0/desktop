@@ -4,6 +4,7 @@ import 'package:clones_desktop/domain/models/factory/factory.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:clones_desktop/ui/components/factory_status_badge.dart';
+import 'package:clones_desktop/ui/components/score_distribution_bars.dart';
 import 'package:clones_desktop/ui/components/usd_price.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,6 +25,8 @@ class ForgeExistingFactoryCard extends ConsumerWidget {
     final factoryBalanceAsync = ref.watch(
       getFactoryBalanceProvider(poolAddress: factory.poolAddress),
     );
+    final gradingResultsAsync =
+        ref.watch(getFactoryGradingResultsProvider(factoryId: factory.id));
 
     return CardWidget(
       padding: CardPadding.small,
@@ -42,19 +45,37 @@ class ForgeExistingFactoryCard extends ConsumerWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 12),
-            Row(
+            Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Pool Balance:',
-                  style: TextStyle(
-                    color: ClonesColors.secondaryText,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w300,
+                gradingResultsAsync.when(
+                  data: (results) => Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: ScoreDistributionBars(
+                      results: results,
+                      barHeight: 4,
+                      spacing: 6,
+                    ),
                   ),
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
                 ),
-                _getBalanceText(factoryBalanceAsync, theme),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Balance:',
+                      style: TextStyle(
+                        color: ClonesColors.secondaryText,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w300,
+                      ),
+                    ),
+                    _getBalanceText(factoryBalanceAsync, theme),
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: 8),

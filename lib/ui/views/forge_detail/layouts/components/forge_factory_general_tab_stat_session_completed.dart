@@ -15,37 +15,35 @@ class ForgeFactoryGeneralTabStatSessionCompleted extends ConsumerWidget {
 
     final theme = Theme.of(context);
 
-    return Expanded(
-      child: CardWidget(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: ClonesColors.containerIcon5.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                Icons.lightbulb_outline,
-                color: ClonesColors.containerIcon5.withValues(alpha: 0.7),
-                size: 20,
-              ),
+    return CardWidget(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: ClonesColors.containerIcon5.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(10),
             ),
-            const SizedBox(height: 10),
-            Text(
-              forgeDetail.factory!.demonstrations.toString(),
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+            child: Icon(
+              Icons.lightbulb_outline,
+              color: ClonesColors.containerIcon5.withValues(alpha: 0.7),
+              size: 20,
             ),
-            const SizedBox(height: 5),
-            Text(
-              'Sessions completed',
-              style: theme.textTheme.bodySmall,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            forgeDetail.factory!.demonstrations.toString(),
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            'Sessions with rewards',
+            style: theme.textTheme.bodySmall,
+          ),
+        ],
       ),
     );
   }

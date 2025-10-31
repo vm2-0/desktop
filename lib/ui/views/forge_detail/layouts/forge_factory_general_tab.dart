@@ -7,6 +7,7 @@ import 'package:clones_desktop/ui/views/forge_detail/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/components/forge_factory_general_tab_factory_address.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/components/forge_factory_general_tab_factory_name.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/components/forge_factory_general_tab_factory_upload_limit.dart';
+import 'package:clones_desktop/ui/views/forge_detail/layouts/components/forge_factory_general_tab_stat_demo.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/components/forge_factory_general_tab_stat_pool_balance.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/components/forge_factory_general_tab_stat_session_completed.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/components/forge_factory_header.dart';
@@ -117,10 +118,21 @@ class ForgeFactoryGeneralTab extends ConsumerWidget {
     return const SizedBox(
       height: 160,
       child: Row(
-        spacing: 20,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ForgeFactoryGeneralTabStatSessionCompleted(),
-          ForgeFactoryGeneralTabStatPoolBalance(),
+          Expanded(
+            child: ForgeFactoryGeneralTabStatSessionCompleted(),
+          ),
+          SizedBox(width: 20),
+          Expanded(
+            flex: 2,
+            child: ForgeFactoryGeneralTabStatDemo(),
+          ),
+          SizedBox(width: 20),
+          Expanded(
+            flex: 2,
+            child: ForgeFactoryGeneralTabStatPoolBalance(),
+          ),
         ],
       ),
     );

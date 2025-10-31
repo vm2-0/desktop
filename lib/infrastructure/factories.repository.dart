@@ -1,6 +1,7 @@
 import 'package:clones_desktop/domain/models/api/request_options.dart';
 import 'package:clones_desktop/domain/models/factory/factory.dart';
 import 'package:clones_desktop/domain/models/factory/factory_app.dart';
+import 'package:clones_desktop/domain/models/factory/factory_grading_result.dart';
 import 'package:clones_desktop/domain/models/factory/factory_search_criteria.dart';
 import 'package:clones_desktop/domain/models/factory/factory_search_result.dart';
 import 'package:clones_desktop/domain/models/supported_token.dart';
@@ -92,6 +93,28 @@ class FactoriesRepositoryImpl implements FactoriesRepository {
       );
     } catch (e) {
       throw Exception('Failed to get factory: $e');
+    }
+  }
+
+  /// Get grading results for a factory
+  Future<List<FactoryGradingResult>> getFactoryGradingResults(
+    String factoryId,
+  ) async {
+    try {
+      final responseData = await _apiClient.get<List<dynamic>>(
+        '/forge/factories/$factoryId/grading-results',
+        options: const RequestOptions(requiresAuth: true),
+        fromJson: (json) => json as List<dynamic>,
+      );
+
+      return responseData
+          .map(
+            (json) =>
+                FactoryGradingResult.fromJson(json as Map<String, dynamic>),
+          )
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to get factory grading results: $e');
     }
   }
 

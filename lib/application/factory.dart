@@ -1,5 +1,6 @@
 import 'package:clones_desktop/domain/models/factory/factory.dart';
 import 'package:clones_desktop/domain/models/factory/factory_app.dart';
+import 'package:clones_desktop/domain/models/factory/factory_grading_result.dart';
 import 'package:clones_desktop/domain/models/factory/factory_search_criteria.dart';
 import 'package:clones_desktop/domain/models/factory/factory_search_result.dart';
 import 'package:clones_desktop/domain/models/supported_token.dart';
@@ -258,4 +259,13 @@ Future<MaxWithdrawal> getMaxWithdrawal(
 }) {
   final repository = ref.read(factoryRepositoryProvider);
   return repository.getMaxWithdrawal(poolAddress: poolAddress);
+}
+
+@riverpod
+Future<List<FactoryGradingResult>> getFactoryGradingResults(
+  Ref ref, {
+  required String factoryId,
+}) {
+  final repository = ref.read(factoryRepositoryProvider);
+  return repository.getFactoryGradingResults(factoryId);
 }

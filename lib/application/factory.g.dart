@@ -3087,5 +3087,144 @@ class _GetMaxWithdrawalProviderElement
   @override
   String get poolAddress => (origin as GetMaxWithdrawalProvider).poolAddress;
 }
+
+String _$getFactoryGradingResultsHash() =>
+    r'd70ef7b99d591c6cfab7623a42d6aa4eac30eea1';
+
+/// See also [getFactoryGradingResults].
+@ProviderFor(getFactoryGradingResults)
+const getFactoryGradingResultsProvider = GetFactoryGradingResultsFamily();
+
+/// See also [getFactoryGradingResults].
+class GetFactoryGradingResultsFamily
+    extends Family<AsyncValue<List<FactoryGradingResult>>> {
+  /// See also [getFactoryGradingResults].
+  const GetFactoryGradingResultsFamily();
+
+  /// See also [getFactoryGradingResults].
+  GetFactoryGradingResultsProvider call({
+    required String factoryId,
+  }) {
+    return GetFactoryGradingResultsProvider(
+      factoryId: factoryId,
+    );
+  }
+
+  @override
+  GetFactoryGradingResultsProvider getProviderOverride(
+    covariant GetFactoryGradingResultsProvider provider,
+  ) {
+    return call(
+      factoryId: provider.factoryId,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'getFactoryGradingResultsProvider';
+}
+
+/// See also [getFactoryGradingResults].
+class GetFactoryGradingResultsProvider
+    extends AutoDisposeFutureProvider<List<FactoryGradingResult>> {
+  /// See also [getFactoryGradingResults].
+  GetFactoryGradingResultsProvider({
+    required String factoryId,
+  }) : this._internal(
+          (ref) => getFactoryGradingResults(
+            ref as GetFactoryGradingResultsRef,
+            factoryId: factoryId,
+          ),
+          from: getFactoryGradingResultsProvider,
+          name: r'getFactoryGradingResultsProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$getFactoryGradingResultsHash,
+          dependencies: GetFactoryGradingResultsFamily._dependencies,
+          allTransitiveDependencies:
+              GetFactoryGradingResultsFamily._allTransitiveDependencies,
+          factoryId: factoryId,
+        );
+
+  GetFactoryGradingResultsProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.factoryId,
+  }) : super.internal();
+
+  final String factoryId;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<FactoryGradingResult>> Function(
+            GetFactoryGradingResultsRef provider)
+        create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: GetFactoryGradingResultsProvider._internal(
+        (ref) => create(ref as GetFactoryGradingResultsRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        factoryId: factoryId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<FactoryGradingResult>> createElement() {
+    return _GetFactoryGradingResultsProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GetFactoryGradingResultsProvider &&
+        other.factoryId == factoryId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, factoryId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin GetFactoryGradingResultsRef
+    on AutoDisposeFutureProviderRef<List<FactoryGradingResult>> {
+  /// The parameter `factoryId` of this provider.
+  String get factoryId;
+}
+
+class _GetFactoryGradingResultsProviderElement
+    extends AutoDisposeFutureProviderElement<List<FactoryGradingResult>>
+    with GetFactoryGradingResultsRef {
+  _GetFactoryGradingResultsProviderElement(super.provider);
+
+  @override
+  String get factoryId =>
+      (origin as GetFactoryGradingResultsProvider).factoryId;
+}
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

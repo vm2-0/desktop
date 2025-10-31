@@ -7,7 +7,7 @@ part of 'provider.dart';
 // **************************************************************************
 
 String _$generateFactoryNotifierHash() =>
-    r'0bd8422a0d53a7f59252363dbe55fbf084143383';
+    r'466f8af3d487a379392b7f1bf64128ed326b840d';
 
 /// See also [GenerateFactoryNotifier].
 @ProviderFor(GenerateFactoryNotifier)
