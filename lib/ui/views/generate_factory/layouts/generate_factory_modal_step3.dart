@@ -4,7 +4,6 @@ import 'package:clones_desktop/ui/views/generate_factory/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/generate_factory/bloc/state.dart';
 import 'package:clones_desktop/ui/views/generate_factory/layouts/components/generate_factory_textfield_factory_app.dart';
 import 'package:clones_desktop/ui/views/shared/components/editable_app_card.dart';
-import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -97,19 +96,6 @@ class GenerateFactoryModalStep3 extends ConsumerWidget {
                   final generateFactoryNotifier =
                       ref.watch(generateFactoryNotifierProvider.notifier);
 
-                  // Calculate default reward per task
-                  final totalFunding =
-                      double.tryParse(generateFactory.fundingAmount ?? '0') ??
-                          0.0;
-                  final totalTasks = generateFactory.apps
-                          ?.fold<int>(0, (sum, a) => sum + a.tasks.length) ??
-                      1;
-                  final defaultRewardPerTask = totalTasks > 0
-                      ? (Decimal.parse(totalFunding.toString()) /
-                              (Decimal.parse(totalTasks.toString())))
-                          .toDouble()
-                      : 0.0;
-
                   return EditableAppCard(
                     appName: app.name,
                     appDomain: app.domain,
@@ -117,7 +103,6 @@ class GenerateFactoryModalStep3 extends ConsumerWidget {
                         app.tasks.map<String>((task) => task.prompt).toList(),
                     showLimits: true,
                     tokenSymbol: generateFactory.selectedTokenSymbol,
-                    defaultRewardPerTask: defaultRewardPerTask,
                     taskRewardLimits:
                         app.tasks.map((task) => task.rewardLimit).toList(),
                     taskUploadLimits:

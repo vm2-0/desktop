@@ -17,7 +17,6 @@ class TaskInputField extends StatefulWidget {
     this.rewardLimit,
     this.uploadLimit,
     this.tokenSymbol,
-    this.defaultRewardLimit,
     this.showLimits = false,
   });
 
@@ -33,7 +32,6 @@ class TaskInputField extends StatefulWidget {
   final double? rewardLimit;
   final int? uploadLimit;
   final String? tokenSymbol;
-  final double? defaultRewardLimit;
   final bool showLimits;
 
   @override
@@ -51,9 +49,10 @@ class _TaskInputFieldState extends State<TaskInputField> {
     super.initState();
     _controller = TextEditingController(text: widget.initialValue ?? '');
     _rewardController = TextEditingController(
-      text: widget.rewardLimit?.toString() ?? widget.defaultRewardLimit?.toString() ?? '',
+      text: widget.rewardLimit?.toString() ?? '',
     );
-    _uploadController = TextEditingController(text: widget.uploadLimit?.toString() ?? '');
+    _uploadController =
+        TextEditingController(text: widget.uploadLimit?.toString() ?? '');
     _focusNode = FocusNode();
   }
 
@@ -127,7 +126,8 @@ class _TaskInputFieldState extends State<TaskInputField> {
                     border: InputBorder.none,
                     hintText: widget.placeholder,
                     hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.2),
+                      color: theme.textTheme.bodyMedium?.color
+                          ?.withValues(alpha: 0.2),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderSide: BorderSide(
@@ -159,7 +159,7 @@ class _TaskInputFieldState extends State<TaskInputField> {
             ),
           ],
         ),
-        
+
         // Limits section (only if showLimits is true)
         if (widget.showLimits && widget.enabled) ...[
           const SizedBox(height: 8),
@@ -195,14 +195,19 @@ class _TaskInputFieldState extends State<TaskInputField> {
                         ),
                         child: TextField(
                           controller: _rewardController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
                           style: theme.textTheme.bodySmall,
                           enabled: widget.enabled,
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,18}$')),
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'^\d*\.?\d{0,18}$'),
+                            ),
                           ],
                           onChanged: (value) {
-                            final parsedValue = value.isEmpty ? null : double.tryParse(value);
+                            final parsedValue =
+                                value.isEmpty ? null : double.tryParse(value);
                             widget.onRewardLimitChanged?.call(parsedValue);
                           },
                           decoration: InputDecoration(
@@ -213,7 +218,8 @@ class _TaskInputFieldState extends State<TaskInputField> {
                             ),
                             hintText: 'Auto',
                             hintStyle: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.4),
+                              color: theme.textTheme.bodySmall?.color
+                                  ?.withValues(alpha: 0.4),
                             ),
                             suffixText: widget.tokenSymbol,
                             suffixStyle: theme.textTheme.bodySmall?.copyWith(
@@ -261,7 +267,8 @@ class _TaskInputFieldState extends State<TaskInputField> {
                             FilteringTextInputFormatter.digitsOnly,
                           ],
                           onChanged: (value) {
-                            final parsedValue = value.isEmpty ? null : int.tryParse(value);
+                            final parsedValue =
+                                value.isEmpty ? null : int.tryParse(value);
                             widget.onUploadLimitChanged?.call(parsedValue);
                           },
                           decoration: InputDecoration(
@@ -272,7 +279,8 @@ class _TaskInputFieldState extends State<TaskInputField> {
                             ),
                             hintText: 'Unlimited',
                             hintStyle: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.4),
+                              color: theme.textTheme.bodySmall?.color
+                                  ?.withValues(alpha: 0.4),
                             ),
                             suffixText: 'demos',
                             suffixStyle: theme.textTheme.bodySmall?.copyWith(

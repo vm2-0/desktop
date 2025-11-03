@@ -6,6 +6,7 @@ import 'package:clones_desktop/domain/models/factory/factory_app.dart';
 import 'package:clones_desktop/domain/models/factory/factory_task.dart';
 import 'package:clones_desktop/ui/views/generate_factory/bloc/setters.dart';
 import 'package:clones_desktop/ui/views/generate_factory/bloc/state.dart';
+import 'package:decimal/decimal.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'provider.g.dart';
@@ -91,8 +92,28 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
           .map((app) => FactoryApp.fromJson(app))
           .toList();
 
+      final totalFunding = double.tryParse(state.fundingAmount ?? '0') ?? 0.0;
+      final totalTasks =
+          forgeApps.fold<int>(0, (sum, a) => sum + a.tasks.length);
+      final defaultRewardPerTask = totalTasks > 0
+          ? (Decimal.parse(totalFunding.toString()) /
+                  (Decimal.parse(totalTasks.toString())))
+              .toDouble()
+          : 0.0;
+
+      final newApps = forgeApps.map((app) {
+        final updatedTasks = app.tasks.map((task) {
+          return task.copyWith(
+            rewardLimit: defaultRewardPerTask,
+            uploadLimit: null,
+          );
+        }).toList();
+
+        return app.copyWith(tasks: updatedTasks);
+      }).toList();
+
       setFactoryName(result['content']['name'] ?? 'Desktop Agent Factory');
-      setApps(forgeApps);
+      setApps(newApps);
       setCurrentStep(GenerateFactoryStep.preview);
     } catch (e) {
       setError(e.toString());

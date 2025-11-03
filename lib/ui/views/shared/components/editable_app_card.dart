@@ -19,7 +19,6 @@ class EditableAppCard extends StatelessWidget {
     this.enabled = true,
     this.showLimits = false,
     this.tokenSymbol,
-    this.defaultRewardPerTask,
     this.taskRewardLimits,
     this.taskUploadLimits,
     this.onTaskRewardLimitChanged,
@@ -39,11 +38,12 @@ class EditableAppCard extends StatelessWidget {
   final bool enabled;
   final bool showLimits;
   final String? tokenSymbol;
-  final double? defaultRewardPerTask;
   final List<double?>? taskRewardLimits;
   final List<int?>? taskUploadLimits;
-  final void Function(int taskIndex, double? rewardLimit)? onTaskRewardLimitChanged;
-  final void Function(int taskIndex, int? uploadLimit)? onTaskUploadLimitChanged;
+  final void Function(int taskIndex, double? rewardLimit)?
+      onTaskRewardLimitChanged;
+  final void Function(int taskIndex, int? uploadLimit)?
+      onTaskUploadLimitChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -100,13 +100,18 @@ class EditableAppCard extends StatelessWidget {
                               enabled: enabled,
                               showLimits: showLimits,
                               tokenSymbol: tokenSymbol,
-                              defaultRewardLimit: defaultRewardPerTask,
                               rewardLimit: taskRewardLimits?[taskIdx],
                               uploadLimit: taskUploadLimits?[taskIdx],
                               onRewardLimitChanged: (rewardLimit) =>
-                                  onTaskRewardLimitChanged?.call(taskIdx, rewardLimit),
+                                  onTaskRewardLimitChanged?.call(
+                                taskIdx,
+                                rewardLimit,
+                              ),
                               onUploadLimitChanged: (uploadLimit) =>
-                                  onTaskUploadLimitChanged?.call(taskIdx, uploadLimit),
+                                  onTaskUploadLimitChanged?.call(
+                                taskIdx,
+                                uploadLimit,
+                              ),
                             ),
                           ),
                           if (showTaskActions && enabled) ...[
