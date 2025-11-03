@@ -4,6 +4,7 @@ import 'package:clones_desktop/ui/views/generate_factory/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/generate_factory/bloc/state.dart';
 import 'package:clones_desktop/ui/views/generate_factory/layouts/components/generate_factory_textfield_factory_app.dart';
 import 'package:clones_desktop/ui/views/shared/components/editable_app_card.dart';
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -38,14 +39,14 @@ class GenerateFactoryModalStep3 extends ConsumerWidget {
             ),
           ],
         ),
-        Expanded(child: _uiEditor(context, ref)),
+        Expanded(child: _tasksList(context, ref)),
         const SizedBox(height: 20),
         _footerButtons(context, ref),
       ],
     );
   }
 
-  Widget _uiEditor(BuildContext context, WidgetRef ref) {
+  Widget _tasksList(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final generateFactory = ref.watch(generateFactoryNotifierProvider);
     return Padding(
@@ -90,78 +91,81 @@ class GenerateFactoryModalStep3 extends ConsumerWidget {
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                  itemCount: (generateFactory.apps! as List).length,
-                  itemBuilder: (context, appIdx) {
-                    final app = generateFactory.apps![appIdx];
-                    final generateFactoryNotifier =
-                        ref.watch(generateFactoryNotifierProvider.notifier);
+                itemCount: (generateFactory.apps! as List).length,
+                itemBuilder: (context, appIdx) {
+                  final app = generateFactory.apps![appIdx];
+                  final generateFactoryNotifier =
+                      ref.watch(generateFactoryNotifierProvider.notifier);
 
-                    // Calculate default reward per task
-                    final totalFunding =
-                        double.tryParse(generateFactory.fundingAmount ?? '0') ??
-                            0.0;
-                    final totalTasks = generateFactory.apps
-                            ?.fold<int>(0, (sum, a) => sum + a.tasks.length) ??
-                        1;
-                    final defaultRewardPerTask =
-                        totalTasks > 0 ? totalFunding / totalTasks : 0.0;
+                  // Calculate default reward per task
+                  final totalFunding =
+                      double.tryParse(generateFactory.fundingAmount ?? '0') ??
+                          0.0;
+                  final totalTasks = generateFactory.apps
+                          ?.fold<int>(0, (sum, a) => sum + a.tasks.length) ??
+                      1;
+                  final defaultRewardPerTask = totalTasks > 0
+                      ? (Decimal.parse(totalFunding.toString()) /
+                              (Decimal.parse(totalTasks.toString())))
+                          .toDouble()
+                      : 0.0;
 
-                    return EditableAppCard(
-                      appName: app.name,
-                      appDomain: app.domain,
-                      tasks:
-                          app.tasks.map<String>((task) => task.prompt).toList(),
-                      showLimits: true,
-                      tokenSymbol: generateFactory.selectedTokenSymbol,
-                      defaultRewardPerTask: defaultRewardPerTask,
-                      taskRewardLimits:
-                          app.tasks.map((task) => task.rewardLimit).toList(),
-                      taskUploadLimits:
-                          app.tasks.map((task) => task.uploadLimit).toList(),
-                      onAppNameChanged: (newName) {
-                        generateFactoryNotifier.updateAppName(appIdx, newName);
-                      },
-                      onTaskChanged: (event) {
-                        generateFactoryNotifier.updateTaskPrompt(
-                          appIdx,
-                          event.taskIndex,
-                          event.newValue,
-                        );
-                      },
-                      onTaskRewardLimitChanged: (taskIdx, rewardLimit) {
-                        final task = app.tasks[taskIdx];
-                        generateFactoryNotifier.updateTaskWithLimits(
-                          appIdx,
-                          taskIdx,
-                          task.prompt,
-                          rewardLimit,
-                          task.uploadLimit,
-                        );
-                      },
-                      onTaskUploadLimitChanged: (taskIdx, uploadLimit) {
-                        final task = app.tasks[taskIdx];
-                        generateFactoryNotifier.updateTaskWithLimits(
-                          appIdx,
-                          taskIdx,
-                          task.prompt,
-                          task.rewardLimit,
-                          uploadLimit,
-                        );
-                      },
-                      onTaskAdded: () {
-                        generateFactoryNotifier.addTask(appIdx);
-                      },
-                      onTaskRemoved: (taskIdx) {
-                        generateFactoryNotifier.removeTask(appIdx, taskIdx);
-                      },
-                      onAppRemoved: () {
-                        generateFactoryNotifier.removeApp(appIdx);
-                      },
-                      enabled: !generateFactory.isCreating &&
-                          !generateFactory.isCreated,
-                    );
-                  },
-                ),
+                  return EditableAppCard(
+                    appName: app.name,
+                    appDomain: app.domain,
+                    tasks:
+                        app.tasks.map<String>((task) => task.prompt).toList(),
+                    showLimits: true,
+                    tokenSymbol: generateFactory.selectedTokenSymbol,
+                    defaultRewardPerTask: defaultRewardPerTask,
+                    taskRewardLimits:
+                        app.tasks.map((task) => task.rewardLimit).toList(),
+                    taskUploadLimits:
+                        app.tasks.map((task) => task.uploadLimit).toList(),
+                    onAppNameChanged: (newName) {
+                      generateFactoryNotifier.updateAppName(appIdx, newName);
+                    },
+                    onTaskChanged: (event) {
+                      generateFactoryNotifier.updateTaskPrompt(
+                        appIdx,
+                        event.taskIndex,
+                        event.newValue,
+                      );
+                    },
+                    onTaskRewardLimitChanged: (taskIdx, rewardLimit) {
+                      final task = app.tasks[taskIdx];
+                      generateFactoryNotifier.updateTaskWithLimits(
+                        appIdx,
+                        taskIdx,
+                        task.prompt,
+                        rewardLimit,
+                        task.uploadLimit,
+                      );
+                    },
+                    onTaskUploadLimitChanged: (taskIdx, uploadLimit) {
+                      final task = app.tasks[taskIdx];
+                      generateFactoryNotifier.updateTaskWithLimits(
+                        appIdx,
+                        taskIdx,
+                        task.prompt,
+                        task.rewardLimit,
+                        uploadLimit,
+                      );
+                    },
+                    onTaskAdded: () {
+                      generateFactoryNotifier.addTask(appIdx);
+                    },
+                    onTaskRemoved: (taskIdx) {
+                      generateFactoryNotifier.removeTask(appIdx, taskIdx);
+                    },
+                    onAppRemoved: () {
+                      generateFactoryNotifier.removeApp(appIdx);
+                    },
+                    enabled: !generateFactory.isCreating &&
+                        !generateFactory.isCreated,
+                  );
+                },
+              ),
             // TODO: Add app button
             /*if (!generateFactory.isCreating && !generateFactory.isCreated)
             AddAppCard(
