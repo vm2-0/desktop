@@ -20,8 +20,7 @@ class ForgeFactoryGeneralTabStatPoolBalance extends ConsumerWidget {
     }
 
     final theme = Theme.of(context);
-    return Expanded(
-      child: CardWidget(
+    return CardWidget(
         child: Stack(
           children: [
             Positioned(
@@ -117,7 +116,6 @@ class ForgeFactoryGeneralTabStatPoolBalance extends ConsumerWidget {
             ),
           ],
         ),
-      ),
     );
   }
 }

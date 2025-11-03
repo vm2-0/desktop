@@ -137,9 +137,8 @@ class FactoriesRepositoryImpl implements FactoriesRepository {
       final responseData = await _apiClient.put<Map<String, dynamic>>(
         '/forge/factories/$factoryId',
         data: updateData,
-        options: RequestOptions(
+        options: const RequestOptions(
           requiresAuth: true,
-          headers: {'X-Wallet-Address': walletAddress},
         ),
         fromJson: (json) => json as Map<String, dynamic>,
       );
@@ -485,9 +484,8 @@ class FactoriesRepositoryImpl implements FactoriesRepository {
         data: {
           'apps': cleanApps,
         },
-        options: RequestOptions(
+        options: const RequestOptions(
           requiresAuth: true,
-          headers: {'X-Wallet-Address': walletAddress},
         ),
         fromJson: (json) => json as Map<String, dynamic>,
       );
