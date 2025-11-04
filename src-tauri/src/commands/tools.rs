@@ -162,10 +162,17 @@ async fn init_tools_background(app: tauri::AppHandle) {
 /// * `Ok(serde_json::Value)` with a map of tool names to their status (true/false).
 #[tauri::command]
 pub async fn check_tools() -> Result<serde_json::Value, String> {
-    // Return the status of each tool
+    // Check if tools are already initialized in memory
+    let ffmpeg_ready = ffmpeg::FFMPEG_PATH.get().is_some();
+    let ffprobe_ready = ffmpeg::FFPROBE_PATH.get().is_some();
+    
+    // If not in memory, check if they're available (PATH or build-time)
+    let ffmpeg_available = ffmpeg_ready || !ffmpeg::get_ffmpeg_dir().as_os_str().is_empty();
+    let ffprobe_available = ffprobe_ready || !ffmpeg::get_ffprobe_dir().as_os_str().is_empty();
+    
     Ok(serde_json::json!({
-        "ffmpeg": ffmpeg::FFMPEG_PATH.get().is_some(),
-        "ffprobe": ffmpeg::FFPROBE_PATH.get().is_some()
+        "ffmpeg": ffmpeg_available,
+        "ffprobe": ffprobe_available
     }))
 }
 
