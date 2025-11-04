@@ -159,24 +159,21 @@ class _ToolStatusModalState extends ConsumerState<ToolStatusModal> {
         },
       ),
       error: () => Row(
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          Expanded(
-            child: BtnPrimary(
-              buttonText: 'Retry',
-              onTap: () {
-                ref.read(toolStatusNotifierProvider.notifier).initializeTools();
-              },
-            ),
+          BtnPrimary(
+            buttonText: 'Retry',
+            onTap: () {
+              ref.read(toolStatusNotifierProvider.notifier).initializeTools();
+            },
           ),
           const SizedBox(width: 16),
-          Expanded(
-            child: BtnPrimary(
-              buttonText: 'Cancel',
-              btnPrimaryType: BtnPrimaryType.outlinePrimary,
-              onTap: () {
-                ref.read(toolStatusModalProvider.notifier).hide();
-              },
-            ),
+          BtnPrimary(
+            buttonText: 'Cancel',
+            btnPrimaryType: BtnPrimaryType.outlinePrimary,
+            onTap: () {
+              ref.read(toolStatusModalProvider.notifier).hide();
+            },
           ),
         ],
       ),

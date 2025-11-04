@@ -32,8 +32,58 @@ fn get_temp_dir() -> PathBuf {
     temp
 }
 
+/// Get build-time pre-downloaded FFmpeg path
+fn get_build_time_ffmpeg_path() -> Option<PathBuf> {
+    // Build-time tools are embedded in the app bundle
+    if let Ok(exe_dir) = std::env::current_exe() {
+        if let Some(exe_parent) = exe_dir.parent() {
+            // On macOS, check in Resources directory of app bundle
+            #[cfg(target_os = "macos")]
+            {
+                let resources_path = exe_parent.join("../Resources/tools");
+                let ffmpeg_path = resources_path.join("ffmpeg");
+                if ffmpeg_path.exists() && ffmpeg_path.is_file() {
+                    return Some(ffmpeg_path);
+                }
+            }
+            
+            // Fallback: check next to executable
+            let ffmpeg_path = exe_parent.join(if cfg!(windows) { "ffmpeg.exe" } else { "ffmpeg" });
+            if ffmpeg_path.exists() && ffmpeg_path.is_file() {
+                return Some(ffmpeg_path);
+            }
+        }
+    }
+    None
+}
 
-/// Checks for ffmpeg in the PATH and temp directory
+/// Get build-time pre-downloaded FFprobe path
+fn get_build_time_ffprobe_path() -> Option<PathBuf> {
+    // Build-time tools are embedded in the app bundle
+    if let Ok(exe_dir) = std::env::current_exe() {
+        if let Some(exe_parent) = exe_dir.parent() {
+            // On macOS, check in Resources directory of app bundle
+            #[cfg(target_os = "macos")]
+            {
+                let resources_path = exe_parent.join("../Resources/tools");
+                let ffprobe_path = resources_path.join("ffprobe");
+                if ffprobe_path.exists() && ffprobe_path.is_file() {
+                    return Some(ffprobe_path);
+                }
+            }
+            
+            // Fallback: check next to executable
+            let ffprobe_path = exe_parent.join(if cfg!(windows) { "ffprobe.exe" } else { "ffprobe" });
+            if ffprobe_path.exists() && ffprobe_path.is_file() {
+                return Some(ffprobe_path);
+            }
+        }
+    }
+    None
+}
+
+
+/// Checks for ffmpeg in PATH, build-time location, and temp directory
 ///
 /// # Returns
 /// * `PathBuf` containing the full file path if found, or an empty `PathBuf` if not found.
@@ -51,9 +101,16 @@ pub fn get_ffmpeg_dir() -> PathBuf {
             return "ffmpeg".into();
         }
     }
-    log::info!("[FFmpeg] FFmpeg not found in PATH, checking temp directory");
 
-    // Check if ffmpeg exists in temp directory (runtime download)
+    // Second check for build-time pre-downloaded binaries
+    if let Some(build_time_path) = get_build_time_ffmpeg_path() {
+        log::info!("[FFmpeg] Found FFmpeg at build-time location: {}", build_time_path.display());
+        return build_time_path;
+    }
+
+    log::info!("[FFmpeg] FFmpeg not found in PATH or build-time location, checking temp directory");
+
+    // Third check if ffmpeg exists in temp directory (runtime download)
     let temp_dir = get_temp_dir();
     if !temp_dir.exists() {
         return PathBuf::new();
@@ -91,9 +148,16 @@ pub fn get_ffprobe_dir() -> PathBuf {
             return "ffprobe".into();
         }
     }
-    log::info!("[FFmpeg] FFprobe not found in PATH, checking temp directory");
 
-    // Check if ffprobe exists in temp directory (runtime download)
+    // Second check for build-time pre-downloaded binaries
+    if let Some(build_time_path) = get_build_time_ffprobe_path() {
+        log::info!("[FFmpeg] Found FFprobe at build-time location: {}", build_time_path.display());
+        return build_time_path;
+    }
+
+    log::info!("[FFmpeg] FFprobe not found in PATH or build-time location, checking temp directory");
+
+    // Third check if ffprobe exists in temp directory (runtime download)
     let temp_dir = get_temp_dir();
     if !temp_dir.exists() {
         return PathBuf::new();
