@@ -10,10 +10,12 @@ use chrono::Utc;
 use log::info;
 use serde::{Deserialize, Serialize};
 use serde_json;
+use tauri::Manager;
 use std::{
     fs::File,
     io::{BufReader, BufWriter, Cursor, Write},
     path::Path,
+    process::Command,
     sync::{Mutex, OnceLock},
     time::Duration,
 };
@@ -170,6 +172,44 @@ fn validate_name(name: &str) -> Result<(), String> {
     if name.len() > 100 {
         return Err("Name is too long".to_string());
     }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn open_logs_folder(app: tauri::AppHandle) -> Result<(), String> {
+    let logs_dir = app
+        .path()
+        .app_log_dir()
+        .map_err(|e| format!("Failed to get logs directory: {}", e))?;
+
+    if !logs_dir.exists() {
+        return Err("Logs directory does not exist".to_string());
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        Command::new("open")
+            .arg(&logs_dir)
+            .spawn()
+            .map_err(|e| format!("Failed to open logs folder on macOS: {}", e))?;
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        Command::new("explorer")
+            .arg(&logs_dir)
+            .spawn()
+            .map_err(|e| format!("Failed to open logs folder on Windows: {}", e))?;
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        Command::new("xdg-open")
+            .arg(&logs_dir)
+            .spawn()
+            .map_err(|e| format!("Failed to open logs folder on Linux: {}", e))?;
+    }
+
     Ok(())
 }
 

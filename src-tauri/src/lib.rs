@@ -13,7 +13,7 @@ use tauri::Listener;
 
 use utils::permissions::{has_ax_perms, has_record_perms, request_ax_perms, request_record_perms};
 
-use crate::commands::general::{greet, list_apps, take_screenshot};
+use crate::commands::general::{greet, list_apps, open_logs_folder, take_screenshot};
 use crate::commands::record::{
     create_recording_zip, delete_recording, get_app_data_dir, get_current_demonstration,
     get_recording_file, get_recording_state, get_video_url, list_recordings, process_recording,
@@ -69,6 +69,7 @@ pub fn setup_builder() -> tauri::Builder<tauri::Wry> {
             stop_recording,
             take_screenshot,
             list_apps,
+            open_logs_folder,
             has_record_perms,
             request_record_perms,
             has_ax_perms,

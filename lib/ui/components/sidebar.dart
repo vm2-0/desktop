@@ -1,5 +1,6 @@
 import 'package:clones_desktop/application/environment_provider.dart';
 import 'package:clones_desktop/application/route_provider.dart';
+import 'package:clones_desktop/application/tauri_api.dart';
 import 'package:clones_desktop/application/upload_modal_provider.dart';
 import 'package:clones_desktop/application/version_provider.dart';
 import 'package:clones_desktop/application/wallet_modal_provider.dart';
@@ -89,31 +90,42 @@ class Sidebar extends ConsumerWidget {
           appVersion.when(
             data: (version) => Padding(
               padding: const EdgeInsets.only(bottom: 16, top: 8),
-              child: Column(
-                children: [
-                  Image.asset(
-                    Assets.logoWhite,
-                    width: 30,
-                    height: 30,
-                    color: ClonesColors.primaryText.withValues(alpha: 0.5),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    version,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.5),
+              child: GestureDetector(
+                onDoubleTap: () async {
+                  try {
+                    final apiClient = ref.read(tauriApiClientProvider);
+                    await apiClient.openLogsFolder();
+                  } catch (e) {
+                    // Handle error silently or show a toast if needed
+                    debugPrint('Failed to open logs folder: $e');
+                  }
+                },
+                child: Column(
+                  children: [
+                    Image.asset(
+                      Assets.logoWhite,
+                      width: 30,
+                      height: 30,
+                      color: ClonesColors.primaryText.withValues(alpha: 0.5),
                     ),
-                  ),
-                  if (environment.shouldShowEnvironmentBadge)
+                    const SizedBox(height: 8),
                     Text(
-                      environment.displayName,
+                      version,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: ClonesColors.error,
-                        fontWeight: FontWeight.bold,
+                        color: Colors.white.withValues(alpha: 0.5),
                       ),
-                      textAlign: TextAlign.center,
                     ),
-                ],
+                    if (environment.shouldShowEnvironmentBadge)
+                      Text(
+                        environment.displayName,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: ClonesColors.error,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                  ],
+                ),
               ),
             ),
             loading: () => const SizedBox(),

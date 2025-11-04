@@ -97,14 +97,14 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
           forgeApps.fold<int>(0, (sum, a) => sum + a.tasks.length);
       final defaultRewardPerTask = totalTasks > 0
           ? (Decimal.parse(totalFunding.toString()) /
-                  (Decimal.parse(totalTasks.toString())))
-              .toDouble()
-          : 0.0;
+                  Decimal.parse(totalTasks.toString()))
+              .toDecimal()
+          : Decimal.zero;
 
       final newApps = forgeApps.map((app) {
         final updatedTasks = app.tasks.map((task) {
           return task.copyWith(
-            rewardLimit: Decimal.parse(defaultRewardPerTask.toString()),
+            rewardLimit: defaultRewardPerTask,
             uploadLimit: null,
           );
         }).toList();

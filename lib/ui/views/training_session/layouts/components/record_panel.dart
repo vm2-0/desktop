@@ -30,7 +30,7 @@ class _RecordPanelState extends ConsumerState<RecordPanel> {
     final recordingState = trainingSession.recordingState;
 
     final rewardAmount =
-        trainingSession.factoryTask?.rewardLimit?.toDouble() ?? 0.0;
+        trainingSession.factoryTask?.rewardLimit ?? Decimal.zero;
 
     final rewardText =
         'Up to: ${rewardAmount.toStringAsFixedLowValue(2, 5)} ${trainingSession.factory?.token.symbol ?? ''}';
@@ -67,7 +67,7 @@ class _RecordPanelState extends ConsumerState<RecordPanel> {
                   Padding(
                     padding: const EdgeInsets.only(left: 4),
                     child: UsdPrice(
-                      amount: Decimal.parse(rewardAmount.toString()),
+                      amount: rewardAmount,
                       symbol: trainingSession.factory?.token.symbol ?? '',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: ClonesColors.secondary,

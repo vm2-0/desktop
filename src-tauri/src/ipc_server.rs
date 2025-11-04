@@ -33,7 +33,7 @@ use crate::utils::heartbeat::{
 // Import business logic from the local `core` module
 use crate::core::record::{self, Demonstration};
 // Import functions from `commands/general`
-use crate::commands::general::{list_apps, take_screenshot};
+use crate::commands::general::{list_apps, open_logs_folder, take_screenshot};
 // Import function from `commands/settings`
 use crate::commands::settings::{get_upload_data_allowed, set_upload_data_allowed};
 // Import function from `utils/permissions`
@@ -268,6 +268,8 @@ pub async fn init(app_handle: AppHandle) {
             "/transaction/callback",
             post(handle_transaction_callback_handler),
         )
+        // POST /logs/open: Open the logs folder
+        .route("/logs/open", post(open_logs_folder_handler))
         .with_state(state)
         .layer(cors);
 
@@ -972,5 +974,15 @@ async fn create_filtered_recording_zip_handler(
             Ok((headers, zip_data))
         }
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    }
+}
+
+// Handler to open logs folder
+async fn open_logs_folder_handler(
+    State(state): State<AppState>,
+) -> Result<StatusCode, (StatusCode, String)> {
+    match open_logs_folder(state.app_handle) {
+        Ok(_) => Ok(StatusCode::OK),
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e)),
     }
 }
