@@ -1,4 +1,6 @@
 import 'package:clones_desktop/domain/models/submission/claim_authorization.dart';
+import 'package:clones_desktop/utils/decimal_json.dart';
+import 'package:decimal/decimal.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'state.freezed.dart';
@@ -9,7 +11,8 @@ class ClaimRewardModalState with _$ClaimRewardModalState {
     @Default(false) bool isShown,
     @Default(false) bool isClaiming,
     ClaimAuthorization? claimAuthorization,
-    @Default(0.0) double rewardAmount,
+    @JsonKey(fromJson: DecimalJson.fromJson, toJson: DecimalJson.toJson)
+    Decimal? rewardAmount,
     String? tokenSymbol,
     String? submissionId,
     String? error,

@@ -1,3 +1,5 @@
+import 'package:clones_desktop/utils/decimal_json.dart';
+import 'package:decimal/decimal.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'on_chain_reward.freezed.dart';
@@ -9,13 +11,29 @@ class OnChainReward with _$OnChainReward {
     required String tokenAddress,
     required String poolAddress,
     required double amount,
-    double? grossAmount,
-    double? feeAmount,
-    double? netAmount,
+    @JsonKey(
+      toJson: DecimalJson.toJson,
+      fromJson: DecimalJson.fromJson,
+    )
+    Decimal? grossAmount,
+    @JsonKey(
+      toJson: DecimalJson.toJson,
+      fromJson: DecimalJson.fromJson,
+    )
+    Decimal? feeAmount,
+    @JsonKey(
+      toJson: DecimalJson.toJson,
+      fromJson: DecimalJson.fromJson,
+    )
+    Decimal? netAmount,
     String? submissionId,
     String? txHash,
     int? timestamp,
-    double? cumulativeAmount,
+    @JsonKey(
+      toJson: DecimalJson.toJson,
+      fromJson: DecimalJson.fromJson,
+    )
+    Decimal? cumulativeAmount,
   }) = _OnChainReward;
 
   factory OnChainReward.fromJson(Map<String, dynamic> json) =>

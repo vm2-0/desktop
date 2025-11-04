@@ -5,6 +5,7 @@ import 'package:clones_desktop/domain/models/factory/factory_token.dart';
 import 'package:clones_desktop/ui/components/design_widget/message_box/message_box.dart';
 import 'package:clones_desktop/ui/components/usd_price.dart';
 import 'package:clones_desktop/utils/format_num.dart';
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -22,7 +23,7 @@ class TaskLimitsWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rewardAmount = task.rewardLimit ?? 0.0;
+    final rewardAmount = task.rewardLimit?.toDouble() ?? 0.0;
 
     final theme = Theme.of(context);
     return Column(
@@ -41,7 +42,7 @@ class TaskLimitsWidget extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.only(left: 4),
                 child: UsdPrice(
-                  amount: rewardAmount,
+                  amount: Decimal.parse(rewardAmount.toString()),
                   symbol: factoryToken.symbol,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: ClonesColors.rewardInfo,

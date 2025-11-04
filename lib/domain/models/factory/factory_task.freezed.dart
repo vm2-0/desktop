@@ -24,7 +24,8 @@ mixin _$FactoryTask {
   String? get id => throw _privateConstructorUsedError;
   String get prompt => throw _privateConstructorUsedError;
   int? get uploadLimit => throw _privateConstructorUsedError;
-  double? get rewardLimit => throw _privateConstructorUsedError;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get rewardLimit => throw _privateConstructorUsedError;
   String? get limitReason => throw _privateConstructorUsedError;
 
   /// Serializes this FactoryTask to a JSON map.
@@ -47,7 +48,8 @@ abstract class $FactoryTaskCopyWith<$Res> {
       {@JsonKey(name: '_id') String? id,
       String prompt,
       int? uploadLimit,
-      double? rewardLimit,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? rewardLimit,
       String? limitReason});
 }
 
@@ -88,7 +90,7 @@ class _$FactoryTaskCopyWithImpl<$Res, $Val extends FactoryTask>
       rewardLimit: freezed == rewardLimit
           ? _value.rewardLimit
           : rewardLimit // ignore: cast_nullable_to_non_nullable
-              as double?,
+              as Decimal?,
       limitReason: freezed == limitReason
           ? _value.limitReason
           : limitReason // ignore: cast_nullable_to_non_nullable
@@ -109,7 +111,8 @@ abstract class _$$FactoryTaskImplCopyWith<$Res>
       {@JsonKey(name: '_id') String? id,
       String prompt,
       int? uploadLimit,
-      double? rewardLimit,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? rewardLimit,
       String? limitReason});
 }
 
@@ -148,7 +151,7 @@ class __$$FactoryTaskImplCopyWithImpl<$Res>
       rewardLimit: freezed == rewardLimit
           ? _value.rewardLimit
           : rewardLimit // ignore: cast_nullable_to_non_nullable
-              as double?,
+              as Decimal?,
       limitReason: freezed == limitReason
           ? _value.limitReason
           : limitReason // ignore: cast_nullable_to_non_nullable
@@ -164,6 +167,7 @@ class _$FactoryTaskImpl implements _FactoryTask {
       {@JsonKey(name: '_id') this.id,
       required this.prompt,
       this.uploadLimit,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       this.rewardLimit,
       this.limitReason});
 
@@ -178,7 +182,8 @@ class _$FactoryTaskImpl implements _FactoryTask {
   @override
   final int? uploadLimit;
   @override
-  final double? rewardLimit;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  final Decimal? rewardLimit;
   @override
   final String? limitReason;
 
@@ -228,7 +233,8 @@ abstract class _FactoryTask implements FactoryTask {
       {@JsonKey(name: '_id') final String? id,
       required final String prompt,
       final int? uploadLimit,
-      final double? rewardLimit,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      final Decimal? rewardLimit,
       final String? limitReason}) = _$FactoryTaskImpl;
 
   factory _FactoryTask.fromJson(Map<String, dynamic> json) =
@@ -242,7 +248,8 @@ abstract class _FactoryTask implements FactoryTask {
   @override
   int? get uploadLimit;
   @override
-  double? get rewardLimit;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get rewardLimit;
   @override
   String? get limitReason;
 

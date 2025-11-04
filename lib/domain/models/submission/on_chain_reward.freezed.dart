@@ -23,13 +23,17 @@ mixin _$OnChainReward {
   String get tokenAddress => throw _privateConstructorUsedError;
   String get poolAddress => throw _privateConstructorUsedError;
   double get amount => throw _privateConstructorUsedError;
-  double? get grossAmount => throw _privateConstructorUsedError;
-  double? get feeAmount => throw _privateConstructorUsedError;
-  double? get netAmount => throw _privateConstructorUsedError;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get grossAmount => throw _privateConstructorUsedError;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get feeAmount => throw _privateConstructorUsedError;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get netAmount => throw _privateConstructorUsedError;
   String? get submissionId => throw _privateConstructorUsedError;
   String? get txHash => throw _privateConstructorUsedError;
   int? get timestamp => throw _privateConstructorUsedError;
-  double? get cumulativeAmount => throw _privateConstructorUsedError;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get cumulativeAmount => throw _privateConstructorUsedError;
 
   /// Serializes this OnChainReward to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -51,13 +55,17 @@ abstract class $OnChainRewardCopyWith<$Res> {
       {String tokenAddress,
       String poolAddress,
       double amount,
-      double? grossAmount,
-      double? feeAmount,
-      double? netAmount,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? grossAmount,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? feeAmount,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? netAmount,
       String? submissionId,
       String? txHash,
       int? timestamp,
-      double? cumulativeAmount});
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? cumulativeAmount});
 }
 
 /// @nodoc
@@ -102,15 +110,15 @@ class _$OnChainRewardCopyWithImpl<$Res, $Val extends OnChainReward>
       grossAmount: freezed == grossAmount
           ? _value.grossAmount
           : grossAmount // ignore: cast_nullable_to_non_nullable
-              as double?,
+              as Decimal?,
       feeAmount: freezed == feeAmount
           ? _value.feeAmount
           : feeAmount // ignore: cast_nullable_to_non_nullable
-              as double?,
+              as Decimal?,
       netAmount: freezed == netAmount
           ? _value.netAmount
           : netAmount // ignore: cast_nullable_to_non_nullable
-              as double?,
+              as Decimal?,
       submissionId: freezed == submissionId
           ? _value.submissionId
           : submissionId // ignore: cast_nullable_to_non_nullable
@@ -126,7 +134,7 @@ class _$OnChainRewardCopyWithImpl<$Res, $Val extends OnChainReward>
       cumulativeAmount: freezed == cumulativeAmount
           ? _value.cumulativeAmount
           : cumulativeAmount // ignore: cast_nullable_to_non_nullable
-              as double?,
+              as Decimal?,
     ) as $Val);
   }
 }
@@ -143,13 +151,17 @@ abstract class _$$OnChainRewardImplCopyWith<$Res>
       {String tokenAddress,
       String poolAddress,
       double amount,
-      double? grossAmount,
-      double? feeAmount,
-      double? netAmount,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? grossAmount,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? feeAmount,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? netAmount,
       String? submissionId,
       String? txHash,
       int? timestamp,
-      double? cumulativeAmount});
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? cumulativeAmount});
 }
 
 /// @nodoc
@@ -192,15 +204,15 @@ class __$$OnChainRewardImplCopyWithImpl<$Res>
       grossAmount: freezed == grossAmount
           ? _value.grossAmount
           : grossAmount // ignore: cast_nullable_to_non_nullable
-              as double?,
+              as Decimal?,
       feeAmount: freezed == feeAmount
           ? _value.feeAmount
           : feeAmount // ignore: cast_nullable_to_non_nullable
-              as double?,
+              as Decimal?,
       netAmount: freezed == netAmount
           ? _value.netAmount
           : netAmount // ignore: cast_nullable_to_non_nullable
-              as double?,
+              as Decimal?,
       submissionId: freezed == submissionId
           ? _value.submissionId
           : submissionId // ignore: cast_nullable_to_non_nullable
@@ -216,7 +228,7 @@ class __$$OnChainRewardImplCopyWithImpl<$Res>
       cumulativeAmount: freezed == cumulativeAmount
           ? _value.cumulativeAmount
           : cumulativeAmount // ignore: cast_nullable_to_non_nullable
-              as double?,
+              as Decimal?,
     ));
   }
 }
@@ -228,12 +240,16 @@ class _$OnChainRewardImpl implements _OnChainReward {
       {required this.tokenAddress,
       required this.poolAddress,
       required this.amount,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       this.grossAmount,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       this.feeAmount,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       this.netAmount,
       this.submissionId,
       this.txHash,
       this.timestamp,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       this.cumulativeAmount});
 
   factory _$OnChainRewardImpl.fromJson(Map<String, dynamic> json) =>
@@ -246,11 +262,14 @@ class _$OnChainRewardImpl implements _OnChainReward {
   @override
   final double amount;
   @override
-  final double? grossAmount;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  final Decimal? grossAmount;
   @override
-  final double? feeAmount;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  final Decimal? feeAmount;
   @override
-  final double? netAmount;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  final Decimal? netAmount;
   @override
   final String? submissionId;
   @override
@@ -258,7 +277,8 @@ class _$OnChainRewardImpl implements _OnChainReward {
   @override
   final int? timestamp;
   @override
-  final double? cumulativeAmount;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  final Decimal? cumulativeAmount;
 
   @override
   String toString() {
@@ -326,13 +346,17 @@ abstract class _OnChainReward implements OnChainReward {
       {required final String tokenAddress,
       required final String poolAddress,
       required final double amount,
-      final double? grossAmount,
-      final double? feeAmount,
-      final double? netAmount,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      final Decimal? grossAmount,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      final Decimal? feeAmount,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      final Decimal? netAmount,
       final String? submissionId,
       final String? txHash,
       final int? timestamp,
-      final double? cumulativeAmount}) = _$OnChainRewardImpl;
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      final Decimal? cumulativeAmount}) = _$OnChainRewardImpl;
 
   factory _OnChainReward.fromJson(Map<String, dynamic> json) =
       _$OnChainRewardImpl.fromJson;
@@ -344,11 +368,14 @@ abstract class _OnChainReward implements OnChainReward {
   @override
   double get amount;
   @override
-  double? get grossAmount;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get grossAmount;
   @override
-  double? get feeAmount;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get feeAmount;
   @override
-  double? get netAmount;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get netAmount;
   @override
   String? get submissionId;
   @override
@@ -356,7 +383,8 @@ abstract class _OnChainReward implements OnChainReward {
   @override
   int? get timestamp;
   @override
-  double? get cumulativeAmount;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get cumulativeAmount;
 
   /// Create a copy of OnChainReward
   /// with the given fields replaced by the non-null parameter values.

@@ -7,7 +7,7 @@ part of 'provider.dart';
 // **************************************************************************
 
 String _$claimRewardModalNotifierHash() =>
-    r'05315739e102c73275341549e453cbdc780a7d09';
+    r'e5ffc5358ab65d19648ba0254423c508cce29a52';
 
 /// See also [ClaimRewardModalNotifier].
 @ProviderFor(ClaimRewardModalNotifier)

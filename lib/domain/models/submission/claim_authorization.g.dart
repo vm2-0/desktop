@@ -17,9 +17,9 @@ _$ClaimAuthorizationImpl _$$ClaimAuthorizationImplFromJson(
       publisherUsed: json['publisherUsed'] as String,
       poolAddress: json['poolAddress'] as String,
       tokenAddress: json['tokenAddress'] as String,
-      alreadyClaimed: (json['alreadyClaimed'] as num?)?.toDouble(),
-      newClaimableAmount: (json['newClaimableAmount'] as num?)?.toDouble(),
-      feePercentage: (json['feePercentage'] as num?)?.toDouble(),
+      alreadyClaimed: DecimalJson.fromJson(json['alreadyClaimed']),
+      newClaimableAmount: DecimalJson.fromJson(json['newClaimableAmount']),
+      feePercentage: DecimalJson.fromJson(json['feePercentage']),
       referrals: (json['referrals'] as List<dynamic>?)
           ?.map((e) =>
               ClaimAuthorizationReferrals.fromJson(e as Map<String, dynamic>))
@@ -37,8 +37,8 @@ Map<String, dynamic> _$$ClaimAuthorizationImplToJson(
       'publisherUsed': instance.publisherUsed,
       'poolAddress': instance.poolAddress,
       'tokenAddress': instance.tokenAddress,
-      'alreadyClaimed': instance.alreadyClaimed,
-      'newClaimableAmount': instance.newClaimableAmount,
-      'feePercentage': instance.feePercentage,
+      'alreadyClaimed': DecimalJson.toJson(instance.alreadyClaimed),
+      'newClaimableAmount': DecimalJson.toJson(instance.newClaimableAmount),
+      'feePercentage': DecimalJson.toJson(instance.feePercentage),
       'referrals': instance.referrals,
     };

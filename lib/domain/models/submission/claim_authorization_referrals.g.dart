@@ -10,7 +10,7 @@ _$ClaimAuthorizationReferralsImpl _$$ClaimAuthorizationReferralsImplFromJson(
         Map<String, dynamic> json) =>
     _$ClaimAuthorizationReferralsImpl(
       address: json['address'] as String,
-      amount: (json['amount'] as num).toDouble(),
+      amount: DecimalJson.fromJson(json['amount']),
       type: json['type'] as String,
     );
 
@@ -18,6 +18,6 @@ Map<String, dynamic> _$$ClaimAuthorizationReferralsImplToJson(
         _$ClaimAuthorizationReferralsImpl instance) =>
     <String, dynamic>{
       'address': instance.address,
-      'amount': instance.amount,
+      'amount': DecimalJson.toJson(instance.amount),
       'type': instance.type,
     };

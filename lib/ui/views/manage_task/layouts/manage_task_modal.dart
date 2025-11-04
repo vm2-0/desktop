@@ -10,6 +10,7 @@ import 'package:clones_desktop/ui/views/manage_task/bloc/state.dart';
 import 'package:clones_desktop/ui/views/manage_task/layouts/components/manage_task_modal_price_per_demo.dart';
 import 'package:clones_desktop/ui/views/manage_task/layouts/components/manage_task_modal_prompt.dart';
 import 'package:clones_desktop/ui/views/manage_task/layouts/components/manage_task_modal_upload_limit.dart';
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -54,7 +55,7 @@ class _ManageTaskModalState extends ConsumerState<ManageTaskModal> {
         ref.read(manageTaskNotifierProvider.notifier)
           ..setPrompt(widget.task!.prompt)
           ..setPricePerDemo(
-            widget.task?.rewardLimit,
+            widget.task?.rewardLimit?.toDouble(),
           )
           ..setUploadLimitValue(widget.task!.uploadLimit);
       }
@@ -78,13 +79,13 @@ class _ManageTaskModalState extends ConsumerState<ManageTaskModal> {
     if (widget.modalType == ManageTaskModalType.create) {
       result = FactoryTask(
         prompt: state.prompt,
-        rewardLimit: state.pricePerDemo,
+        rewardLimit: state.pricePerDemo != null ? Decimal.parse(state.pricePerDemo.toString()) : null,
         uploadLimit: state.uploadLimitValue,
       );
     } else {
       result = widget.task!.copyWith(
         prompt: state.prompt,
-        rewardLimit: state.pricePerDemo,
+        rewardLimit: state.pricePerDemo != null ? Decimal.parse(state.pricePerDemo.toString()) : null,
         uploadLimit: state.uploadLimitValue,
       );
     }

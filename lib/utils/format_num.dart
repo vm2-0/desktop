@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:intl/intl.dart';
 
 String formatNumberWithSeparator(double? num) {
@@ -6,9 +7,18 @@ String formatNumberWithSeparator(double? num) {
   return formatter.format(num);
 }
 
-extension FormatNumberDecimal on double {
+extension FormatNumberDouble on double {
   String toStringAsFixedLowValue(int precision, int precisionLowValue) {
     if (this < 1) {
+      return toStringAsFixed(precisionLowValue);
+    }
+    return toStringAsFixed(precision);
+  }
+}
+
+extension FormatNumberDecimal on Decimal {
+  String toStringAsFixedLowValue(int precision, int precisionLowValue) {
+    if (this < Decimal.one) {
       return toStringAsFixed(precisionLowValue);
     }
     return toStringAsFixed(precision);

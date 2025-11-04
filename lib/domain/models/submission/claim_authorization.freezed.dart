@@ -45,13 +45,16 @@ mixin _$ClaimAuthorization {
   String get tokenAddress => throw _privateConstructorUsedError;
 
   /// Already claimed amount
-  double? get alreadyClaimed => throw _privateConstructorUsedError;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get alreadyClaimed => throw _privateConstructorUsedError;
 
   /// New claimable amount
-  double? get newClaimableAmount => throw _privateConstructorUsedError;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get newClaimableAmount => throw _privateConstructorUsedError;
 
   /// Platform fee percentage (e.g. 10.0 for 10%)
-  double? get feePercentage => throw _privateConstructorUsedError;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get feePercentage => throw _privateConstructorUsedError;
 
   /// Referrals
   List<ClaimAuthorizationReferrals>? get referrals =>
@@ -82,9 +85,12 @@ abstract class $ClaimAuthorizationCopyWith<$Res> {
       String publisherUsed,
       String poolAddress,
       String tokenAddress,
-      double? alreadyClaimed,
-      double? newClaimableAmount,
-      double? feePercentage,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? alreadyClaimed,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? newClaimableAmount,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? feePercentage,
       List<ClaimAuthorizationReferrals>? referrals});
 }
 
@@ -152,15 +158,15 @@ class _$ClaimAuthorizationCopyWithImpl<$Res, $Val extends ClaimAuthorization>
       alreadyClaimed: freezed == alreadyClaimed
           ? _value.alreadyClaimed
           : alreadyClaimed // ignore: cast_nullable_to_non_nullable
-              as double?,
+              as Decimal?,
       newClaimableAmount: freezed == newClaimableAmount
           ? _value.newClaimableAmount
           : newClaimableAmount // ignore: cast_nullable_to_non_nullable
-              as double?,
+              as Decimal?,
       feePercentage: freezed == feePercentage
           ? _value.feePercentage
           : feePercentage // ignore: cast_nullable_to_non_nullable
-              as double?,
+              as Decimal?,
       referrals: freezed == referrals
           ? _value.referrals
           : referrals // ignore: cast_nullable_to_non_nullable
@@ -186,9 +192,12 @@ abstract class _$$ClaimAuthorizationImplCopyWith<$Res>
       String publisherUsed,
       String poolAddress,
       String tokenAddress,
-      double? alreadyClaimed,
-      double? newClaimableAmount,
-      double? feePercentage,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? alreadyClaimed,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? newClaimableAmount,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? feePercentage,
       List<ClaimAuthorizationReferrals>? referrals});
 }
 
@@ -254,15 +263,15 @@ class __$$ClaimAuthorizationImplCopyWithImpl<$Res>
       alreadyClaimed: freezed == alreadyClaimed
           ? _value.alreadyClaimed
           : alreadyClaimed // ignore: cast_nullable_to_non_nullable
-              as double?,
+              as Decimal?,
       newClaimableAmount: freezed == newClaimableAmount
           ? _value.newClaimableAmount
           : newClaimableAmount // ignore: cast_nullable_to_non_nullable
-              as double?,
+              as Decimal?,
       feePercentage: freezed == feePercentage
           ? _value.feePercentage
           : feePercentage // ignore: cast_nullable_to_non_nullable
-              as double?,
+              as Decimal?,
       referrals: freezed == referrals
           ? _value._referrals
           : referrals // ignore: cast_nullable_to_non_nullable
@@ -283,8 +292,11 @@ class _$ClaimAuthorizationImpl implements _ClaimAuthorization {
       required this.publisherUsed,
       required this.poolAddress,
       required this.tokenAddress,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       this.alreadyClaimed,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       this.newClaimableAmount,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       this.feePercentage,
       final List<ClaimAuthorizationReferrals>? referrals})
       : _referrals = referrals;
@@ -326,15 +338,18 @@ class _$ClaimAuthorizationImpl implements _ClaimAuthorization {
 
   /// Already claimed amount
   @override
-  final double? alreadyClaimed;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  final Decimal? alreadyClaimed;
 
   /// New claimable amount
   @override
-  final double? newClaimableAmount;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  final Decimal? newClaimableAmount;
 
   /// Platform fee percentage (e.g. 10.0 for 10%)
   @override
-  final double? feePercentage;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  final Decimal? feePercentage;
 
   /// Referrals
   final List<ClaimAuthorizationReferrals>? _referrals;
@@ -427,9 +442,12 @@ abstract class _ClaimAuthorization implements ClaimAuthorization {
           required final String publisherUsed,
           required final String poolAddress,
           required final String tokenAddress,
-          final double? alreadyClaimed,
-          final double? newClaimableAmount,
-          final double? feePercentage,
+          @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+          final Decimal? alreadyClaimed,
+          @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+          final Decimal? newClaimableAmount,
+          @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+          final Decimal? feePercentage,
           final List<ClaimAuthorizationReferrals>? referrals}) =
       _$ClaimAuthorizationImpl;
 
@@ -470,15 +488,18 @@ abstract class _ClaimAuthorization implements ClaimAuthorization {
 
   /// Already claimed amount
   @override
-  double? get alreadyClaimed;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get alreadyClaimed;
 
   /// New claimable amount
   @override
-  double? get newClaimableAmount;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get newClaimableAmount;
 
   /// Platform fee percentage (e.g. 10.0 for 10%)
   @override
-  double? get feePercentage;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get feePercentage;
 
   /// Referrals
   @override

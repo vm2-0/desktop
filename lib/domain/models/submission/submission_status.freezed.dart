@@ -34,8 +34,10 @@ mixin _$SubmissionStatus {
   int? get clampedScore => throw _privateConstructorUsedError;
   @JsonKey(name: 'grade_result')
   GradeResult? get gradeResult => throw _privateConstructorUsedError;
-  double? get maxReward => throw _privateConstructorUsedError;
-  double? get reward => throw _privateConstructorUsedError;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get maxReward => throw _privateConstructorUsedError;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get reward => throw _privateConstructorUsedError;
   ClaimAuthorization? get claimAuthorization =>
       throw _privateConstructorUsedError;
   OnChainReward? get onChainReward => throw _privateConstructorUsedError;
@@ -69,8 +71,10 @@ abstract class $SubmissionStatusCopyWith<$Res> {
       String updatedAt,
       int? clampedScore,
       @JsonKey(name: 'grade_result') GradeResult? gradeResult,
-      double? maxReward,
-      double? reward,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? maxReward,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? reward,
       ClaimAuthorization? claimAuthorization,
       OnChainReward? onChainReward});
 
@@ -165,11 +169,11 @@ class _$SubmissionStatusCopyWithImpl<$Res, $Val extends SubmissionStatus>
       maxReward: freezed == maxReward
           ? _value.maxReward
           : maxReward // ignore: cast_nullable_to_non_nullable
-              as double?,
+              as Decimal?,
       reward: freezed == reward
           ? _value.reward
           : reward // ignore: cast_nullable_to_non_nullable
-              as double?,
+              as Decimal?,
       claimAuthorization: freezed == claimAuthorization
           ? _value.claimAuthorization
           : claimAuthorization // ignore: cast_nullable_to_non_nullable
@@ -270,8 +274,10 @@ abstract class _$$SubmissionStatusImplCopyWith<$Res>
       String updatedAt,
       int? clampedScore,
       @JsonKey(name: 'grade_result') GradeResult? gradeResult,
-      double? maxReward,
-      double? reward,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? maxReward,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? reward,
       ClaimAuthorization? claimAuthorization,
       OnChainReward? onChainReward});
 
@@ -369,11 +375,11 @@ class __$$SubmissionStatusImplCopyWithImpl<$Res>
       maxReward: freezed == maxReward
           ? _value.maxReward
           : maxReward // ignore: cast_nullable_to_non_nullable
-              as double?,
+              as Decimal?,
       reward: freezed == reward
           ? _value.reward
           : reward // ignore: cast_nullable_to_non_nullable
-              as double?,
+              as Decimal?,
       claimAuthorization: freezed == claimAuthorization
           ? _value.claimAuthorization
           : claimAuthorization // ignore: cast_nullable_to_non_nullable
@@ -402,7 +408,9 @@ class _$SubmissionStatusImpl implements _SubmissionStatus {
       required this.updatedAt,
       this.clampedScore,
       @JsonKey(name: 'grade_result') this.gradeResult,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       this.maxReward,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       this.reward,
       this.claimAuthorization,
       this.onChainReward});
@@ -437,9 +445,11 @@ class _$SubmissionStatusImpl implements _SubmissionStatus {
   @JsonKey(name: 'grade_result')
   final GradeResult? gradeResult;
   @override
-  final double? maxReward;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  final Decimal? maxReward;
   @override
-  final double? reward;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  final Decimal? reward;
   @override
   final ClaimAuthorization? claimAuthorization;
   @override
@@ -535,8 +545,10 @@ abstract class _SubmissionStatus implements SubmissionStatus {
       required final String updatedAt,
       final int? clampedScore,
       @JsonKey(name: 'grade_result') final GradeResult? gradeResult,
-      final double? maxReward,
-      final double? reward,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      final Decimal? maxReward,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      final Decimal? reward,
       final ClaimAuthorization? claimAuthorization,
       final OnChainReward? onChainReward}) = _$SubmissionStatusImpl;
 
@@ -570,9 +582,11 @@ abstract class _SubmissionStatus implements SubmissionStatus {
   @JsonKey(name: 'grade_result')
   GradeResult? get gradeResult;
   @override
-  double? get maxReward;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get maxReward;
   @override
-  double? get reward;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get reward;
   @override
   ClaimAuthorization? get claimAuthorization;
   @override

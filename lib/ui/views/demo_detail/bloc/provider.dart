@@ -15,6 +15,7 @@ import 'package:clones_desktop/domain/models/submission/submission_status.dart';
 import 'package:clones_desktop/domain/models/video_clip.dart';
 import 'package:clones_desktop/ui/components/video_player/video_source.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/state.dart';
+import 'package:clones_desktop/utils/decimal_json.dart';
 import 'package:clones_desktop/utils/env.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -129,8 +130,8 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
           createdAt: poolSubmission.createdAt,
           updatedAt: poolSubmission.updatedAt,
           gradeResult: poolSubmission.gradeResult,
-          maxReward: poolSubmission.maxReward,
-          reward: poolSubmission.reward,
+          maxReward: DecimalJson.fromJson(poolSubmission.maxReward),
+          reward: DecimalJson.fromJson(poolSubmission.reward),
           clampedScore: poolSubmission.clampedScore?.toInt(),
           claimAuthorization: poolSubmission.claimAuthorization,
         );

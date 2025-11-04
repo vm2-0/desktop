@@ -34,7 +34,10 @@ mixin _$Factory {
   List<String> get skills =>
       throw _privateConstructorUsedError; // Economic model
   FactoryToken get token => throw _privateConstructorUsedError;
-  double get balance => throw _privateConstructorUsedError; // Statistics
+  double get balance =>
+      throw _privateConstructorUsedError; // Keep for backward compatibility
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get totalEarned => throw _privateConstructorUsedError; // Statistics
   int get demonstrations => throw _privateConstructorUsedError; // Configuration
   FactoryUploadLimit? get uploadLimit =>
       throw _privateConstructorUsedError; // Apps & tasks (integrated)
@@ -71,6 +74,8 @@ abstract class $FactoryCopyWith<$Res> {
       List<String> skills,
       FactoryToken token,
       double balance,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? totalEarned,
       int demonstrations,
       FactoryUploadLimit? uploadLimit,
       List<FactoryApp> apps,
@@ -108,6 +113,7 @@ class _$FactoryCopyWithImpl<$Res, $Val extends Factory>
     Object? skills = null,
     Object? token = null,
     Object? balance = null,
+    Object? totalEarned = freezed,
     Object? demonstrations = null,
     Object? uploadLimit = freezed,
     Object? apps = null,
@@ -160,6 +166,10 @@ class _$FactoryCopyWithImpl<$Res, $Val extends Factory>
           ? _value.balance
           : balance // ignore: cast_nullable_to_non_nullable
               as double,
+      totalEarned: freezed == totalEarned
+          ? _value.totalEarned
+          : totalEarned // ignore: cast_nullable_to_non_nullable
+              as Decimal?,
       demonstrations: null == demonstrations
           ? _value.demonstrations
           : demonstrations // ignore: cast_nullable_to_non_nullable
@@ -231,6 +241,8 @@ abstract class _$$FactoryImplCopyWith<$Res> implements $FactoryCopyWith<$Res> {
       List<String> skills,
       FactoryToken token,
       double balance,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? totalEarned,
       int demonstrations,
       FactoryUploadLimit? uploadLimit,
       List<FactoryApp> apps,
@@ -268,6 +280,7 @@ class __$$FactoryImplCopyWithImpl<$Res>
     Object? skills = null,
     Object? token = null,
     Object? balance = null,
+    Object? totalEarned = freezed,
     Object? demonstrations = null,
     Object? uploadLimit = freezed,
     Object? apps = null,
@@ -320,6 +333,10 @@ class __$$FactoryImplCopyWithImpl<$Res>
           ? _value.balance
           : balance // ignore: cast_nullable_to_non_nullable
               as double,
+      totalEarned: freezed == totalEarned
+          ? _value.totalEarned
+          : totalEarned // ignore: cast_nullable_to_non_nullable
+              as Decimal?,
       demonstrations: null == demonstrations
           ? _value.demonstrations
           : demonstrations // ignore: cast_nullable_to_non_nullable
@@ -363,6 +380,8 @@ class _$FactoryImpl implements _Factory {
       final List<String> skills = const [],
       required this.token,
       this.balance = 0.0,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      this.totalEarned,
       this.demonstrations = 0,
       this.uploadLimit,
       final List<FactoryApp> apps = const [],
@@ -411,6 +430,10 @@ class _$FactoryImpl implements _Factory {
   @override
   @JsonKey()
   final double balance;
+// Keep for backward compatibility
+  @override
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  final Decimal? totalEarned;
 // Statistics
   @override
   @JsonKey()
@@ -443,7 +466,7 @@ class _$FactoryImpl implements _Factory {
 
   @override
   String toString() {
-    return 'Factory(id: $id, poolAddress: $poolAddress, name: $name, description: $description, ownerAddress: $ownerAddress, status: $status, createdAt: $createdAt, updatedAt: $updatedAt, skills: $skills, token: $token, balance: $balance, demonstrations: $demonstrations, uploadLimit: $uploadLimit, apps: $apps, searchText: $searchText, expanded: $expanded, isLoading: $isLoading)';
+    return 'Factory(id: $id, poolAddress: $poolAddress, name: $name, description: $description, ownerAddress: $ownerAddress, status: $status, createdAt: $createdAt, updatedAt: $updatedAt, skills: $skills, token: $token, balance: $balance, totalEarned: $totalEarned, demonstrations: $demonstrations, uploadLimit: $uploadLimit, apps: $apps, searchText: $searchText, expanded: $expanded, isLoading: $isLoading)';
   }
 
   @override
@@ -467,6 +490,8 @@ class _$FactoryImpl implements _Factory {
             const DeepCollectionEquality().equals(other._skills, _skills) &&
             (identical(other.token, token) || other.token == token) &&
             (identical(other.balance, balance) || other.balance == balance) &&
+            (identical(other.totalEarned, totalEarned) ||
+                other.totalEarned == totalEarned) &&
             (identical(other.demonstrations, demonstrations) ||
                 other.demonstrations == demonstrations) &&
             (identical(other.uploadLimit, uploadLimit) ||
@@ -495,6 +520,7 @@ class _$FactoryImpl implements _Factory {
       const DeepCollectionEquality().hash(_skills),
       token,
       balance,
+      totalEarned,
       demonstrations,
       uploadLimit,
       const DeepCollectionEquality().hash(_apps),
@@ -531,6 +557,8 @@ abstract class _Factory implements Factory {
       final List<String> skills,
       required final FactoryToken token,
       final double balance,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      final Decimal? totalEarned,
       final int demonstrations,
       final FactoryUploadLimit? uploadLimit,
       final List<FactoryApp> apps,
@@ -562,7 +590,10 @@ abstract class _Factory implements Factory {
   @override
   FactoryToken get token;
   @override
-  double get balance; // Statistics
+  double get balance; // Keep for backward compatibility
+  @override
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get totalEarned; // Statistics
   @override
   int get demonstrations; // Configuration
   @override

@@ -11,7 +11,8 @@ class ReferralStatTotalRewards extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final referralState = ref.watch(referralNotifierProvider);
-    if (referralState.referralInfo == null) {
+    if (referralState.referralInfo == null ||
+        referralState.referralInfo!.totalRewards == null) {
       return const SizedBox.shrink();
     }
 
@@ -34,7 +35,7 @@ class ReferralStatTotalRewards extends ConsumerWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            referralState.referralInfo!.totalRewards
+            referralState.referralInfo!.totalRewards!
                 .toStringAsFixedLowValue(2, 5),
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,

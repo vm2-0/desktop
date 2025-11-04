@@ -11,7 +11,7 @@ _$FactoryTaskImpl _$$FactoryTaskImplFromJson(Map<String, dynamic> json) =>
       id: json['_id'] as String?,
       prompt: json['prompt'] as String,
       uploadLimit: (json['uploadLimit'] as num?)?.toInt(),
-      rewardLimit: (json['rewardLimit'] as num?)?.toDouble(),
+      rewardLimit: DecimalJson.fromJson(json['rewardLimit']),
       limitReason: json['limitReason'] as String?,
     );
 
@@ -20,6 +20,6 @@ Map<String, dynamic> _$$FactoryTaskImplToJson(_$FactoryTaskImpl instance) =>
       '_id': instance.id,
       'prompt': instance.prompt,
       'uploadLimit': instance.uploadLimit,
-      'rewardLimit': instance.rewardLimit,
+      'rewardLimit': DecimalJson.toJson(instance.rewardLimit),
       'limitReason': instance.limitReason,
     };

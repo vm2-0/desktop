@@ -25,7 +25,8 @@ mixin _$GetReferralInfoResponse {
   String get referralCode => throw _privateConstructorUsedError;
   bool get isActive => throw _privateConstructorUsedError;
   int get totalReferrals => throw _privateConstructorUsedError;
-  double get totalRewards => throw _privateConstructorUsedError;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get totalRewards => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
   DateTime? get lastUpdated => throw _privateConstructorUsedError;
   DateTime? get expiresAt => throw _privateConstructorUsedError;
@@ -52,7 +53,8 @@ abstract class $GetReferralInfoResponseCopyWith<$Res> {
       String referralCode,
       bool isActive,
       int totalReferrals,
-      double totalRewards,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? totalRewards,
       DateTime createdAt,
       DateTime? lastUpdated,
       DateTime? expiresAt,
@@ -79,7 +81,7 @@ class _$GetReferralInfoResponseCopyWithImpl<$Res,
     Object? referralCode = null,
     Object? isActive = null,
     Object? totalReferrals = null,
-    Object? totalRewards = null,
+    Object? totalRewards = freezed,
     Object? createdAt = null,
     Object? lastUpdated = freezed,
     Object? expiresAt = freezed,
@@ -102,10 +104,10 @@ class _$GetReferralInfoResponseCopyWithImpl<$Res,
           ? _value.totalReferrals
           : totalReferrals // ignore: cast_nullable_to_non_nullable
               as int,
-      totalRewards: null == totalRewards
+      totalRewards: freezed == totalRewards
           ? _value.totalRewards
           : totalRewards // ignore: cast_nullable_to_non_nullable
-              as double,
+              as Decimal?,
       createdAt: null == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -140,7 +142,8 @@ abstract class _$$GetReferralInfoResponseImplCopyWith<$Res>
       String referralCode,
       bool isActive,
       int totalReferrals,
-      double totalRewards,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? totalRewards,
       DateTime createdAt,
       DateTime? lastUpdated,
       DateTime? expiresAt,
@@ -166,7 +169,7 @@ class __$$GetReferralInfoResponseImplCopyWithImpl<$Res>
     Object? referralCode = null,
     Object? isActive = null,
     Object? totalReferrals = null,
-    Object? totalRewards = null,
+    Object? totalRewards = freezed,
     Object? createdAt = null,
     Object? lastUpdated = freezed,
     Object? expiresAt = freezed,
@@ -189,10 +192,10 @@ class __$$GetReferralInfoResponseImplCopyWithImpl<$Res>
           ? _value.totalReferrals
           : totalReferrals // ignore: cast_nullable_to_non_nullable
               as int,
-      totalRewards: null == totalRewards
+      totalRewards: freezed == totalRewards
           ? _value.totalRewards
           : totalRewards // ignore: cast_nullable_to_non_nullable
-              as double,
+              as Decimal?,
       createdAt: null == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -221,6 +224,7 @@ class _$GetReferralInfoResponseImpl implements _GetReferralInfoResponse {
       required this.referralCode,
       required this.isActive,
       required this.totalReferrals,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       required this.totalRewards,
       required this.createdAt,
       this.lastUpdated,
@@ -240,7 +244,8 @@ class _$GetReferralInfoResponseImpl implements _GetReferralInfoResponse {
   @override
   final int totalReferrals;
   @override
-  final double totalRewards;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  final Decimal? totalRewards;
   @override
   final DateTime createdAt;
   @override
@@ -324,7 +329,8 @@ abstract class _GetReferralInfoResponse implements GetReferralInfoResponse {
       required final String referralCode,
       required final bool isActive,
       required final int totalReferrals,
-      required final double totalRewards,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      required final Decimal? totalRewards,
       required final DateTime createdAt,
       final DateTime? lastUpdated,
       final DateTime? expiresAt,
@@ -342,7 +348,8 @@ abstract class _GetReferralInfoResponse implements GetReferralInfoResponse {
   @override
   int get totalReferrals;
   @override
-  double get totalRewards;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get totalRewards;
   @override
   DateTime get createdAt;
   @override

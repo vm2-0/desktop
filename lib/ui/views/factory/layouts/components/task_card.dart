@@ -47,7 +47,7 @@ class TaskCard extends ConsumerWidget {
 
     final tokenSymbol = factory.token.symbol;
 
-    final rewardAmount = task.rewardLimit ?? 0.0;
+    final rewardAmount = task.rewardLimit?.toDouble() ?? 0.0;
 
     final String rewardText;
     if (currencyMode == 'fiat') {

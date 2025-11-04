@@ -4,6 +4,7 @@ import 'package:clones_desktop/ui/views/generate_factory/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/generate_factory/bloc/state.dart';
 import 'package:clones_desktop/ui/views/generate_factory/layouts/components/generate_factory_textfield_factory_app.dart';
 import 'package:clones_desktop/ui/views/shared/components/editable_app_card.dart';
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -104,7 +105,7 @@ class GenerateFactoryModalStep3 extends ConsumerWidget {
                     showLimits: true,
                     tokenSymbol: generateFactory.selectedTokenSymbol,
                     taskRewardLimits:
-                        app.tasks.map((task) => task.rewardLimit).toList(),
+                        app.tasks.map((task) => task.rewardLimit?.toDouble()).toList(),
                     taskUploadLimits:
                         app.tasks.map((task) => task.uploadLimit).toList(),
                     onAppNameChanged: (newName) {
@@ -123,7 +124,7 @@ class GenerateFactoryModalStep3 extends ConsumerWidget {
                         appIdx,
                         taskIdx,
                         task.prompt,
-                        rewardLimit,
+                        rewardLimit != null ? Decimal.parse(rewardLimit.toString()) : null,
                         task.uploadLimit,
                       );
                     },

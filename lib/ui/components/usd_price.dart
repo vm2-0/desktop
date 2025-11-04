@@ -1,5 +1,6 @@
 import 'package:clones_desktop/application/coin_price.dart';
 import 'package:clones_desktop/utils/format_num.dart';
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -11,7 +12,7 @@ class UsdPrice extends ConsumerWidget {
     this.style,
     this.withParentheses = true,
   });
-  final double amount;
+  final Decimal amount;
   final String symbol;
   final TextStyle? style;
   final bool withParentheses;
@@ -22,7 +23,7 @@ class UsdPrice extends ConsumerWidget {
     WidgetRef ref,
   ) {
     final priceUSD = ref.watch(coinPriceNotifierProvider(symbol));
-    final price = amount * priceUSD;
+    final price = amount * Decimal.parse(priceUSD.toString());
     final theme = Theme.of(context);
     return Text(
       withParentheses

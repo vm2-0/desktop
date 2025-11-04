@@ -13,6 +13,7 @@ import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
 import 'package:clones_desktop/utils/env.dart';
 import 'package:clones_desktop/utils/format_address.dart';
 import 'package:collection/collection.dart';
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -62,14 +63,15 @@ class DemoDetailRewards extends ConsumerWidget {
         final theme = Theme.of(context);
         final score =
             submission.gradeResult?.score ?? submission.clampedScore ?? 0;
-        final maxReward = submission.maxReward ?? 0;
-        final reward = submission.reward ?? 0;
+        final maxReward = submission.maxReward ?? Decimal.zero;
+        final reward = submission.reward ?? Decimal.zero;
 
         final feePercentage = submission.claimAuthorization?.feePercentage;
-        final feeMultiplier =
-            feePercentage != null ? feePercentage / 100.0 : null;
+        final feeMultiplier = feePercentage != null
+            ? (feePercentage / Decimal.fromInt(100)).toDecimal()
+            : null;
         final netMultiplier =
-            feeMultiplier != null ? 1.0 - feeMultiplier : null;
+            feeMultiplier != null ? Decimal.one - feeMultiplier : null;
 
         return Column(
           children: [
@@ -98,7 +100,7 @@ class DemoDetailRewards extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 5),
-                  if (reward > 0)
+                  if (reward > Decimal.zero)
                     if (feePercentage != null &&
                         feeMultiplier != null &&
                         netMultiplier != null) ...[
@@ -162,7 +164,9 @@ class DemoDetailRewards extends ConsumerWidget {
                     height: 10,
                   ),
                   LinearProgressIndicator(
-                    value: maxReward > 0 ? reward / maxReward : 0,
+                    value: maxReward > Decimal.zero
+                        ? (reward / maxReward).toDouble()
+                        : 0,
                     minHeight: 10,
                     color: ClonesColors.getScoreColor(score),
                     borderRadius: BorderRadius.circular(5),
@@ -208,7 +212,7 @@ class DemoDetailRewards extends ConsumerWidget {
     WidgetRef ref,
     ClaimAuthorization claimAuth,
     String tokenSymbol,
-    double rewardAmount,
+    Decimal rewardAmount,
     String? submissionId,
   ) {
     final theme = Theme.of(context);
@@ -286,7 +290,7 @@ class DemoDetailRewards extends ConsumerWidget {
     WidgetRef ref,
     ClaimAuthorization claimAuth,
     String tokenSymbol,
-    double rewardAmount,
+    Decimal rewardAmount,
     String? submissionId,
   ) {
     // Open the claim reward modal
@@ -306,8 +310,9 @@ class DemoDetailRewards extends ConsumerWidget {
   ) {
     final theme = Theme.of(context);
     final txHash = submission.onChainReward?.txHash;
-    final grossAmount =
-        submission.onChainReward?.grossAmount ?? submission.reward ?? 0;
+    final grossAmount = submission.onChainReward?.grossAmount ??
+        submission.reward ??
+        Decimal.zero;
 
     final netAmount = submission.onChainReward?.netAmount;
     final feeAmount = submission.onChainReward?.feeAmount;
