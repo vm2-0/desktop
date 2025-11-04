@@ -278,4 +278,11 @@ class TauriApiClient {
       throw Exception('Failed to get platform: ${response.body}');
     }
   }
+
+  Future<void> openLogsFolder() async {
+    final response = await _client.post(Uri.parse('$_baseUrl/logs/open'));
+    if (response.statusCode != 200) {
+      throw Exception('Failed to open logs folder: ${response.body}');
+    }
+  }
 }

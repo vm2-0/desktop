@@ -23,7 +23,7 @@ class TaskLimitsWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rewardAmount = task.rewardLimit?.toDouble() ?? 0.0;
+    final rewardAmount = task.rewardLimit ?? Decimal.zero;
 
     final theme = Theme.of(context);
     return Column(
@@ -42,7 +42,7 @@ class TaskLimitsWidget extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.only(left: 4),
                 child: UsdPrice(
-                  amount: Decimal.parse(rewardAmount.toString()),
+                  amount: rewardAmount,
                   symbol: factoryToken.symbol,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: ClonesColors.rewardInfo,
@@ -80,7 +80,7 @@ class TaskLimitsWidget extends ConsumerWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-        if (factory.balance < rewardAmount)
+        if (factory.balance < rewardAmount.toDouble())
           Padding(
             padding: const EdgeInsets.only(top: 10),
             child: MessageBox(
