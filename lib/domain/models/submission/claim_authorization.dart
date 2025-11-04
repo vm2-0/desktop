@@ -1,4 +1,6 @@
 import 'package:clones_desktop/domain/models/submission/claim_authorization_referrals.dart';
+import 'package:clones_desktop/utils/decimal_json.dart';
+import 'package:decimal/decimal.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'claim_authorization.freezed.dart';
@@ -33,13 +35,25 @@ class ClaimAuthorization with _$ClaimAuthorization {
     required String tokenAddress,
 
     /// Already claimed amount
-    double? alreadyClaimed,
+    @JsonKey(
+      toJson: DecimalJson.toJson,
+      fromJson: DecimalJson.fromJson,
+    )
+    Decimal? alreadyClaimed,
 
     /// New claimable amount
-    double? newClaimableAmount,
+    @JsonKey(
+      toJson: DecimalJson.toJson,
+      fromJson: DecimalJson.fromJson,
+    )
+    Decimal? newClaimableAmount,
 
     /// Platform fee percentage (e.g. 10.0 for 10%)
-    double? feePercentage,
+    @JsonKey(
+      toJson: DecimalJson.toJson,
+      fromJson: DecimalJson.fromJson,
+    )
+    Decimal? feePercentage,
 
     /// Referrals
     List<ClaimAuthorizationReferrals>? referrals,

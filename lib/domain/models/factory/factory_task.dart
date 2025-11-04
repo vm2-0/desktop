@@ -1,5 +1,7 @@
 // ignore_for_file: invalid_annotation_target
 
+import 'package:clones_desktop/utils/decimal_json.dart';
+import 'package:decimal/decimal.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'factory_task.freezed.dart';
@@ -12,7 +14,11 @@ class FactoryTask with _$FactoryTask {
     @JsonKey(name: '_id') String? id,
     required String prompt,
     int? uploadLimit,
-    double? rewardLimit,
+    @JsonKey(
+      toJson: DecimalJson.toJson,
+      fromJson: DecimalJson.fromJson,
+    )
+    Decimal? rewardLimit,
     String? limitReason,
   }) = _FactoryTask;
 

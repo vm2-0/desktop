@@ -13,7 +13,7 @@ _$GetReferralInfoResponseImpl _$$GetReferralInfoResponseImplFromJson(
       referralCode: json['referralCode'] as String,
       isActive: json['isActive'] as bool,
       totalReferrals: (json['totalReferrals'] as num).toInt(),
-      totalRewards: (json['totalRewards'] as num).toDouble(),
+      totalRewards: DecimalJson.fromJson(json['totalRewards']),
       createdAt: DateTime.parse(json['createdAt'] as String),
       lastUpdated: json['lastUpdated'] == null
           ? null
@@ -33,7 +33,7 @@ Map<String, dynamic> _$$GetReferralInfoResponseImplToJson(
       'referralCode': instance.referralCode,
       'isActive': instance.isActive,
       'totalReferrals': instance.totalReferrals,
-      'totalRewards': instance.totalRewards,
+      'totalRewards': DecimalJson.toJson(instance.totalRewards),
       'createdAt': instance.createdAt.toIso8601String(),
       'lastUpdated': instance.lastUpdated?.toIso8601String(),
       'expiresAt': instance.expiresAt?.toIso8601String(),

@@ -20,7 +20,8 @@ mixin _$ClaimRewardModalState {
   bool get isClaiming => throw _privateConstructorUsedError;
   ClaimAuthorization? get claimAuthorization =>
       throw _privateConstructorUsedError;
-  double get rewardAmount => throw _privateConstructorUsedError;
+  @JsonKey(fromJson: DecimalJson.fromJson, toJson: DecimalJson.toJson)
+  Decimal? get rewardAmount => throw _privateConstructorUsedError;
   String? get tokenSymbol => throw _privateConstructorUsedError;
   String? get submissionId => throw _privateConstructorUsedError;
   String? get error => throw _privateConstructorUsedError;
@@ -44,7 +45,8 @@ abstract class $ClaimRewardModalStateCopyWith<$Res> {
       {bool isShown,
       bool isClaiming,
       ClaimAuthorization? claimAuthorization,
-      double rewardAmount,
+      @JsonKey(fromJson: DecimalJson.fromJson, toJson: DecimalJson.toJson)
+      Decimal? rewardAmount,
       String? tokenSymbol,
       String? submissionId,
       String? error,
@@ -73,7 +75,7 @@ class _$ClaimRewardModalStateCopyWithImpl<$Res,
     Object? isShown = null,
     Object? isClaiming = null,
     Object? claimAuthorization = freezed,
-    Object? rewardAmount = null,
+    Object? rewardAmount = freezed,
     Object? tokenSymbol = freezed,
     Object? submissionId = freezed,
     Object? error = freezed,
@@ -93,10 +95,10 @@ class _$ClaimRewardModalStateCopyWithImpl<$Res,
           ? _value.claimAuthorization
           : claimAuthorization // ignore: cast_nullable_to_non_nullable
               as ClaimAuthorization?,
-      rewardAmount: null == rewardAmount
+      rewardAmount: freezed == rewardAmount
           ? _value.rewardAmount
           : rewardAmount // ignore: cast_nullable_to_non_nullable
-              as double,
+              as Decimal?,
       tokenSymbol: freezed == tokenSymbol
           ? _value.tokenSymbol
           : tokenSymbol // ignore: cast_nullable_to_non_nullable
@@ -149,7 +151,8 @@ abstract class _$$ClaimRewardModalStateImplCopyWith<$Res>
       {bool isShown,
       bool isClaiming,
       ClaimAuthorization? claimAuthorization,
-      double rewardAmount,
+      @JsonKey(fromJson: DecimalJson.fromJson, toJson: DecimalJson.toJson)
+      Decimal? rewardAmount,
       String? tokenSymbol,
       String? submissionId,
       String? error,
@@ -177,7 +180,7 @@ class __$$ClaimRewardModalStateImplCopyWithImpl<$Res>
     Object? isShown = null,
     Object? isClaiming = null,
     Object? claimAuthorization = freezed,
-    Object? rewardAmount = null,
+    Object? rewardAmount = freezed,
     Object? tokenSymbol = freezed,
     Object? submissionId = freezed,
     Object? error = freezed,
@@ -197,10 +200,10 @@ class __$$ClaimRewardModalStateImplCopyWithImpl<$Res>
           ? _value.claimAuthorization
           : claimAuthorization // ignore: cast_nullable_to_non_nullable
               as ClaimAuthorization?,
-      rewardAmount: null == rewardAmount
+      rewardAmount: freezed == rewardAmount
           ? _value.rewardAmount
           : rewardAmount // ignore: cast_nullable_to_non_nullable
-              as double,
+              as Decimal?,
       tokenSymbol: freezed == tokenSymbol
           ? _value.tokenSymbol
           : tokenSymbol // ignore: cast_nullable_to_non_nullable
@@ -232,7 +235,8 @@ class _$ClaimRewardModalStateImpl implements _ClaimRewardModalState {
       {this.isShown = false,
       this.isClaiming = false,
       this.claimAuthorization,
-      this.rewardAmount = 0.0,
+      @JsonKey(fromJson: DecimalJson.fromJson, toJson: DecimalJson.toJson)
+      this.rewardAmount,
       this.tokenSymbol,
       this.submissionId,
       this.error,
@@ -248,8 +252,8 @@ class _$ClaimRewardModalStateImpl implements _ClaimRewardModalState {
   @override
   final ClaimAuthorization? claimAuthorization;
   @override
-  @JsonKey()
-  final double rewardAmount;
+  @JsonKey(fromJson: DecimalJson.fromJson, toJson: DecimalJson.toJson)
+  final Decimal? rewardAmount;
   @override
   final String? tokenSymbol;
   @override
@@ -318,7 +322,8 @@ abstract class _ClaimRewardModalState implements ClaimRewardModalState {
       {final bool isShown,
       final bool isClaiming,
       final ClaimAuthorization? claimAuthorization,
-      final double rewardAmount,
+      @JsonKey(fromJson: DecimalJson.fromJson, toJson: DecimalJson.toJson)
+      final Decimal? rewardAmount,
       final String? tokenSymbol,
       final String? submissionId,
       final String? error,
@@ -332,7 +337,8 @@ abstract class _ClaimRewardModalState implements ClaimRewardModalState {
   @override
   ClaimAuthorization? get claimAuthorization;
   @override
-  double get rewardAmount;
+  @JsonKey(fromJson: DecimalJson.fromJson, toJson: DecimalJson.toJson)
+  Decimal? get rewardAmount;
   @override
   String? get tokenSymbol;
   @override

@@ -5,6 +5,7 @@ import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:clones_desktop/ui/components/usd_price.dart';
 import 'package:clones_desktop/utils/format_num.dart';
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -25,8 +26,11 @@ class ClaimRewardModal extends ConsumerWidget {
     }
 
     final feePercentage = claimAuth.feePercentage;
-    final feeMultiplier = feePercentage != null ? feePercentage / 100.0 : null;
-    final netMultiplier = feeMultiplier != null ? 1.0 - feeMultiplier : null;
+    final feeMultiplier = feePercentage != null
+        ? (feePercentage / Decimal.fromInt(100)).toDecimal()
+        : null;
+    final netMultiplier =
+        feeMultiplier != null ? Decimal.one - feeMultiplier : null;
 
     return Stack(
       children: [
@@ -101,11 +105,12 @@ class ClaimRewardModal extends ConsumerWidget {
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
                                       Text(
-                                        '${formatNumberWithSeparator(modalState.rewardAmount)} ${modalState.tokenSymbol}',
+                                        '${formatNumberWithSeparator(modalState.rewardAmount?.toDouble() ?? 0.0)} ${modalState.tokenSymbol}',
                                         style: theme.textTheme.bodyMedium,
                                       ),
                                       UsdPrice(
-                                        amount: modalState.rewardAmount,
+                                        amount: modalState.rewardAmount ??
+                                            Decimal.zero,
                                         symbol: modalState.tokenSymbol ?? '',
                                         style: theme.textTheme.bodySmall,
                                       ),
@@ -128,14 +133,14 @@ class ClaimRewardModal extends ConsumerWidget {
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
                                       Text(
-                                        '${formatNumberWithSeparator(modalState.rewardAmount * feeMultiplier)} ${modalState.tokenSymbol}',
+                                        '${formatNumberWithSeparator((modalState.rewardAmount! * feeMultiplier).toDouble())} ${modalState.tokenSymbol}',
                                         style: theme.textTheme.bodyMedium
                                             ?.copyWith(
                                           color: ClonesColors.secondaryText,
                                         ),
                                       ),
                                       UsdPrice(
-                                        amount: modalState.rewardAmount *
+                                        amount: modalState.rewardAmount! *
                                             feeMultiplier,
                                         symbol: modalState.tokenSymbol ?? '',
                                         style: theme.textTheme.bodySmall,
@@ -158,7 +163,7 @@ class ClaimRewardModal extends ConsumerWidget {
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
                                       Text(
-                                        '${formatNumberWithSeparator(modalState.rewardAmount * netMultiplier)} ${modalState.tokenSymbol}',
+                                        '${formatNumberWithSeparator((modalState.rewardAmount! * netMultiplier).toDouble())} ${modalState.tokenSymbol}',
                                         style: theme.textTheme.bodyMedium
                                             ?.copyWith(
                                           color:
@@ -166,7 +171,7 @@ class ClaimRewardModal extends ConsumerWidget {
                                         ),
                                       ),
                                       UsdPrice(
-                                        amount: modalState.rewardAmount *
+                                        amount: modalState.rewardAmount! *
                                             netMultiplier,
                                         symbol: modalState.tokenSymbol ?? '',
                                         style:

@@ -6,6 +6,7 @@ import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/application/transaction/provider.dart';
 import 'package:clones_desktop/domain/models/submission/claim_authorization.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
+import 'package:decimal/decimal.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'provider.g.dart';
@@ -46,7 +47,7 @@ class ClaimRewardModalNotifier extends _$ClaimRewardModalNotifier {
 
   void show({
     required ClaimAuthorization claimAuthorization,
-    required double rewardAmount,
+    required Decimal rewardAmount,
     required String tokenSymbol,
     String? submissionId,
   }) {
@@ -115,16 +116,18 @@ class ClaimRewardModalNotifier extends _$ClaimRewardModalNotifier {
 
       var gasExceedsReward = isExpensive;
       if (feePercentage != null) {
-        final netMultiplier = 1.0 - (feePercentage / 100.0);
-        final netRewardAmount = state.rewardAmount * netMultiplier;
-        
+        final netMultiplier =
+            Decimal.one - (feePercentage / Decimal.fromInt(100)).toDecimal();
+        final netRewardAmount = state.rewardAmount! * netMultiplier;
+
         // Try to parse ETH cost for more precise comparison
         final ethCostStr = gasData['totalCost'].toString();
         final ethCost = double.tryParse(ethCostStr);
         if (ethCost != null) {
           // Compare ETH cost with USD reward amount (rough estimate)
           // This is a simplified comparison - ideally we'd convert to same currency
-          gasExceedsReward = ethCost * 3000 > netRewardAmount; // Assuming ~$3000 per ETH
+          gasExceedsReward = ethCost * 3000 >
+              netRewardAmount.toDouble(); // Assuming ~$3000 per ETH
         }
       }
 
@@ -154,7 +157,7 @@ class ClaimRewardModalNotifier extends _$ClaimRewardModalNotifier {
       return;
     }
 
-    if (state.rewardAmount <= 0) {
+    if (state.rewardAmount == null || state.rewardAmount! <= Decimal.zero) {
       setError('Invalid reward amount');
       return;
     }

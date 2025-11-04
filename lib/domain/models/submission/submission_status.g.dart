@@ -25,8 +25,8 @@ _$SubmissionStatusImpl _$$SubmissionStatusImplFromJson(
       gradeResult: json['grade_result'] == null
           ? null
           : GradeResult.fromJson(json['grade_result'] as Map<String, dynamic>),
-      maxReward: (json['maxReward'] as num?)?.toDouble(),
-      reward: (json['reward'] as num?)?.toDouble(),
+      maxReward: DecimalJson.fromJson(json['maxReward']),
+      reward: DecimalJson.fromJson(json['reward']),
       claimAuthorization: json['claimAuthorization'] == null
           ? null
           : ClaimAuthorization.fromJson(
@@ -52,8 +52,8 @@ Map<String, dynamic> _$$SubmissionStatusImplToJson(
       'updatedAt': instance.updatedAt,
       'clampedScore': instance.clampedScore,
       'grade_result': instance.gradeResult,
-      'maxReward': instance.maxReward,
-      'reward': instance.reward,
+      'maxReward': DecimalJson.toJson(instance.maxReward),
+      'reward': DecimalJson.toJson(instance.reward),
       'claimAuthorization': instance.claimAuthorization,
       'onChainReward': instance.onChainReward,
     };

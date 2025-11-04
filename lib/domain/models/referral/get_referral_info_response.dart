@@ -1,4 +1,6 @@
 import 'package:clones_desktop/domain/models/referral/referral.dart';
+import 'package:clones_desktop/utils/decimal_json.dart';
+import 'package:decimal/decimal.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'get_referral_info_response.freezed.dart';
@@ -11,7 +13,11 @@ class GetReferralInfoResponse with _$GetReferralInfoResponse {
     required String referralCode,
     required bool isActive,
     required int totalReferrals,
-    required double totalRewards,
+    @JsonKey(
+      toJson: DecimalJson.toJson,
+      fromJson: DecimalJson.fromJson,
+    )
+    required Decimal? totalRewards,
     required DateTime createdAt,
     DateTime? lastUpdated,
     DateTime? expiresAt,

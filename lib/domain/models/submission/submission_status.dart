@@ -5,6 +5,8 @@ import 'package:clones_desktop/domain/models/submission/file_manifest.dart';
 import 'package:clones_desktop/domain/models/submission/grade_result.dart';
 import 'package:clones_desktop/domain/models/submission/on_chain_reward.dart';
 import 'package:clones_desktop/domain/models/submission/submission_meta.dart';
+import 'package:clones_desktop/utils/decimal_json.dart';
+import 'package:decimal/decimal.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'submission_status.freezed.dart';
@@ -25,8 +27,16 @@ class SubmissionStatus with _$SubmissionStatus {
     required String updatedAt,
     int? clampedScore,
     @JsonKey(name: 'grade_result') GradeResult? gradeResult,
-    double? maxReward,
-    double? reward,
+    @JsonKey(
+      toJson: DecimalJson.toJson,
+      fromJson: DecimalJson.fromJson,
+    )
+    Decimal? maxReward,
+    @JsonKey(
+      toJson: DecimalJson.toJson,
+      fromJson: DecimalJson.fromJson,
+    )
+    Decimal? reward,
     ClaimAuthorization? claimAuthorization,
     OnChainReward? onChainReward,
   }) = _SubmissionStatus;

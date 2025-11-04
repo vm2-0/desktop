@@ -22,7 +22,8 @@ ClaimAuthorizationReferrals _$ClaimAuthorizationReferralsFromJson(
 /// @nodoc
 mixin _$ClaimAuthorizationReferrals {
   String get address => throw _privateConstructorUsedError;
-  double get amount => throw _privateConstructorUsedError;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get amount => throw _privateConstructorUsedError;
   String get type => throw _privateConstructorUsedError;
 
   /// Serializes this ClaimAuthorizationReferrals to a JSON map.
@@ -43,7 +44,11 @@ abstract class $ClaimAuthorizationReferralsCopyWith<$Res> {
       _$ClaimAuthorizationReferralsCopyWithImpl<$Res,
           ClaimAuthorizationReferrals>;
   @useResult
-  $Res call({String address, double amount, String type});
+  $Res call(
+      {String address,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? amount,
+      String type});
 }
 
 /// @nodoc
@@ -63,7 +68,7 @@ class _$ClaimAuthorizationReferralsCopyWithImpl<$Res,
   @override
   $Res call({
     Object? address = null,
-    Object? amount = null,
+    Object? amount = freezed,
     Object? type = null,
   }) {
     return _then(_value.copyWith(
@@ -71,10 +76,10 @@ class _$ClaimAuthorizationReferralsCopyWithImpl<$Res,
           ? _value.address
           : address // ignore: cast_nullable_to_non_nullable
               as String,
-      amount: null == amount
+      amount: freezed == amount
           ? _value.amount
           : amount // ignore: cast_nullable_to_non_nullable
-              as double,
+              as Decimal?,
       type: null == type
           ? _value.type
           : type // ignore: cast_nullable_to_non_nullable
@@ -92,7 +97,11 @@ abstract class _$$ClaimAuthorizationReferralsImplCopyWith<$Res>
       __$$ClaimAuthorizationReferralsImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String address, double amount, String type});
+  $Res call(
+      {String address,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? amount,
+      String type});
 }
 
 /// @nodoc
@@ -111,7 +120,7 @@ class __$$ClaimAuthorizationReferralsImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? address = null,
-    Object? amount = null,
+    Object? amount = freezed,
     Object? type = null,
   }) {
     return _then(_$ClaimAuthorizationReferralsImpl(
@@ -119,10 +128,10 @@ class __$$ClaimAuthorizationReferralsImplCopyWithImpl<$Res>
           ? _value.address
           : address // ignore: cast_nullable_to_non_nullable
               as String,
-      amount: null == amount
+      amount: freezed == amount
           ? _value.amount
           : amount // ignore: cast_nullable_to_non_nullable
-              as double,
+              as Decimal?,
       type: null == type
           ? _value.type
           : type // ignore: cast_nullable_to_non_nullable
@@ -136,7 +145,10 @@ class __$$ClaimAuthorizationReferralsImplCopyWithImpl<$Res>
 class _$ClaimAuthorizationReferralsImpl
     implements _ClaimAuthorizationReferrals {
   const _$ClaimAuthorizationReferralsImpl(
-      {required this.address, required this.amount, required this.type});
+      {required this.address,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      required this.amount,
+      required this.type});
 
   factory _$ClaimAuthorizationReferralsImpl.fromJson(
           Map<String, dynamic> json) =>
@@ -145,7 +157,8 @@ class _$ClaimAuthorizationReferralsImpl
   @override
   final String address;
   @override
-  final double amount;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  final Decimal? amount;
   @override
   final String type;
 
@@ -189,7 +202,8 @@ abstract class _ClaimAuthorizationReferrals
     implements ClaimAuthorizationReferrals {
   const factory _ClaimAuthorizationReferrals(
       {required final String address,
-      required final double amount,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      required final Decimal? amount,
       required final String type}) = _$ClaimAuthorizationReferralsImpl;
 
   factory _ClaimAuthorizationReferrals.fromJson(Map<String, dynamic> json) =
@@ -198,7 +212,8 @@ abstract class _ClaimAuthorizationReferrals
   @override
   String get address;
   @override
-  double get amount;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get amount;
   @override
   String get type;
 

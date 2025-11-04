@@ -8,6 +8,7 @@ import 'package:clones_desktop/ui/views/record_overlay/layouts/record_overlay_vi
 import 'package:clones_desktop/ui/views/training_session/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/training_session/bloc/state.dart';
 import 'package:clones_desktop/utils/format_num.dart';
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -28,7 +29,8 @@ class _RecordPanelState extends ConsumerState<RecordPanel> {
     final trainingSession = ref.watch(trainingSessionNotifierProvider);
     final recordingState = trainingSession.recordingState;
 
-    final rewardAmount = trainingSession.factoryTask?.rewardLimit ?? 0.0;
+    final rewardAmount =
+        trainingSession.factoryTask?.rewardLimit?.toDouble() ?? 0.0;
 
     final rewardText =
         'Up to: ${rewardAmount.toStringAsFixedLowValue(2, 5)} ${trainingSession.factory?.token.symbol ?? ''}';
@@ -65,7 +67,7 @@ class _RecordPanelState extends ConsumerState<RecordPanel> {
                   Padding(
                     padding: const EdgeInsets.only(left: 4),
                     child: UsdPrice(
-                      amount: rewardAmount,
+                      amount: Decimal.parse(rewardAmount.toString()),
                       symbol: trainingSession.factory?.token.symbol ?? '',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: ClonesColors.secondary,

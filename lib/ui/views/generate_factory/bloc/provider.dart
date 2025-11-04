@@ -104,7 +104,7 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
       final newApps = forgeApps.map((app) {
         final updatedTasks = app.tasks.map((task) {
           return task.copyWith(
-            rewardLimit: defaultRewardPerTask,
+            rewardLimit: Decimal.parse(defaultRewardPerTask.toString()),
             uploadLimit: null,
           );
         }).toList();
@@ -168,7 +168,7 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
     int appIndex,
     int taskIndex,
     String prompt,
-    double? rewardLimit,
+    Decimal? rewardLimit,
     int? uploadLimit,
   ) {
     if (state.apps == null) return;

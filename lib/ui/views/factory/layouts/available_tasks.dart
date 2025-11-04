@@ -75,7 +75,7 @@ class _AvailableTasksState extends ConsumerState<AvailableTasks> {
 
   double _getReward(FactoryApp app, FactoryTask task) {
     // TODO(reddwarf03): Use factory pricePerDemo ?
-    return task.rewardLimit ?? 0.0;
+    return task.rewardLimit?.toDouble() ?? 0.0;
   }
 
   @override

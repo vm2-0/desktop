@@ -6,6 +6,7 @@ import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.d
 import 'package:clones_desktop/ui/components/factory_status_badge.dart';
 import 'package:clones_desktop/ui/components/score_distribution_bars.dart';
 import 'package:clones_desktop/ui/components/usd_price.dart';
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -103,7 +104,7 @@ class ForgeExistingFactoryCard extends ConsumerWidget {
               ),
             ),
             UsdPrice(
-              amount: balance,
+              amount: Decimal.parse(balance.toString()),
               symbol: factory.token.symbol,
               withParentheses: false,
               style: theme.textTheme.bodySmall?.copyWith(

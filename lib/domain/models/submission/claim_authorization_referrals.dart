@@ -1,5 +1,7 @@
 // ignore_for_file: invalid_annotation_target
 
+import 'package:clones_desktop/utils/decimal_json.dart';
+import 'package:decimal/decimal.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'claim_authorization_referrals.freezed.dart';
@@ -9,7 +11,11 @@ part 'claim_authorization_referrals.g.dart';
 class ClaimAuthorizationReferrals with _$ClaimAuthorizationReferrals {
   const factory ClaimAuthorizationReferrals({
     required String address,
-    required double amount,
+    @JsonKey(
+      toJson: DecimalJson.toJson,
+      fromJson: DecimalJson.fromJson,
+    )
+    required Decimal? amount,
     required String type,
   }) = _ClaimAuthorizationReferrals;
 

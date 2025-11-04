@@ -3,6 +3,7 @@ import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/domain/models/api/api_error.dart';
 import 'package:clones_desktop/domain/models/referral/referral_info.dart';
 import 'package:clones_desktop/ui/views/referral/bloc/state.dart';
+import 'package:decimal/decimal.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'provider.g.dart';
@@ -47,7 +48,7 @@ class ReferralNotifier extends _$ReferralNotifier {
         referralCode: response.referralCode,
         walletAddress: response.walletAddress,
         totalReferrals: 0,
-        totalRewards: 0,
+        totalRewards: Decimal.zero,
         isActive: true,
         createdAt: response.createdAt,
       );

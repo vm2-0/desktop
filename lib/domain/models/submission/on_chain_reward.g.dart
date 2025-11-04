@@ -11,13 +11,13 @@ _$OnChainRewardImpl _$$OnChainRewardImplFromJson(Map<String, dynamic> json) =>
       tokenAddress: json['tokenAddress'] as String,
       poolAddress: json['poolAddress'] as String,
       amount: (json['amount'] as num).toDouble(),
-      grossAmount: (json['grossAmount'] as num?)?.toDouble(),
-      feeAmount: (json['feeAmount'] as num?)?.toDouble(),
-      netAmount: (json['netAmount'] as num?)?.toDouble(),
+      grossAmount: DecimalJson.fromJson(json['grossAmount']),
+      feeAmount: DecimalJson.fromJson(json['feeAmount']),
+      netAmount: DecimalJson.fromJson(json['netAmount']),
       submissionId: json['submissionId'] as String?,
       txHash: json['txHash'] as String?,
       timestamp: (json['timestamp'] as num?)?.toInt(),
-      cumulativeAmount: (json['cumulativeAmount'] as num?)?.toDouble(),
+      cumulativeAmount: DecimalJson.fromJson(json['cumulativeAmount']),
     );
 
 Map<String, dynamic> _$$OnChainRewardImplToJson(_$OnChainRewardImpl instance) =>
@@ -25,11 +25,11 @@ Map<String, dynamic> _$$OnChainRewardImplToJson(_$OnChainRewardImpl instance) =>
       'tokenAddress': instance.tokenAddress,
       'poolAddress': instance.poolAddress,
       'amount': instance.amount,
-      'grossAmount': instance.grossAmount,
-      'feeAmount': instance.feeAmount,
-      'netAmount': instance.netAmount,
+      'grossAmount': DecimalJson.toJson(instance.grossAmount),
+      'feeAmount': DecimalJson.toJson(instance.feeAmount),
+      'netAmount': DecimalJson.toJson(instance.netAmount),
       'submissionId': instance.submissionId,
       'txHash': instance.txHash,
       'timestamp': instance.timestamp,
-      'cumulativeAmount': instance.cumulativeAmount,
+      'cumulativeAmount': DecimalJson.toJson(instance.cumulativeAmount),
     };
