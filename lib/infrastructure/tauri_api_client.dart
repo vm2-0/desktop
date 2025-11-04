@@ -210,6 +210,15 @@ class TauriApiClient {
     }
   }
 
+  Future<Map<String, dynamic>> getToolInitProgress() async {
+    final response = await _client.get(Uri.parse('$_baseUrl/tools/progress'));
+    if (response.statusCode == 200) {
+      return json.decode(response.body) as Map<String, dynamic>;
+    } else {
+      throw Exception('Failed to get tool init progress: ${response.body}');
+    }
+  }
+
   // --- Recording Actions ---
 
   Future<void> processRecording(

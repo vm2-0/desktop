@@ -32,7 +32,8 @@ fn get_temp_dir() -> PathBuf {
     temp
 }
 
-/// Checks for ffmpeg in the PATH and in the temp directory
+
+/// Checks for ffmpeg in the PATH and temp directory
 ///
 /// # Returns
 /// * `PathBuf` containing the full file path if found, or an empty `PathBuf` if not found.
@@ -52,7 +53,7 @@ pub fn get_ffmpeg_dir() -> PathBuf {
     }
     log::info!("[FFmpeg] FFmpeg not found in PATH, checking temp directory");
 
-    // Check if ffmpeg exists in temp directory
+    // Check if ffmpeg exists in temp directory (runtime download)
     let temp_dir = get_temp_dir();
     if !temp_dir.exists() {
         return PathBuf::new();
@@ -72,7 +73,7 @@ pub fn get_ffmpeg_dir() -> PathBuf {
     PathBuf::new()
 }
 
-/// Checks for ffprobe in the PATH and in the temp directory
+/// Checks for ffprobe in the PATH and temp directory
 ///
 /// # Returns
 /// * `PathBuf` containing the full file path if found, or an empty `PathBuf` if not found.
@@ -92,7 +93,7 @@ pub fn get_ffprobe_dir() -> PathBuf {
     }
     log::info!("[FFmpeg] FFprobe not found in PATH, checking temp directory");
 
-    // Check if ffprobe exists in temp directory
+    // Check if ffprobe exists in temp directory (runtime download)
     let temp_dir = get_temp_dir();
     if !temp_dir.exists() {
         return PathBuf::new();

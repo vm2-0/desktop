@@ -14,7 +14,6 @@ class RecordOverlayControls extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final trainingSession = ref.watch(trainingSessionNotifierProvider);
-
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -68,6 +67,32 @@ class RecordOverlayControls extends ConsumerWidget {
                     strokeWidth: 0.5,
                     color: Colors.white,
                   ),
+                ),
+              ),
+            ),
+          ),
+        if (trainingSession.recordingState == RecordingState.off)
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Recording tools loading',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(width: 8),
+                    const SizedBox(
+                      width: 8,
+                      height: 8,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 0.5,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

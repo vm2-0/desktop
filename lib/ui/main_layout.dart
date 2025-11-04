@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:clones_desktop/application/onboarding_provider.dart';
 import 'package:clones_desktop/application/tauri_api.dart';
-import 'package:clones_desktop/application/tools_provider.dart';
+import 'package:clones_desktop/application/tool_status_modal_provider.dart';
+import 'package:clones_desktop/application/tool_status_provider.dart';
 import 'package:clones_desktop/ui/components/layout_background.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,8 +30,6 @@ class MainLayout extends ConsumerStatefulWidget {
 }
 
 class _MainLayoutState extends ConsumerState<MainLayout> {
-  Timer? _timer;
-
   @override
   void initState() {
     super.initState();
@@ -47,81 +46,40 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
   }
 
   Future<void> _initializeTools() async {
+    // Check if tools are already available
     final tauriApiClient = ref.read(tauriApiClientProvider);
-    const maxRetries = 10;
-    const retryDelay = Duration(seconds: 2);
-
-    // First check if agent is reachable
     try {
-      await tauriApiClient.checkTools();
-    } catch (e) {
-      debugPrint('Agent not yet reachable, will retry tool initialization: $e');
-    }
-
-    for (var i = 0; i < maxRetries; i++) {
-      try {
-        await tauriApiClient.initTools();
-        // If successful, start checking status and exit the loop
-        await _checkToolsStatus();
-        _timer = Timer.periodic(const Duration(seconds: 2), (timer) {
-          _checkToolsStatus();
-        });
-        return; // Exit the function on success
-      } catch (e) {
-        debugPrint('Failed to init tools (attempt ${i + 1}/$maxRetries): $e');
-        if (i < maxRetries - 1) {
-          await Future.delayed(retryDelay);
-        } else {
-          debugPrint('Could not initialize tools after $maxRetries attempts.');
-          // TODO(reddwarf03): Handle the final failure (e.g., show an error message to the user)
-        }
-      }
-    }
-  }
-
-  Future<void> _checkToolsStatus() async {
-    try {
-      final tauriApiClient = ref.read(tauriApiClientProvider);
       final status = await tauriApiClient.checkTools();
+      final ffmpegReady = status['ffmpeg'] ?? false;
+      final ffprobeReady = status['ffprobe'] ?? false;
 
-      const totalTools = 3;
-      var initializedTools = 0;
-      if (status['ffmpeg'] ?? false) initializedTools++;
-      if (status['ffprobe'] ?? false) initializedTools++;
-      if (status['cqa'] ?? false) initializedTools++;
-
-      final progress = (initializedTools / totalTools) * 100;
-
-      ref
-          .read(toolsInitProvider.notifier)
-          .setProgress(progress > 0 ? progress : 5.0);
-
-      if (initializedTools == totalTools) {
-        _timer?.cancel();
-        _timer = null;
-
-        ref.read(toolsInitProvider.notifier).setProgress(100);
-
-        Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) {
-            ref.read(toolsInitProvider.notifier).setInitializing(false);
-          }
-        });
-      } else {
+      // If tools are not ready, show informative dialog for first-time users
+      if (!ffmpegReady || !ffprobeReady) {
         if (mounted) {
-          ref.read(toolsInitProvider.notifier).setInitializing(true);
+          ref.watch(toolStatusNotifierProvider);
+          _showToolInitializationDialog();
+          final notifier = ref.read(toolStatusNotifierProvider.notifier);
+          unawaited(notifier.initializeTools());
         }
       }
-    } catch (error) {
-      debugPrint('Failed to check tools status: $error');
-      _timer?.cancel();
+    } catch (e) {
+      // Show modal and try initialization anyway
+      if (mounted) {
+        try {
+          ref.watch(toolStatusNotifierProvider);
+          _showToolInitializationDialog();
+          unawaited(
+            ref.read(toolStatusNotifierProvider.notifier).initializeTools(),
+          );
+        } catch (initError) {
+          // Silent fail - user will see error in modal
+        }
+      }
     }
   }
 
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
+  void _showToolInitializationDialog() {
+    ref.read(toolStatusModalProvider.notifier).show();
   }
 
   @override
