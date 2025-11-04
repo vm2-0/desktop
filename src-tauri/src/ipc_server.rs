@@ -39,7 +39,7 @@ use crate::commands::settings::{get_upload_data_allowed, set_upload_data_allowed
 // Import function from `utils/permissions`
 use crate::utils::permissions::has_ax_perms;
 // Import functions from `commands/tools`
-use crate::commands::tools::{check_tools, init_tools};
+use crate::commands::tools::{check_tools, get_tool_init_progress, init_tools};
 // Import functions from `core/record`
 use crate::core::record::process_recording;
 // Import functions from `utils/permissions`
@@ -228,6 +228,8 @@ pub async fn init(app_handle: AppHandle) {
         .route("/tools/init", post(init_tools_handler))
         // GET /tools/check: Check the status of external tools.
         .route("/tools/check", get(check_tools_handler))
+        // GET /tools/progress: Get the current tool initialization progress.
+        .route("/tools/progress", get(get_tool_init_progress_handler))
         // POST /recordings/:id/process: Trigger post-processing for a specific recording.
         .route("/recordings/:id/process", post(process_recording_handler))
         // GET /deeplink: Retrieve the latest deep link URL received by the application.
@@ -730,6 +732,13 @@ async fn init_tools_handler(
 async fn check_tools_handler() -> Result<impl IntoResponse, (StatusCode, String)> {
     match check_tools().await {
         Ok(status) => Ok((StatusCode::OK, Json(status))),
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    }
+}
+
+async fn get_tool_init_progress_handler() -> Result<impl IntoResponse, (StatusCode, String)> {
+    match get_tool_init_progress().await {
+        Ok(progress) => Ok((StatusCode::OK, Json(progress))),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }
