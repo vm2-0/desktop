@@ -20,7 +20,7 @@ use crate::commands::record::{
     start_recording, stop_recording, write_file, write_recording_file,
 };
 use crate::commands::settings::{get_upload_data_allowed, set_upload_data_allowed};
-use crate::commands::tools::{check_tools, init_tools};
+use crate::commands::tools::check_tools;
 use crate::commands::transaction::{
     cleanup_old_transactions, generate_session_token, generate_transaction_deep_link,
     get_transaction_request, handle_transaction_callback, list_pending_transactions,
@@ -76,7 +76,6 @@ pub fn setup_builder() -> tauri::Builder<tauri::Wry> {
             request_ax_perms,
             list_recordings,
             get_recording_file,
-            init_tools,
             check_tools,
             get_app_data_dir,
             write_file,
@@ -118,6 +117,39 @@ pub fn run() {
             {
                 // Hide the app icon from the Dock - this is a background agent
                 app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+            }
+
+            // Pre-initialize FFmpeg binaries to trigger macOS code signature verification
+            // This avoids 10-15 second delays on first recording start
+            // The verification is cached by macOS for subsequent executions
+            if let Err(e) = crate::tools::ffmpeg::init_ffmpeg() {
+                log::warn!("[Startup] Failed to pre-initialize FFmpeg: {}", e);
+            }
+            if let Err(e) = crate::tools::ffmpeg::init_ffprobe() {
+                log::warn!("[Startup] Failed to pre-initialize FFprobe: {}", e);
+            }
+            
+            // Pre-warm FFmpeg and FFprobe to trigger macOS Gatekeeper verification on first run
+            // This prevents 10-15 second delays when starting/stopping first recording
+            #[cfg(target_os = "macos")]
+            {
+                use crate::tools::ffmpeg::{FFMPEG_PATH, FFPROBE_PATH};
+                
+                if let Some(ffmpeg_path) = FFMPEG_PATH.get() {
+                    log::info!("[Startup] Pre-warming FFmpeg binary to trigger code signature verification...");
+                    let _ = std::process::Command::new(ffmpeg_path)
+                        .arg("-version")
+                        .output();
+                    log::info!("[Startup] FFmpeg pre-warmed successfully");
+                }
+                
+                if let Some(ffprobe_path) = FFPROBE_PATH.get() {
+                    log::info!("[Startup] Pre-warming FFprobe binary to trigger code signature verification...");
+                    let _ = std::process::Command::new(ffprobe_path)
+                        .arg("-version")
+                        .output();
+                    log::info!("[Startup] FFprobe pre-warmed successfully");
+                }
             }
 
             // Check if agent is launched in development mode

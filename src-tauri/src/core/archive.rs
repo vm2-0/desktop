@@ -1,4 +1,7 @@
 //! Archive extraction utilities for handling zip and tar.xz files, used to extract binaries for the application.
+//! Currently unused with embedded binaries but kept for potential future use.
+
+#![allow(dead_code)]
 
 use crate::tools::sanitize_and_check_path;
 use std::fs;

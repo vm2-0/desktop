@@ -1,55 +1,46 @@
-//! FFmpeg and FFprobe integration for video recording and processing.
+//! Simple FFmpeg binary management using embedded binaries.
 //!
-//! This module manages the download, initialization, and use of FFmpeg and FFprobe binaries, and provides a recorder struct for capturing video.
+//! This module provides access to FFmpeg and FFprobe binaries that are embedded
+//! directly in the project, eliminating the need for downloads or complex detection.
 
-use crate::core::archive;
-use crate::utils::downloader::download_file;
-use std::fs;
-use std::path::{Path, PathBuf};
-use std::process::Command;
-use std::sync::OnceLock;
+use once_cell::sync::OnceCell;
+use std::path::PathBuf;
 
-// #[cfg(not(target_os = "macos"))]
-use {
-    std::io::Write,
-    std::process::Stdio,
-    std::sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
-    std::thread,
-    std::time::Duration,
-};
+/// Global FFmpeg binary path
+pub static FFMPEG_PATH: OnceCell<PathBuf> = OnceCell::new();
 
-/// Path to the FFmpeg binary, initialized once per session.
-pub static FFMPEG_PATH: OnceLock<PathBuf> = OnceLock::new();
-/// Path to the FFprobe binary, initialized once per session.
-pub static FFPROBE_PATH: OnceLock<PathBuf> = OnceLock::new();
+/// Global FFprobe binary path
+pub static FFPROBE_PATH: OnceCell<PathBuf> = OnceCell::new();
 
-fn get_temp_dir() -> PathBuf {
-    let mut temp = std::env::temp_dir();
-    temp.push("clones-desktop");
-    temp
-}
+/// Get the embedded FFmpeg binary path for the current platform
+pub fn get_embedded_ffmpeg_path() -> Option<PathBuf> {
+    if let Ok(exe_path) = std::env::current_exe() {
+        if let Some(exe_dir) = exe_path.parent() {
+            // In development, binaries are in src-tauri/binaries/
+            if exe_dir.to_string_lossy().contains("/target/debug") {
+                let project_root = exe_dir.parent()?.parent()?.parent()?; // target/debug -> target -> src-tauri -> project
+                return Some(
+                    project_root
+                        .join("src-tauri/binaries")
+                        .join(get_platform_dir())
+                        .join(get_ffmpeg_name()),
+                );
+            }
 
-/// Get build-time pre-downloaded FFmpeg path
-fn get_build_time_ffmpeg_path() -> Option<PathBuf> {
-    // Build-time tools are embedded in the app bundle
-    if let Ok(exe_dir) = std::env::current_exe() {
-        if let Some(exe_parent) = exe_dir.parent() {
-            // On macOS, check in Resources directory of app bundle
-            #[cfg(target_os = "macos")]
-            {
-                let resources_path = exe_parent.join("../Resources/tools");
-                let ffmpeg_path = resources_path.join("ffmpeg");
-                if ffmpeg_path.exists() && ffmpeg_path.is_file() {
+            // In production app bundle (macOS/Windows):
+            // Agent is in a subdirectory: app_root/agent/clones-desktop(.exe)
+            // FFmpeg is at: app_root/ffmpeg-binaries/
+            // So we need to go up one level from the agent directory
+            if let Some(app_root) = exe_dir.parent() {
+                let ffmpeg_path = app_root.join("ffmpeg-binaries").join(get_ffmpeg_name());
+                if ffmpeg_path.exists() {
                     return Some(ffmpeg_path);
                 }
             }
-            
-            // Fallback: check next to executable
-            let ffmpeg_path = exe_parent.join(if cfg!(windows) { "ffmpeg.exe" } else { "ffmpeg" });
-            if ffmpeg_path.exists() && ffmpeg_path.is_file() {
+
+            // Fallback: try next to executable (for other deployment scenarios)
+            let ffmpeg_path = exe_dir.join("ffmpeg-binaries").join(get_ffmpeg_name());
+            if ffmpeg_path.exists() {
                 return Some(ffmpeg_path);
             }
         }
@@ -57,24 +48,35 @@ fn get_build_time_ffmpeg_path() -> Option<PathBuf> {
     None
 }
 
-/// Get build-time pre-downloaded FFprobe path
-fn get_build_time_ffprobe_path() -> Option<PathBuf> {
-    // Build-time tools are embedded in the app bundle
-    if let Ok(exe_dir) = std::env::current_exe() {
-        if let Some(exe_parent) = exe_dir.parent() {
-            // On macOS, check in Resources directory of app bundle
-            #[cfg(target_os = "macos")]
-            {
-                let resources_path = exe_parent.join("../Resources/tools");
-                let ffprobe_path = resources_path.join("ffprobe");
-                if ffprobe_path.exists() && ffprobe_path.is_file() {
+/// Get the embedded FFprobe binary path for the current platform
+pub fn get_embedded_ffprobe_path() -> Option<PathBuf> {
+    if let Ok(exe_path) = std::env::current_exe() {
+        if let Some(exe_dir) = exe_path.parent() {
+            // In development, binaries are in src-tauri/binaries/
+            if exe_dir.to_string_lossy().contains("/target/debug") {
+                let project_root = exe_dir.parent()?.parent()?.parent()?; // target/debug -> target -> src-tauri -> project
+                return Some(
+                    project_root
+                        .join("src-tauri/binaries")
+                        .join(get_platform_dir())
+                        .join(get_ffprobe_name()),
+                );
+            }
+
+            // In production app bundle (macOS/Windows):
+            // Agent is in a subdirectory: app_root/agent/clones-desktop(.exe)
+            // FFmpeg is at: app_root/ffmpeg-binaries/
+            // So we need to go up one level from the agent directory
+            if let Some(app_root) = exe_dir.parent() {
+                let ffprobe_path = app_root.join("ffmpeg-binaries").join(get_ffprobe_name());
+                if ffprobe_path.exists() {
                     return Some(ffprobe_path);
                 }
             }
-            
-            // Fallback: check next to executable
-            let ffprobe_path = exe_parent.join(if cfg!(windows) { "ffprobe.exe" } else { "ffprobe" });
-            if ffprobe_path.exists() && ffprobe_path.is_file() {
+
+            // Fallback: try next to executable (for other deployment scenarios)
+            let ffprobe_path = exe_dir.join("ffmpeg-binaries").join(get_ffprobe_name());
+            if ffprobe_path.exists() {
                 return Some(ffprobe_path);
             }
         }
@@ -82,440 +84,107 @@ fn get_build_time_ffprobe_path() -> Option<PathBuf> {
     None
 }
 
-
-/// Checks for ffmpeg in PATH, build-time location, and temp directory
-///
-/// # Returns
-/// * `PathBuf` containing the full file path if found, or an empty `PathBuf` if not found.
-pub fn get_ffmpeg_dir() -> PathBuf {
-    // First check if ffmpeg is in PATH
-    let mut command = Command::new("ffmpeg");
-    #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt;
-        command.creation_flags(0x08000000); // CREATE_NO_WINDOW constant
+/// Get the platform-specific directory name
+fn get_platform_dir() -> &'static str {
+    if cfg!(target_os = "macos") {
+        "macos"
+    } else if cfg!(target_os = "windows") {
+        "windows"
+    } else {
+        "linux"
     }
-    if let Ok(output) = command.arg("-version").output() {
-        if output.status.success() {
-            log::info!("[FFmpeg] Found FFmpeg in system PATH");
-            return "ffmpeg".into();
-        }
-    }
+}
 
-    // Second check for build-time pre-downloaded binaries
-    if let Some(build_time_path) = get_build_time_ffmpeg_path() {
-        log::info!("[FFmpeg] Found FFmpeg at build-time location: {}", build_time_path.display());
-        return build_time_path;
-    }
-
-    log::info!("[FFmpeg] FFmpeg not found in PATH or build-time location, checking temp directory");
-
-    // Third check if ffmpeg exists in temp directory (runtime download)
-    let temp_dir = get_temp_dir();
-    if !temp_dir.exists() {
-        return PathBuf::new();
-    }
-
-    let ffmpeg_path = temp_dir.join(if cfg!(windows) {
+/// Get the platform-specific FFmpeg binary name
+fn get_ffmpeg_name() -> &'static str {
+    if cfg!(target_os = "windows") {
         "ffmpeg.exe"
     } else {
         "ffmpeg"
-    });
-
-    if ffmpeg_path.exists() {
-        return ffmpeg_path;
     }
-
-    // Not found or not working
-    PathBuf::new()
 }
 
-/// Checks for ffprobe in the PATH and temp directory
-///
-/// # Returns
-/// * `PathBuf` containing the full file path if found, or an empty `PathBuf` if not found.
-pub fn get_ffprobe_dir() -> PathBuf {
-    // First check if ffprobe is in PATH
-    let mut command = Command::new("ffprobe");
-    #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt;
-        command.creation_flags(0x08000000); // CREATE_NO_WINDOW constant
-    }
-    if let Ok(output) = command.arg("-version").output() {
-        if output.status.success() {
-            log::info!("[FFmpeg] Found FFprobe in system PATH");
-            return "ffprobe".into();
-        }
-    }
-
-    // Second check for build-time pre-downloaded binaries
-    if let Some(build_time_path) = get_build_time_ffprobe_path() {
-        log::info!("[FFmpeg] Found FFprobe at build-time location: {}", build_time_path.display());
-        return build_time_path;
-    }
-
-    log::info!("[FFmpeg] FFprobe not found in PATH or build-time location, checking temp directory");
-
-    // Third check if ffprobe exists in temp directory (runtime download)
-    let temp_dir = get_temp_dir();
-    if !temp_dir.exists() {
-        return PathBuf::new();
-    }
-
-    let ffprobe_path = temp_dir.join(if cfg!(windows) {
+/// Get the platform-specific FFprobe binary name
+fn get_ffprobe_name() -> &'static str {
+    if cfg!(target_os = "windows") {
         "ffprobe.exe"
     } else {
         "ffprobe"
-    });
-
-    if ffprobe_path.exists() {
-        // Verify the binary works
-        return ffprobe_path;
-    }
-
-    // Not found or not working
-    PathBuf::new()
-}
-
-/// Extracts binary from archive based on OS type
-fn extract_binary(
-    archive_path: &Path,
-    binary_path: &Path,
-    binary_name: &str,
-    os_type: &str,
-) -> Result<bool, String> {
-    if os_type.starts_with("windows") {
-        // For Windows, look for bin/ffmpeg.exe or bin/ffprobe.exe
-        archive::extract_from_zip(
-            archive_path,
-            binary_path,
-            &format!("/bin/{}.exe", binary_name),
-        )
-    } else if os_type.starts_with("macos") {
-        // For macOS, just look for the binary name
-        archive::extract_from_zip(archive_path, binary_path, binary_name)
-    } else if os_type.starts_with("linux") {
-        // For Linux, we need to handle ffmpeg vs ffprobe differently
-        let exclude_pattern = if binary_name == "ffmpeg" {
-            Some("ffprobe")
-        } else {
-            None
-        };
-
-        archive::extract_from_tar_xz(archive_path, binary_path, binary_name, exclude_pattern)
-    } else {
-        Err(format!("Unsupported OS type: {}", os_type))
     }
 }
 
-/// Downloads and extracts a binary from an archive
-/// If keep_archive is true, the archive file will not be deleted after extraction
-/// If url is empty, it assumes the archive already exists and skips the download step
-fn download_and_extract_binary(
-    url: &str,
-    archive_path: &Path,
-    binary_path: &Path,
-    binary_name: &str,
-    os_type: &str,
-    keep_archive: bool,
-) -> Result<(), String> {
-    // We'll use this to track if we've already attempted a retry
-    let mut retry_attempted = false;
-
-    // Function to handle the download process
-    let download_archive = || -> Result<(), String> {
-        if !url.is_empty() {
-            log::info!(
-                "[FFmpeg] Downloading {} for {} from {}",
-                binary_name,
-                os_type,
-                url
-            );
-
-            // Download the archive
-            download_file(url, archive_path)?;
-        } else {
-            // Just using existing archive, no download needed
-            if !archive_path.exists() {
-                return Err(format!(
-                    "Archive file not found at {}",
-                    archive_path.display()
-                ));
-            }
-            log::info!(
-                "[FFmpeg] Using existing archive for {} at {}",
-                binary_name,
-                archive_path.display()
-            );
-        }
-        Ok(())
-    };
-
-    // Initial download attempt
-    if !archive_path.exists() || url.is_empty() {
-        download_archive()?;
-    } else {
-        log::info!(
-            "[FFmpeg] Using existing archive for {} at {}",
-            binary_name,
-            archive_path.display()
-        );
-    }
-
-    // Extraction process with retry logic
-    loop {
-        log::info!("[FFmpeg] Extracting {} from archive", binary_name);
-
-        match extract_binary(archive_path, binary_path, binary_name, os_type) {
-            Ok(true) => {
-                // Binary was found and extracted successfully
-                break;
-            }
-            Ok(false) => {
-                // Archive was processed but binary wasn't found
-                let error_msg = format!("Could not find {} binary in archive", binary_name);
-                log::info!("[FFmpeg] Error: {}", error_msg);
-                return Err(error_msg);
-            }
-            Err(e) if e == "RETRY_NEEDED" && !retry_attempted => {
-                // Need to retry - download again
-                log::info!("[FFmpeg] Retrying download after archive corruption");
-                retry_attempted = true;
-
-                // Delete corrupted archive
-                if let Err(del_err) = fs::remove_file(archive_path) {
-                    log::info!(
-                        "[FFmpeg] Warning: Failed to delete corrupted archive: {}",
-                        del_err
-                    );
-                }
-
-                // Re-download if URL was provided
-                if !url.is_empty() {
-                    download_file(url, archive_path)?;
-                } else {
-                    return Err("Archive is corrupted and no URL provided for retry".to_string());
-                }
-
-                continue;
-            }
-            Err(e) => {
-                // Any other error or retry already attempted
-                return Err(e);
-            }
-        }
-    }
-
-    // Make executable on Unix
-    #[cfg(unix)]
-    archive::make_file_executable(binary_path)?;
-
-    // Clean up archive file if not keeping it
-    if !keep_archive {
-        archive::cleanup_archive(archive_path)?;
-    }
-
-    Ok(())
-}
-
-/// Initialize both FFmpeg and FFprobe binaries.
-///
-/// # Returns
-/// * `Ok(())` if both binaries were initialized successfully.
-/// * `Err` if initialization failed.
-pub fn init_ffmpeg_and_ffprobe() -> Result<(), String> {
-    // Initialize FFmpeg first
-    init_ffmpeg()?;
-
-    // Then initialize FFprobe
-    init_ffprobe()?;
-
-    Ok(())
-}
-
-/// Initialize the FFmpeg binary.
-///
-/// # Returns
-/// * `Ok(())` if FFmpeg was initialized successfully.
-/// * `Err` if initialization failed.
+/// Initialize FFmpeg binary path (now just sets the global path)
 pub fn init_ffmpeg() -> Result<(), String> {
     if FFMPEG_PATH.get().is_some() {
         log::info!("[FFmpeg] FFmpeg already initialized");
         return Ok(());
     }
 
-    log::info!("[FFmpeg] Initializing FFmpeg");
-
-    // Check for existing ffmpeg
-    let ffmpeg_path = get_ffmpeg_dir();
-
-    // If ffmpeg binary is found and working, use it
-    if !ffmpeg_path.as_os_str().is_empty() {
-        log::info!(
-            "[FFmpeg] Using existing FFmpeg binary at {}",
-            ffmpeg_path.display()
-        );
-        if let Err(_) = FFMPEG_PATH.set(ffmpeg_path.clone()) {
-            log::warn!("[FFmpeg] FFMPEG_PATH already set, skipping");
+    if let Some(path) = get_embedded_ffmpeg_path() {
+        if path.exists() {
+            log::info!("[FFmpeg] Using embedded FFmpeg at: {}", path.display());
+            FFMPEG_PATH
+                .set(path)
+                .map_err(|_| "Failed to set FFmpeg path")?;
+            return Ok(());
         }
-        return Ok(());
     }
 
-    // Need to download the binary
-    log::info!("[FFmpeg] Need to download FFmpeg binary");
-
-    // Ensure temp directory exists
-    let temp_dir = get_temp_dir();
-    fs::create_dir_all(&temp_dir).map_err(|e| {
-        log::info!("[FFmpeg] Error: Failed to create temp directory: {}", e);
-        format!("Failed to create temp directory: {}", e)
-    })?;
-
-    // Define path for the binary we'll download
-    let ffmpeg_path = temp_dir.join(if cfg!(windows) {
-        "ffmpeg.exe"
-    } else {
-        "ffmpeg"
-    });
-
-    // Remove any existing binary that might be corrupted
-    if ffmpeg_path.exists() {
-        log::info!("[FFmpeg] Removing existing FFmpeg binary for fresh download");
-        let _ = fs::remove_file(&ffmpeg_path);
-    }
-
-    // Download and extract FFmpeg
-    let (url, os) = if cfg!(windows) {
-        (get_ffmpeg_url_windows(), "windows")
-    } else if cfg!(target_os = "macos") {
-        (get_ffmpeg_url_macos(), "macos")
-    } else {
-        (get_ffmpeg_url_linux(), "linux")
-    };
-
-    let archive_path = temp_dir.join("ffmpeg.archive");
-
-    // On Windows and Linux, we need to keep the archive for ffprobe extraction
-    #[cfg(not(target_os = "macos"))]
-    let keep_archive = true;
-    #[cfg(target_os = "macos")]
-    let keep_archive = false;
-
-    download_and_extract_binary(
-        &url,
-        &archive_path,
-        &ffmpeg_path,
-        "ffmpeg",
-        os,
-        keep_archive,
-    )?;
-
-    // Set the path
-    log::info!(
-        "[FFmpeg] FFmpeg successfully initialized in {:?}",
-        ffmpeg_path
-    );
-    if let Err(_) = FFMPEG_PATH.set(ffmpeg_path.clone()) {
-        log::warn!("[FFmpeg] FFMPEG_PATH already set during download, skipping");
-    }
-    Ok(())
+    Err("Embedded FFmpeg binary not found".to_string())
 }
 
-/// Initialize the FFprobe binary.
-///
-/// # Returns
-/// * `Ok(())` if FFprobe was initialized successfully.
-/// * `Err` if initialization failed.
+/// Initialize FFprobe binary path (now just sets the global path)
 pub fn init_ffprobe() -> Result<(), String> {
     if FFPROBE_PATH.get().is_some() {
         log::info!("[FFmpeg] FFprobe already initialized");
         return Ok(());
     }
 
-    log::info!("[FFmpeg] Initializing FFprobe");
-
-    // Check for existing ffprobe
-    let ffprobe_path = get_ffprobe_dir();
-
-    // If ffprobe binary is found and working, use it
-    if !ffprobe_path.as_os_str().is_empty() {
-        log::info!(
-            "[FFmpeg] Using existing FFprobe binary at {}",
-            ffprobe_path.display()
-        );
-        if let Err(_) = FFPROBE_PATH.set(ffprobe_path.clone()) {
-            log::warn!("[FFmpeg] FFPROBE_PATH already set, skipping");
+    if let Some(path) = get_embedded_ffprobe_path() {
+        if path.exists() {
+            log::info!("[FFmpeg] Using embedded FFprobe at: {}", path.display());
+            FFPROBE_PATH
+                .set(path)
+                .map_err(|_| "Failed to set FFprobe path")?;
+            return Ok(());
         }
-        return Ok(());
     }
 
-    // Need to download the binary
-    log::info!("[FFmpeg] Need to download FFprobe binary");
-
-    // Ensure temp directory exists
-    let temp_dir = get_temp_dir();
-    fs::create_dir_all(&temp_dir).map_err(|e| {
-        log::info!("[FFmpeg] Error: Failed to create temp directory: {}", e);
-        format!("Failed to create temp directory: {}", e)
-    })?;
-
-    // Define path for the binary we'll download
-    let ffprobe_path = temp_dir.join(if cfg!(windows) {
-        "ffprobe.exe"
-    } else {
-        "ffprobe"
-    });
-
-    // Remove any existing binary that might be corrupted
-    if ffprobe_path.exists() {
-        log::info!("[FFmpeg] Removing existing FFprobe binary for fresh download");
-        let _ = fs::remove_file(&ffprobe_path);
-    }
-
-    // For macOS, FFprobe has a separate download URL
-    #[cfg(target_os = "macos")]
-    {
-        let archive_path = temp_dir.join("ffprobe.archive");
-        let url = get_ffprobe_url_macos();
-        download_and_extract_binary(
-            &url,
-            &archive_path,
-            &ffprobe_path,
-            "ffprobe",
-            "macos",
-            false, // On macOS, ffprobe has its own archive, so we don't need to keep it
-        )?;
-    }
-
-    // For Windows and Linux, FFprobe is included in the same archive as FFmpeg
-    #[cfg(not(target_os = "macos"))]
-    {
-        // We need to use the FFmpeg archive which contains FFprobe
-        let (url, os) = if cfg!(windows) {
-            (get_ffmpeg_url_windows(), "windows")
-        } else if cfg!(target_os = "macos") {
-            (get_ffmpeg_url_macos(), "macos")
-        } else {
-            (get_ffmpeg_url_linux(), "linux")
-        };
-
-        let archive_path = temp_dir.join("ffmpeg.archive");
-        download_and_extract_binary(&url, &archive_path, &ffprobe_path, "ffprobe", os, true)?;
-    }
-
-    // Set the path
-    log::info!(
-        "[FFmpeg] FFprobe successfully initialized in {:?}",
-        ffprobe_path
-    );
-    if let Err(_) = FFPROBE_PATH.set(ffprobe_path.clone()) {
-        log::warn!("[FFmpeg] FFPROBE_PATH already set during download, skipping");
-    }
-    Ok(())
+    Err("Embedded FFprobe binary not found".to_string())
 }
 
-// #[cfg(not(target_os = "macos"))]
+/// Get the FFmpeg binary path
+pub fn get_ffmpeg_dir() -> PathBuf {
+    FFMPEG_PATH.get().cloned().unwrap_or_default()
+}
+
+/// Get the FFprobe binary path  
+pub fn get_ffprobe_dir() -> PathBuf {
+    FFPROBE_PATH.get().cloned().unwrap_or_default()
+}
+
+/// Check if FFmpeg is available
+#[allow(dead_code)]
+pub fn is_ffmpeg_available() -> bool {
+    get_embedded_ffmpeg_path().map_or(false, |p| p.exists())
+}
+
+/// Check if FFprobe is available
+#[allow(dead_code)]
+pub fn is_ffprobe_available() -> bool {
+    get_embedded_ffprobe_path().map_or(false, |p| p.exists())
+}
+
+use std::io::Write;
+use std::process::{Command, Stdio};
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
+use std::thread;
+use std::time::Duration;
+
+/// FFmpeg recorder structure for video recording
 pub struct FFmpegRecorder {
     width: u32,
     height: u32,
@@ -528,20 +197,8 @@ pub struct FFmpegRecorder {
     pub ready_signal: Arc<AtomicBool>,
 }
 
-// #[cfg(not(target_os = "macos"))]
 impl FFmpegRecorder {
-    /// Creates a new `FFmpegRecorder` with the specified input format and device.
-    ///
-    /// # Arguments
-    /// * `width` - Video width in pixels.
-    /// * `height` - Video height in pixels.
-    /// * `fps` - Frames per second.
-    /// * `output_path` - Path to the output video file.
-    /// * `input_format` - Input format string (e.g., "gdigrab", "avfoundation").
-    /// * `input_device` - Input device string.
-    ///
-    /// # Returns
-    /// * `FFmpegRecorder` instance.
+    /// Create a new FFmpeg recorder with input
     pub fn new_with_input(
         width: u32,
         height: u32,
@@ -549,7 +206,7 @@ impl FFmpegRecorder {
         output_path: PathBuf,
         input_format: String,
         input_device: String,
-    ) -> Self {
+    ) -> Result<Self, String> {
         log::info!(
             "[FFmpeg] Creating new recorder with input format {}: {}x{} @ {} fps -> {}",
             input_format,
@@ -559,7 +216,7 @@ impl FFmpegRecorder {
             output_path.display()
         );
 
-        Self {
+        Ok(Self {
             width,
             height,
             fps,
@@ -568,11 +225,10 @@ impl FFmpegRecorder {
             input_format: Some(input_format),
             input_device: Some(input_device),
             ready_signal: Arc::new(AtomicBool::new(false)),
-        }
+        })
     }
 
     /// Wait for FFmpeg to be ready (capturing frames)
-    /// Returns true if ready within timeout, false otherwise
     pub fn wait_until_ready(&self, timeout_ms: u64) -> bool {
         let start = std::time::Instant::now();
         let timeout = Duration::from_millis(timeout_ms);
@@ -592,11 +248,7 @@ impl FFmpegRecorder {
         false
     }
 
-    /// Starts the recording process using FFmpeg.
-    ///
-    /// # Returns
-    /// * `Ok(())` if recording started successfully.
-    /// * `Err` if FFmpeg could not be started or failed immediately.
+    /// Start the recording process
     pub fn start(&mut self) -> Result<(), String> {
         log::info!(
             "[FFmpeg] Starting recording: {}x{} @ {} fps",
@@ -604,10 +256,9 @@ impl FFmpegRecorder {
             self.height,
             self.fps
         );
-        let ffmpeg = FFMPEG_PATH.get().ok_or_else(|| {
-            log::info!("[FFmpeg] Error: FFmpeg not initialized");
-            "FFmpeg not initialized".to_string()
-        })?;
+
+        let ffmpeg_path = get_embedded_ffmpeg_path()
+            .ok_or_else(|| "Embedded FFmpeg binary not found".to_string())?;
 
         let mut args: Vec<String> = Vec::new();
 
@@ -624,37 +275,12 @@ impl FFmpegRecorder {
 
             // Platform specific options
             if format == "gdigrab" {
-                args.extend([
-                    "-draw_mouse".to_string(),
-                    "1".to_string(),
-                    "-offset_x".to_string(),
-                    "0".to_string(),
-                    "-offset_y".to_string(),
-                    "0".to_string(),
-                    "-probesize".to_string(),
-                    "10M".to_string(),
-                    "-thread_queue_size".to_string(),
-                    "1024".to_string(),
-                ]);
+                args.extend(["-draw_mouse".to_string(), "1".to_string()]);
             } else if format == "avfoundation" {
                 args.extend(["-capture_cursor".to_string(), "1".to_string()]);
             }
 
             args.extend(["-i".to_string(), device.clone()]);
-        } else {
-            // Fallback to raw video input
-            args.extend([
-                "-f".to_string(),
-                "rawvideo".to_string(),
-                "-pixel_format".to_string(),
-                "rgb24".to_string(),
-                "-video_size".to_string(),
-                format!("{}x{}", self.width, self.height),
-                "-framerate".to_string(),
-                self.fps.to_string(),
-                "-i".to_string(),
-                "-".to_string(), // Read from stdin
-            ]);
         }
 
         // Output encoding args
@@ -664,285 +290,85 @@ impl FFmpegRecorder {
             "-preset".to_string(),
             "ultrafast".to_string(),
             "-crf".to_string(),
-            "23".to_string(), // Balance between quality and file size
+            "23".to_string(),
             "-pix_fmt".to_string(),
-            "yuv420p".to_string(), // Required for compatibility
-            "-movflags".to_string(),
-            "+faststart".to_string(), // Enable streaming playback
-            "-profile:v".to_string(),
-            "high".to_string(),
-            "-tune".to_string(),
-            "zerolatency".to_string(), // Reduce encoding latency
-            "-y".to_string(),          // Overwrite output file
+            "yuv420p".to_string(),
+            "-y".to_string(),
             self.output_path.to_str().unwrap().to_string(),
         ]);
 
-        log::info!("[FFmpeg] Command: {} {}", ffmpeg.display(), args.join(" "));
-        let mut command = Command::new(ffmpeg);
+        log::info!(
+            "[FFmpeg] Command: {} {}",
+            ffmpeg_path.display(),
+            args.join(" ")
+        );
+
+        let mut command = Command::new(&ffmpeg_path);
         #[cfg(windows)]
         {
             use std::os::windows::process::CommandExt;
-            command.creation_flags(0x08000000); // CREATE_NO_WINDOW constant
+            command.creation_flags(0x08000000);
         }
+
         let mut process = command
             .args(&args)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
-            .map_err(|e| {
-                log::info!("[FFmpeg] Error: Failed to start process: {}", e);
-                format!("Failed to start FFmpeg: {}", e)
-            })?;
+            .map_err(|e| format!("Failed to start FFmpeg: {}", e))?;
 
-        // Spawn threads to handle stdout and stderr in real-time
-        if let Some(stdout) = process.stdout.take() {
-            let stdout_reader = std::io::BufReader::new(stdout);
-            thread::spawn(move || {
-                use std::io::BufRead;
-                for line in stdout_reader.lines() {
-                    if let Ok(line) = line {
-                        log::info!("[FFmpeg] stdout: {}", line);
-                        let _ = crate::core::record::log_ffmpeg(&line, false);
-                    }
-                }
-            });
-        }
-
+        // Handle stderr for ready signal
         if let Some(stderr) = process.stderr.take() {
-            let stderr_reader = std::io::BufReader::new(stderr);
             let ready_signal = self.ready_signal.clone();
             thread::spawn(move || {
-                use std::io::BufRead;
+                use std::io::{BufRead, BufReader};
+                let stderr_reader = BufReader::new(stderr);
                 for line in stderr_reader.lines() {
                     if let Ok(line) = line {
                         log::info!("[FFmpeg] stderr: {}", line);
-
-                        // Detect when FFmpeg is ready to capture
-                        // "Press [q] to stop" indicates FFmpeg has started encoding
                         if line.contains("Press [q] to stop") {
-                            log::info!(
-                                "[FFmpeg] Ready signal detected: FFmpeg is capturing frames"
-                            );
+                            log::info!("[FFmpeg] Ready signal detected");
                             ready_signal.store(true, Ordering::Relaxed);
                         }
-
-                        let _ = crate::core::record::log_ffmpeg(&line, true);
                     }
                 }
             });
         }
 
-        // Check if process died immediately and capture any error output
-        match process.try_wait() {
-            Ok(Some(status)) => {
-                // Process exited immediately
-                let mut error_msg =
-                    format!("FFmpeg process exited immediately with status: {}", status);
-
-                // Try to capture any error output
-                if let Some(mut stderr) = process.stderr.take() {
-                    let mut error_output = String::new();
-                    if std::io::Read::read_to_string(&mut stderr, &mut error_output).is_ok()
-                        && !error_output.is_empty()
-                    {
-                        error_msg = format!("{}\nFFmpeg error output: {}", error_msg, error_output);
-
-                        // Check for common Windows-specific errors
-                        if cfg!(windows) {
-                            if error_output.contains("Could not find video device") {
-                                error_msg = format!("{}\nHint: On Windows, make sure you have permission to access screen recording.", error_msg);
-                            } else if error_output.contains("Permission denied") {
-                                error_msg = format!(
-                                    "{}\nHint: Try running the application as administrator.",
-                                    error_msg
-                                );
-                            }
-                        }
-                    }
-                }
-
-                // Cleanup any partial output file
-                if self.output_path.exists() {
-                    if let Err(e) = fs::remove_file(&self.output_path) {
-                        log::info!(
-                            "[FFmpeg] Warning: Failed to cleanup partial output file: {}",
-                            e
-                        );
-                    }
-                }
-
-                log::info!("[FFmpeg] Error: {}", error_msg);
-                return Err(error_msg);
-            }
-            Ok(None) => {
-                // Process is still running, which is what we want
-                log::info!("[FFmpeg] Process started successfully");
-
-                // On Windows, verify we can write to the output directory
-                if cfg!(windows) {
-                    if let Some(parent) = self.output_path.parent() {
-                        if !parent.exists() {
-                            if let Err(e) = fs::create_dir_all(parent) {
-                                let error_msg = format!("Failed to create output directory: {}", e);
-                                log::info!("[FFmpeg] Error: {}", error_msg);
-                                return Err(error_msg);
-                            }
-                        }
-                        // Try creating a test file to verify write permissions
-                        let test_file = parent.join(".test_write");
-                        if let Err(e) = fs::write(&test_file, b"test") {
-                            let error_msg =
-                                format!("No write permission in output directory: {}", e);
-                            log::info!("[FFmpeg] Error: {}", error_msg);
-                            return Err(error_msg);
-                        }
-                        let _ = fs::remove_file(test_file); // Cleanup test file
-                    }
-                }
-
-                self.process = Some(process);
-                Ok(())
-            }
-            Err(e) => {
-                log::info!("[FFmpeg] Error: Failed to check process status: {}", e);
-                Err(format!("Failed to check FFmpeg process status: {}", e))
-            }
-        }
-    }
-
-    /// Stops the recording process gracefully.
-    ///
-    /// # Returns
-    /// * `Ok(())` if recording stopped successfully.
-    /// * `Err` if the process could not be stopped.
-    pub fn stop(&mut self) -> Result<(), String> {
-        log::info!("[FFmpeg] Stopping recording");
-        if let Some(mut process) = self.process.take() {
-            // Send 'q' to FFmpeg to stop recording gracefully
-            if let Some(mut stdin) = process.stdin.take() {
-                if let Err(e) = stdin.write_all(b"q") {
-                    log::info!("[FFmpeg] Warning: Failed to send quit command: {}", e);
-                    // Continue with the process termination even if we couldn't write to stdin
-                }
-            }
-
-            log::info!("[FFmpeg] Waiting for process to finish with timeout");
-
-            // Give FFmpeg a chance to exit gracefully
-            let timeout = Duration::from_secs(15);
-            let start_time = std::time::Instant::now();
-
-            // Try waiting with a timeout
-            loop {
-                match process.try_wait() {
-                    Ok(Some(_status)) => {
-                        // Process exited naturally
-                        log::info!("[FFmpeg] Process exited gracefully");
-                        break;
-                    }
-                    Ok(None) => {
-                        // Process still running
-                        if start_time.elapsed() >= timeout {
-                            // Timeout reached, kill the process
-                            log::warn!("[FFmpeg] Timeout reached after 15s, killing process");
-                            if let Err(e) = process.kill() {
-                                log::error!("[FFmpeg] Failed to kill process: {}", e);
-                                return Err(format!("Failed to kill FFmpeg process: {}", e));
-                            }
-                            break;
-                        }
-                        // Sleep a bit before checking again
-                        thread::sleep(Duration::from_millis(100));
-                    }
-                    Err(e) => {
-                        log::error!("[FFmpeg] Failed to check process status: {}", e);
-                        if let Err(kill_err) = process.kill() {
-                            log::error!("[FFmpeg] Failed to kill process after status check error: {}", kill_err);
-                            return Err(format!("Failed to kill FFmpeg process: {}", kill_err));
-                        }
-                        break;
-                    }
-                }
-            }
-
-            // Wait for any remaining cleanup
-            match process.wait() {
-                Ok(status) => {
-                    if !status.success() {
-                        log::warn!("[FFmpeg] Process exited with non-zero status: {}", status);
-                    }
-                }
-                Err(e) => {
-                    log::error!("[FFmpeg] Error waiting for process: {}", e);
-                    return Err(format!("Error waiting for FFmpeg process: {}", e));
-                }
-            }
-
-            // Check if output file exists and has size
-            if !self.output_path.exists() {
-                log::error!(
-                    "[FFmpeg] Failed to create output file at {}",
-                    self.output_path.display()
-                );
-                return Err("FFmpeg failed to create output file".to_string());
-            }
-
-            let file_size = fs::metadata(&self.output_path)
-                .map_err(|e| {
-                    log::error!("[FFmpeg] Failed to get output file metadata: {}", e);
-                    format!("Failed to get output file metadata: {}", e)
-                })?
-                .len();
-
-            if file_size == 0 {
-                log::error!(
-                    "[FFmpeg] Created empty output file at {}",
-                    self.output_path.display()
-                );
-                return Err("FFmpeg created empty output file".to_string());
-            }
-
-            log::info!(
-                "[FFmpeg] Recording saved successfully: {} ({} bytes)",
-                self.output_path.display(),
-                file_size
-            );
-        } else {
-            log::info!("[FFmpeg] No active process to stop");
-        }
+        self.process = Some(process);
         Ok(())
     }
 
-    /// Force kill the recording process immediately (no grace period).
-    /// Use for emergency shutdown paths (app crash, parent death, lifeline EOF).
+    /// Stop the recorder
+    pub fn stop(&mut self) -> Result<(), String> {
+        log::info!("[FFmpeg] Stopping recording");
+        if let Some(mut process) = self.process.take() {
+            // Send 'q' to FFmpeg
+            if let Some(mut stdin) = process.stdin.take() {
+                let _ = stdin.write_all(b"q");
+            }
+
+            // Wait for process to exit
+            match process.wait() {
+                Ok(_) => {
+                    log::info!("[FFmpeg] Recording stopped successfully");
+                    Ok(())
+                }
+                Err(e) => Err(format!("Failed to stop FFmpeg: {}", e)),
+            }
+        } else {
+            Ok(())
+        }
+    }
+
+    /// Force kill the process
     pub fn force_kill(&mut self) {
         if let Some(mut process) = self.process.take() {
             if let Err(e) = process.kill() {
                 log::error!("[FFmpeg] Failed to force kill process: {}", e);
             }
-            if let Err(e) = process.wait() {
-                log::error!("[FFmpeg] Failed to wait for killed process: {}", e);
-            }
+            let _ = process.wait();
         }
     }
-}
-
-fn get_ffmpeg_url_windows() -> String {
-    std::env::var("FFMPEG_URL_WIN").unwrap_or_else(|_| {
-        "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip".to_string()
-    })
-}
-fn get_ffmpeg_url_linux() -> String {
-    std::env::var("FFMPEG_URL_LINUX").unwrap_or_else(|_| {
-        "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl-shared.tar.xz".to_string()
-    })
-}
-fn get_ffmpeg_url_macos() -> String {
-    std::env::var("FFMPEG_URL_MACOS")
-        .unwrap_or_else(|_| "https://www.osxexperts.net/ffmpeg71intel.zip".to_string())
-}
-fn get_ffprobe_url_macos() -> String {
-    std::env::var("FFPROBE_URL_MACOS")
-        .unwrap_or_else(|_| "https://www.osxexperts.net/ffprobe71intel.zip".to_string())
 }

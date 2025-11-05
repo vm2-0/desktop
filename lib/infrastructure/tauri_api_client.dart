@@ -193,13 +193,6 @@ class TauriApiClient {
 
   // --- Tools ---
 
-  Future<void> initTools() async {
-    final response = await _client.post(Uri.parse('$_baseUrl/tools/init'));
-    if (response.statusCode != 200) {
-      throw Exception('Failed to initialize tools: ${response.body}');
-    }
-  }
-
   Future<Map<String, bool>> checkTools() async {
     final response = await _client.get(Uri.parse('$_baseUrl/tools/check'));
     if (response.statusCode == 200) {
@@ -207,15 +200,6 @@ class TauriApiClient {
       return data.map((key, value) => MapEntry(key, value as bool));
     } else {
       throw Exception('Failed to check tools: ${response.body}');
-    }
-  }
-
-  Future<Map<String, dynamic>> getToolInitProgress() async {
-    final response = await _client.get(Uri.parse('$_baseUrl/tools/progress'));
-    if (response.statusCode == 200) {
-      return json.decode(response.body) as Map<String, dynamic>;
-    } else {
-      throw Exception('Failed to get tool init progress: ${response.body}');
     }
   }
 

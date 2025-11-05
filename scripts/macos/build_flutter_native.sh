@@ -103,6 +103,7 @@ if [ "$VERBOSE" = true ]; then
 fi
 
 ROOT_DIR=$(pwd)
+PROJECT_DIR="$ROOT_DIR"
 BUILD_DATE=$(date +"%Y%m%d_%H%M%S")
 BUILD_DIR="${BUILD_DIR:-$ROOT_DIR/build_output_$BUILD_DATE}"
 
@@ -471,7 +472,65 @@ create_universal_app() {
         return 1
     fi
     
+    # Copy FFmpeg binaries if they exist (from build.rs)
+    copy_ffmpeg_binaries_to_bundle "$universal_app"
+    
     log_success "Universal app bundle created"
+}
+
+# Copy FFmpeg binaries from build artifacts to app bundle
+copy_ffmpeg_binaries_to_bundle() {
+    local app_path="$1"
+    local ffmpeg_binaries_dir="$app_path/Contents/Resources/ffmpeg-binaries"
+    
+    # Look for FFmpeg binaries in architecture-specific target directories (created by build.rs)
+    # Priority: aarch64 (ARM64) -> x86_64 (Intel) -> universal build
+    local source_dirs=(
+        "$PROJECT_DIR/src-tauri/target/aarch64-apple-darwin/release/ffmpeg-binaries"
+        "$PROJECT_DIR/src-tauri/target/x86_64-apple-darwin/release/ffmpeg-binaries"
+        "$PROJECT_DIR/src-tauri/target/release/ffmpeg-binaries"
+    )
+    
+    local actual_source=""
+    for dir in "${source_dirs[@]}"; do
+        if [ -d "$dir" ] && [ -f "$dir/ffmpeg" ]; then
+            actual_source="$dir"
+            break
+        fi
+    done
+    
+    if [ -n "$actual_source" ]; then
+        log_info "Found FFmpeg binaries at: $actual_source"
+        log_info "Copying to app bundle..."
+        
+        # Create target directory
+        mkdir -p "$ffmpeg_binaries_dir"
+        
+        # Copy binaries
+        if [ -f "$actual_source/ffmpeg" ]; then
+            cp "$actual_source/ffmpeg" "$ffmpeg_binaries_dir/"
+            chmod +x "$ffmpeg_binaries_dir/ffmpeg"
+            log_success "Copied FFmpeg binary to app bundle"
+        fi
+        
+        if [ -f "$actual_source/ffprobe" ]; then
+            cp "$actual_source/ffprobe" "$ffmpeg_binaries_dir/"
+            chmod +x "$ffmpeg_binaries_dir/ffprobe"
+            log_success "Copied FFprobe binary to app bundle"
+        fi
+        
+        # List what we copied
+        if [ "$(ls -A "$ffmpeg_binaries_dir" 2>/dev/null)" ]; then
+            log_info "FFmpeg binaries included in app bundle:"
+            ls -la "$ffmpeg_binaries_dir"
+        fi
+    else
+        log_warning "No FFmpeg binaries found from build.rs - runtime download will be used"
+        log_info "Searched in:"
+        for dir in "${source_dirs[@]}"; do
+            log_info "  - $dir"
+        done
+    fi
 }
 
 # Code sign the app bundle
@@ -565,6 +624,30 @@ code_sign_app() {
             log_error "Failed to sign Tauri agent binary"
             return 1
         }
+    fi
+    
+    # Sign FFmpeg binaries (embedded executables)
+    local ffmpeg_binaries_dir="$app_path/Contents/Resources/ffmpeg-binaries"
+    if [ -d "$ffmpeg_binaries_dir" ]; then
+        log_info "Signing FFmpeg binaries..."
+        
+        if [ -f "$ffmpeg_binaries_dir/ffmpeg" ]; then
+            log_verbose "Signing FFmpeg binary..."
+            codesign --force --timestamp --options runtime --entitlements "$entitlements" --sign "$APPLE_SIGNING_IDENTITY" "$ffmpeg_binaries_dir/ffmpeg" || {
+                log_error "Failed to sign FFmpeg binary"
+                return 1
+            }
+            log_success "FFmpeg binary signed"
+        fi
+        
+        if [ -f "$ffmpeg_binaries_dir/ffprobe" ]; then
+            log_verbose "Signing FFprobe binary..."
+            codesign --force --timestamp --options runtime --entitlements "$entitlements" --sign "$APPLE_SIGNING_IDENTITY" "$ffmpeg_binaries_dir/ffprobe" || {
+                log_error "Failed to sign FFprobe binary"
+                return 1
+            }
+            log_success "FFprobe binary signed"
+        fi
     fi
     
     # Sign all frameworks (skip core Flutter frameworks to avoid VM snapshot issues)
