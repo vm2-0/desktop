@@ -17,11 +17,13 @@ pub fn get_embedded_ffmpeg_path() -> Option<PathBuf> {
     if let Ok(exe_path) = std::env::current_exe() {
         if let Some(exe_dir) = exe_path.parent() {
             // In development, binaries are in src-tauri/binaries/
-            if exe_dir.to_string_lossy().contains("/target/debug") {
+            let exe_dir_str = exe_dir.to_string_lossy();
+            if exe_dir_str.contains("/target/debug") || exe_dir_str.contains("\\target\\debug") {
                 let project_root = exe_dir.parent()?.parent()?.parent()?; // target/debug -> target -> src-tauri -> project
                 return Some(
                     project_root
-                        .join("src-tauri/binaries")
+                        .join("src-tauri")
+                        .join("binaries")
                         .join(get_platform_dir())
                         .join(get_ffmpeg_name()),
                 );
@@ -53,11 +55,13 @@ pub fn get_embedded_ffprobe_path() -> Option<PathBuf> {
     if let Ok(exe_path) = std::env::current_exe() {
         if let Some(exe_dir) = exe_path.parent() {
             // In development, binaries are in src-tauri/binaries/
-            if exe_dir.to_string_lossy().contains("/target/debug") {
+            let exe_dir_str = exe_dir.to_string_lossy();
+            if exe_dir_str.contains("/target/debug") || exe_dir_str.contains("\\target\\debug") {
                 let project_root = exe_dir.parent()?.parent()?.parent()?; // target/debug -> target -> src-tauri -> project
                 return Some(
                     project_root
-                        .join("src-tauri/binaries")
+                        .join("src-tauri")
+                        .join("binaries")
                         .join(get_platform_dir())
                         .join(get_ffprobe_name()),
                 );
