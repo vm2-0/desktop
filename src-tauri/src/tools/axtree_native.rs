@@ -895,18 +895,39 @@ mod windows {
         element.CurrentBoundingRectangle().ok()
     }
 
+    /// Get the DPI scale factor for the primary monitor
+    unsafe fn get_dpi_scale_factor() -> f32 {
+        use ::windows::Win32::UI::HiDpi::GetDpiForSystem;
+        
+        // Try to get system DPI (fallback to 96 which is 100% scaling)
+        let dpi = GetDpiForSystem();
+        
+        // Standard DPI is 96, so scale factor is dpi / 96.0
+        dpi as f32 / 96.0
+    }
+
     /// Extract window data from a UI Automation element
     unsafe fn extract_window_from_element(
         element: &IUIAutomationElement,
         monitors: &[MonitorInfo],
         display_filter: Option<u32>,
     ) -> Option<Value> {
-        // Get bounding rectangle
+        // Get bounding rectangle (in physical pixels on high DPI displays)
         let rect = get_element_rect(element)?;
 
+        // Get DPI scale factor to convert physical to logical coordinates
+        let scale_factor = get_dpi_scale_factor();
+
+        // Convert physical pixels to logical pixels
+        let logical_left = (rect.left as f32 / scale_factor).round() as i32;
+        let logical_top = (rect.top as f32 / scale_factor).round() as i32;
+        let logical_right = (rect.right as f32 / scale_factor).round() as i32;
+        let logical_bottom = (rect.bottom as f32 / scale_factor).round() as i32;
+        
+        let width = logical_right - logical_left;
+        let height = logical_bottom - logical_top;
+
         // Filter tiny windows
-        let width = rect.right - rect.left;
-        let height = rect.bottom - rect.top;
         if width < 100 || height < 100 {
             return None;
         }
@@ -916,7 +937,14 @@ mod windows {
             return None;
         }
 
-        let display_index = get_display_index_for_rect(&rect, monitors);
+        // Use logical coordinates for display index detection
+        let logical_rect = RECT {
+            left: logical_left,
+            top: logical_top,
+            right: logical_right,
+            bottom: logical_bottom,
+        };
+        let display_index = get_display_index_for_rect(&logical_rect, monitors);
 
         // Filter by display if specified
         if let Some(filter) = display_filter {
@@ -934,8 +962,8 @@ mod windows {
             "description": format!("Display {}", display_index),
             "value": "",
             "bbox": {
-                "x": rect.left,
-                "y": rect.top,
+                "x": logical_left,
+                "y": logical_top,
                 "width": width,
                 "height": height
             },
@@ -1120,14 +1148,23 @@ mod windows {
                     return BOOL::from(true);
                 }
 
-                // Get window rect to filter tiny windows
+                // Get window rect (in physical pixels on high DPI displays)
                 let mut rect = RECT::default();
                 if GetWindowRect(hwnd, &mut rect).is_err() {
                     return BOOL::from(true);
                 }
 
-                let width = rect.right - rect.left;
-                let height = rect.bottom - rect.top;
+                // Get DPI scale factor to convert physical to logical coordinates
+                let scale_factor = get_dpi_scale_factor();
+
+                // Convert physical pixels to logical pixels
+                let logical_left = (rect.left as f32 / scale_factor).round() as i32;
+                let logical_top = (rect.top as f32 / scale_factor).round() as i32;
+                let logical_right = (rect.right as f32 / scale_factor).round() as i32;
+                let logical_bottom = (rect.bottom as f32 / scale_factor).round() as i32;
+                
+                let width = logical_right - logical_left;
+                let height = logical_bottom - logical_top;
 
                 if width < 100 || height < 100 {
                     return BOOL::from(true);
@@ -1144,8 +1181,14 @@ mod windows {
                     return BOOL::from(true);
                 }
 
-                // Get display index
-                let display_index = get_display_index_for_rect(&rect, &data.monitors);
+                // Use logical coordinates for display index detection
+                let logical_rect = RECT {
+                    left: logical_left,
+                    top: logical_top,
+                    right: logical_right,
+                    bottom: logical_bottom,
+                };
+                let display_index = get_display_index_for_rect(&logical_rect, &data.monitors);
 
                 // Filter by display if specified
                 if let Some(filter) = data.display_filter {
@@ -1154,7 +1197,7 @@ mod windows {
                     }
                 }
 
-                // Create window data
+                // Create window data with logical coordinates
                 let window_name = if !window_title.is_empty() {
                     window_title
                 } else {
@@ -1167,8 +1210,8 @@ mod windows {
                     "description": format!("Display {}", display_index),
                     "value": "",
                     "bbox": {
-                        "x": rect.left,
-                        "y": rect.top,
+                        "x": logical_left,
+                        "y": logical_top,
                         "width": width,
                         "height": height
                     },

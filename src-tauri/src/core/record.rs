@@ -8,6 +8,7 @@ use crate::tools::ffmpeg::{init_ffmpeg, FFmpegRecorder, FFMPEG_PATH};
 #[cfg(not(target_os = "macos"))]
 use crate::utils::keyboard_layout;
 use crate::utils::logger::Logger;
+#[cfg(target_os = "macos")]
 use crate::utils::permissions::{has_ax_perms, request_ax_perms};
 use crate::utils::settings::get_custom_app_local_data_dir;
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
@@ -269,12 +270,21 @@ impl Recorder {
                 }
             };
 
-            let physical_width = (primary.width as f32 * primary.scale_factor).round() as u32;
-            let physical_height = (primary.height as f32 * primary.scale_factor).round() as u32;
+            // Windows gdigrab requires LOGICAL dimensions, not physical
+            // macOS and Linux can handle physical dimensions
+            #[cfg(target_os = "windows")]
+            let (capture_width, capture_height) = (primary.width, primary.height);
+            
+            #[cfg(not(target_os = "windows"))]
+            let (capture_width, capture_height) = {
+                let physical_width = (primary.width as f32 * primary.scale_factor).round() as u32;
+                let physical_height = (primary.height as f32 * primary.scale_factor).round() as u32;
+                (physical_width, physical_height)
+            };
 
             Ok(Recorder::FFmpeg(FFmpegRecorder::new_with_input(
-                physical_width,
-                physical_height,
+                capture_width,
+                capture_height,
                 fps,
                 video_path.to_path_buf(),
                 input_format.to_string(),
@@ -569,13 +579,24 @@ pub async fn start_recording(
 
     let physical_width = (primary.width as f32 * primary.scale_factor).round() as u32;
     let physical_height = (primary.height as f32 * primary.scale_factor).round() as u32;
+    
+    // On Windows, gdigrab records at logical resolution, not physical
+    // On macOS/Linux, we record at physical resolution
+    #[cfg(target_os = "windows")]
+    let (video_width, video_height) = (primary.width, primary.height);
+    
+    #[cfg(not(target_os = "windows"))]
+    let (video_width, video_height) = (physical_width, physical_height);
+    
     log::info!(
-        "[record] Display info: logical {}x{}, scale_factor: {}, physical {}x{}",
+        "[record] Display info: logical {}x{}, scale_factor: {}, physical {}x{}, video will be {}x{}",
         primary.width,
         primary.height,
         primary.scale_factor,
         physical_width,
-        physical_height
+        physical_height,
+        video_width,
+        video_height
     );
 
     // Create and save initial meta file
@@ -601,9 +622,9 @@ pub async fn start_recording(
         locale: safe_os_locale(),
         keyboard_layout: safe_keyboard_layout_id(),
         primary_monitor: MonitorInfo {
-            // Store physical dimensions for video recording (meta.json)
-            width: physical_width,
-            height: physical_height,
+            // Store actual video dimensions that will be recorded
+            width: video_width,
+            height: video_height,
             scale_factor: primary.scale_factor,
             x: 0, // display_info doesn't provide position yet
             y: 0, // display_info doesn't provide position yet
