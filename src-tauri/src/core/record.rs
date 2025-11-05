@@ -279,7 +279,7 @@ impl Recorder {
                 video_path.to_path_buf(),
                 input_format.to_string(),
                 input_device,
-            )))
+            )?))
         }
     }
 }
@@ -967,6 +967,7 @@ pub fn log_input(mut event: serde_json::Value) -> Result<(), String> {
 /// # Returns
 /// * `Ok(())` if successful.
 /// * `Err` if an error occurred.
+#[allow(dead_code)]
 pub fn log_ffmpeg(output: &str, is_stderr: bool) -> Result<(), String> {
     // Get recording start time from atomic variable (lock-free, no deadlock risk)
     let start_time_millis = RECORDING_START_TIME_MILLIS.load(Ordering::Relaxed);

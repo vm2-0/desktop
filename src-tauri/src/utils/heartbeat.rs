@@ -12,6 +12,39 @@ const HEARTBEAT_MAX_AGE_SECONDS: u64 = 5;
 #[cfg(target_os = "windows")]
 const WINDOWS_TEMP_FALLBACK: &str = r"C:\\Windows\\Temp";
 
+/// Clean up old heartbeat files from previous sessions
+/// This prevents the agent from reading stale heartbeat data
+pub fn cleanup_old_heartbeat_files(heartbeat_path: &PathBuf) {
+    // Remove old heartbeat file if it exists
+    if heartbeat_path.exists() {
+        match fs::remove_file(heartbeat_path) {
+            Ok(_) => log::info!(
+                "[Heartbeat] Cleaned up old heartbeat file: {}",
+                heartbeat_path.display()
+            ),
+            Err(e) => log::warn!(
+                "[Heartbeat] Failed to remove old heartbeat file: {}",
+                e
+            ),
+        }
+    }
+
+    // Remove old ready signal file if it exists
+    let ready_path = PathBuf::from(format!("{}.ready", heartbeat_path.display()));
+    if ready_path.exists() {
+        match fs::remove_file(&ready_path) {
+            Ok(_) => log::info!(
+                "[Heartbeat] Cleaned up old ready signal file: {}",
+                ready_path.display()
+            ),
+            Err(e) => log::warn!(
+                "[Heartbeat] Failed to remove old ready signal file: {}",
+                e
+            ),
+        }
+    }
+}
+
 /// Get the Flutter heartbeat file path using EXACT same logic as Flutter
 /// This must be kept in sync with heartbeat_writer.dart _getHeartbeatPath()
 pub fn get_flutter_heartbeat_path_stable() -> PathBuf {

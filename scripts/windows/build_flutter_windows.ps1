@@ -265,8 +265,71 @@ function New-WindowsAppBundle {
         return $false
     }
 
+    # Copy FFmpeg binaries if they exist (from build.rs)
+    Copy-FFmpegBinariesToBundle -AppPath $finalApp
+
     Write-LogSuccess "Windows app bundle created at: $finalApp"
     return $true
+}
+
+# Copy FFmpeg binaries from build artifacts to app bundle
+function Copy-FFmpegBinariesToBundle {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$AppPath
+    )
+    
+    $ffmpegBinariesDir = "$AppPath\ffmpeg-binaries"
+    
+    # Look for FFmpeg binaries in architecture-specific target directories (created by build.rs)
+    # Priority: x86_64 (most common) -> release (fallback)
+    $sourceDirs = @(
+        "$ROOT_DIR\src-tauri\target\x86_64-pc-windows-msvc\release\ffmpeg-binaries",
+        "$ROOT_DIR\src-tauri\target\release\ffmpeg-binaries"
+    )
+    
+    $sourceDir = $null
+    foreach ($dir in $sourceDirs) {
+        if ((Test-Path $dir) -and (Test-Path "$dir\ffmpeg.exe")) {
+            $sourceDir = $dir
+            break
+        }
+    }
+    
+    if ($sourceDir) {
+        Write-LogInfo "Found FFmpeg binaries at: $sourceDir"
+        Write-LogInfo "Copying to app bundle..."
+        
+        # Create target directory
+        New-Item -ItemType Directory -Path $ffmpegBinariesDir -Force | Out-Null
+        
+        # Copy binaries
+        $ffmpegPath = "$sourceDir\ffmpeg.exe"
+        $ffprobePath = "$sourceDir\ffprobe.exe"
+        
+        if (Test-Path $ffmpegPath) {
+            Copy-Item -Path $ffmpegPath -Destination "$ffmpegBinariesDir\ffmpeg.exe" -Force
+            Write-LogSuccess "Copied FFmpeg binary to app bundle"
+        }
+        
+        if (Test-Path $ffprobePath) {
+            Copy-Item -Path $ffprobePath -Destination "$ffmpegBinariesDir\ffprobe.exe" -Force
+            Write-LogSuccess "Copied FFprobe binary to app bundle"
+        }
+        
+        # List what we copied
+        $copiedFiles = Get-ChildItem -Path $ffmpegBinariesDir -ErrorAction SilentlyContinue
+        if ($copiedFiles) {
+            Write-LogInfo "FFmpeg binaries included in app bundle:"
+            $copiedFiles | ForEach-Object { Write-LogInfo "  - $($_.Name) ($($_.Length) bytes)" }
+        }
+    } else {
+        Write-LogWarning "No FFmpeg binaries found from build.rs - runtime download will be used"
+        Write-LogInfo "Searched in:"
+        foreach ($dir in $sourceDirs) {
+            Write-LogInfo "  - $dir"
+        }
+    }
 }
 
 # Create MSI installer using WiX Toolset

@@ -27,7 +27,8 @@ const READY_SIGNAL_TIMEOUT_SECONDS: u64 = 30;
 
 // Import heartbeat utilities
 use crate::utils::heartbeat::{
-    check_flutter_heartbeat_simple, check_flutter_ready_signal, get_flutter_heartbeat_path_stable,
+    check_flutter_heartbeat_simple, check_flutter_ready_signal, cleanup_old_heartbeat_files,
+    get_flutter_heartbeat_path_stable,
 };
 
 // Import business logic from the local `core` module
@@ -39,7 +40,7 @@ use crate::commands::settings::{get_upload_data_allowed, set_upload_data_allowed
 // Import function from `utils/permissions`
 use crate::utils::permissions::has_ax_perms;
 // Import functions from `commands/tools`
-use crate::commands::tools::{check_tools, get_tool_init_progress, init_tools};
+use crate::commands::tools::check_tools;
 // Import functions from `core/record`
 use crate::core::record::process_recording;
 // Import functions from `utils/permissions`
@@ -224,12 +225,8 @@ pub async fn init(app_handle: AppHandle) {
         )
         // POST /permissions/ax/request: Trigger a request for accessibility permissions.
         .route("/permissions/ax/request", post(request_ax_perms_handler))
-        // POST /tools/init: Trigger the initialization of external tools.
-        .route("/tools/init", post(init_tools_handler))
         // GET /tools/check: Check the status of external tools.
         .route("/tools/check", get(check_tools_handler))
-        // GET /tools/progress: Get the current tool initialization progress.
-        .route("/tools/progress", get(get_tool_init_progress_handler))
         // POST /recordings/:id/process: Trigger post-processing for a specific recording.
         .route("/recordings/:id/process", post(process_recording_handler))
         // GET /deeplink: Retrieve the latest deep link URL received by the application.
@@ -314,6 +311,11 @@ fn start_heartbeat_monitoring(app_handle: AppHandle) {
 
     // Use stable heartbeat path independent of Flutter PID
     let heartbeat_path = get_flutter_heartbeat_path_stable();
+
+    // Clean up old heartbeat files from previous sessions before starting monitoring
+    // This prevents the agent from reading stale heartbeat data (e.g., from a crash)
+    cleanup_old_heartbeat_files(&heartbeat_path);
+
     log::info!(
         "[Heartbeat] Starting heartbeat monitoring at: {}",
         heartbeat_path.display()
@@ -720,25 +722,9 @@ async fn request_ax_perms_handler() -> StatusCode {
 
 // --- Handlers for tools ---
 
-async fn init_tools_handler(
-    State(state): State<AppState>,
-) -> Result<StatusCode, (StatusCode, String)> {
-    match init_tools(state.app_handle).await {
-        Ok(_) => Ok(StatusCode::OK),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
-    }
-}
-
 async fn check_tools_handler() -> Result<impl IntoResponse, (StatusCode, String)> {
     match check_tools().await {
         Ok(status) => Ok((StatusCode::OK, Json(status))),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
-    }
-}
-
-async fn get_tool_init_progress_handler() -> Result<impl IntoResponse, (StatusCode, String)> {
-    match get_tool_init_progress().await {
-        Ok(progress) => Ok((StatusCode::OK, Json(progress))),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }
