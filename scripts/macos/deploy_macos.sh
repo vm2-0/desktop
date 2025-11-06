@@ -2,6 +2,12 @@
 
 set -euo pipefail
 
+# Enable verbose debug output if requested
+if [ "${VERBOSE:-false}" = true ]; then
+    set -x
+    echo "VERBOSE MODE ENABLED"
+fi
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -31,14 +37,22 @@ main() {
     echo "==========================================="
     
     if [ -z "${1:-}" ]; then
-        log_error "Usage: $0 <environment>"
+        log_error "Usage: $0 <environment> [--verbose]"
         echo "  Environment: prod, test"
+        echo "  Options:"
+        echo "    --verbose    Enable verbose debug output"
         echo "  Example: $0 prod"
-        echo "  Example: $0 test"
+        echo "  Example: $0 test --verbose"
         exit 1
     fi
     
     local environment="$1"
+    
+    # Check for verbose flag
+    if [ "${2:-}" = "--verbose" ]; then
+        export VERBOSE=true
+        log_info "Verbose mode enabled for all scripts"
+    fi
     
     log_info "Cleaning previous build artifacts..."
     if ls build_output_* 1> /dev/null 2>&1; then

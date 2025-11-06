@@ -544,6 +544,16 @@ code_sign_app() {
         return 0
     fi
     
+    # Validate signing identity exists in keychain
+    if ! security find-identity -v -p codesigning | grep -q "$APPLE_SIGNING_IDENTITY"; then
+        log_error "Code signing identity not found in keychain: $APPLE_SIGNING_IDENTITY"
+        log_info "Available identities:"
+        security find-identity -v -p codesigning
+        return 1
+    fi
+    
+    log_info "Using code signing identity: ${APPLE_SIGNING_IDENTITY:0:50}..."
+    
     if [ "$DRY_RUN" = true ]; then
         log_info "DRY RUN: Would code sign app bundle with identity: $APPLE_SIGNING_IDENTITY"
         log_info "DRY RUN: Would sign Sparkle components, agent binary, frameworks, and main app"
@@ -716,8 +726,32 @@ code_sign_app() {
         return 1
     }
     
+    # Additional signature verification for debugging
+    log_info "Displaying signature details..."
+    codesign --display --requirements --verbose=2 "$app_path" || {
+        log_warning "Failed to display signature requirements"
+    }
+    
+    # Test Gatekeeper assessment for the app bundle
+    log_info "Testing Gatekeeper assessment for app bundle..."
+    if spctl --assess --type execute --verbose "$app_path" 2>&1; then
+        log_success "App bundle passes Gatekeeper assessment"
+    else
+        # Capture output for analysis even if assessment fails
+        local spctl_output
+        spctl_output=$(spctl --assess --type execute --verbose "$app_path" 2>&1 || true)
+        log_warning "App bundle Gatekeeper assessment details:"
+        echo "$spctl_output"
+        
+        # Check for common patterns that indicate signing is correct
+        if echo "$spctl_output" | grep -q "source=Developer ID"; then
+            log_info "App is signed with Developer ID - should pass Gatekeeper after notarization"
+        fi
+    fi
+    
     log_success "App bundle signed and verified successfully"
 }
+
 
 # Create DMG
 create_dmg() {
@@ -874,9 +908,33 @@ main() {
     # Build Flutter apps for both architectures
     build_flutter_macos
     
-    # Build Tauri agent for both architectures
-    build_tauri_agent "aarch64-apple-darwin" "arm64"
-    build_tauri_agent "x86_64-apple-darwin" "intel"
+    # Build Tauri agent for both architectures in parallel
+    log_info "Building Tauri agents for both architectures in parallel..."
+    build_tauri_agent "aarch64-apple-darwin" "arm64" &
+    local arm64_pid=$!
+    build_tauri_agent "x86_64-apple-darwin" "intel" &
+    local intel_pid=$!
+    
+    log_info "Waiting for parallel Tauri builds to complete..."
+    local arm64_result=0
+    local intel_result=0
+    
+    if ! wait $arm64_pid; then
+        arm64_result=1
+        log_error "ARM64 Tauri build failed"
+    fi
+    
+    if ! wait $intel_pid; then
+        intel_result=1
+        log_error "Intel Tauri build failed"
+    fi
+    
+    if [ $arm64_result -ne 0 ] || [ $intel_result -ne 0 ]; then
+        log_error "One or more Tauri builds failed"
+        exit 1
+    fi
+    
+    log_success "Parallel Tauri builds completed successfully"
     
     # Create universal app
     create_universal_app
@@ -885,7 +943,7 @@ main() {
     local universal_app="$BUILD_DIR/universal/clones.app"
     code_sign_app "$universal_app"
     
-    # Create DMG
+    # Create DMG (notarization + stapling happens later in deploy process)
     create_dmg "$universal_app" "clones-desktop-universal.dmg"
     
     log_success "Build completed!"

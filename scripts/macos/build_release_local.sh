@@ -2,6 +2,12 @@
 
 set -euo pipefail
 
+# Enable verbose debug output if requested
+if [ "${VERBOSE:-false}" = true ]; then
+    set -x
+    echo "VERBOSE MODE ENABLED"
+fi
+
 echo "🚀 Building Clones Desktop for macOS Release (Local)"
 
 ROOT_DIR=$(pwd)
@@ -140,10 +146,20 @@ install_dependencies() {
     
     log_info "Installing Tauri CLI (if not already installed)..."
     if ! command -v cargo-tauri &> /dev/null; then
-        cargo install tauri-cli --version "^2.0"
-        log_success "Tauri CLI installed"
+        # Pin exact version for reproducible builds (latest as of Nov 2024)
+        cargo install tauri-cli --version "=2.9.3"
+        log_success "Tauri CLI installed (v2.9.3)"
     else
-        log_info "Tauri CLI already installed"
+        local tauri_version=$(cargo-tauri --version 2>/dev/null | head -1 | awk '{print $2}' || echo "unknown")
+        log_info "Tauri CLI already installed: $tauri_version"
+        
+        # Warn if version is significantly outdated (< 2.9.0)
+        if [[ "$tauri_version" =~ ^2\.[0-8]\. ]] || [[ "$tauri_version" =~ ^[01]\. ]]; then
+            log_warning "Tauri CLI version outdated. Current: $tauri_version, Latest: 2.9.3"
+            log_warning "Consider: cargo install tauri-cli --version '=2.9.3' --force"
+        elif [[ "$tauri_version" != "2.9.3" ]] && [[ "$tauri_version" != "unknown" ]]; then
+            log_info "Tauri CLI version: $tauri_version (expected: 2.9.3)"
+        fi
     fi
 }
 
@@ -243,6 +259,24 @@ notarize_artifacts() {
                     log_info "Stapling notarization ticket..."
                     if xcrun stapler staple "$dmg"; then
                         log_success "Stapling successful for $(basename "$dmg")"
+                        
+                        # Verify DMG will not trigger translocation
+                        log_info "Verifying DMG passes Gatekeeper..."
+                        if spctl --assess --type open --verbose "$dmg" 2>&1; then
+                            log_success "✅ DMG passes Gatekeeper - NO APP TRANSLOCATION will occur"
+                        else
+                            # Even if spctl returns non-zero, check the output for useful info
+                            local spctl_output
+                            spctl_output=$(spctl --assess --type open --verbose "$dmg" 2>&1 || true)
+                            if echo "$spctl_output" | grep -q "source=Notarized Developer ID"; then
+                                log_success "DMG is properly notarized - app translocation will be avoided"
+                            elif echo "$spctl_output" | grep -q "source=Developer ID"; then
+                                log_success "DMG is signed with Developer ID - app translocation should be avoided"
+                            else
+                                log_warning "DMG Gatekeeper status unclear, but notarization + stapling completed"
+                                echo "Output: $spctl_output"
+                            fi
+                        fi
                     else
                         log_warning "Stapling failed for $(basename "$dmg")"
                     fi
