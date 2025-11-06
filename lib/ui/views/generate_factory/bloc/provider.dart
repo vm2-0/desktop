@@ -339,7 +339,7 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
       final gasData = await ref.read(
         estimateFactoryGasProvider(
           type:
-              'createFactory', // TODO: this should be dynamic based on context (create vs fund)
+              'createFactory', // TODO(reddwarf03): this should be dynamic based on context (create vs fund)
           token: state.selectedTokenSymbol,
           creator: creatorAddress,
           amount: state.fundingAmount,
@@ -348,7 +348,7 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
 
       final isExpensive = gasData['isExpensive'] as bool;
 
-      // TODO: Get ETH price from a provider to show USD value
+      // TODO(reddwarf03): Get ETH price from a provider to show USD value
       final estimatedGas = '~${gasData['totalCost']} ETH';
 
       state = state.copyWith(

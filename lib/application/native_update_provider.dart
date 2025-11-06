@@ -66,7 +66,7 @@ class NativeUpdateNotifier extends StateNotifier<NativeUpdateState> {
       if (Platform.isMacOS) {
         await _initializeSparkle();
       } else if (Platform.isWindows) {
-        // TODO: Implement native Windows updater (WinSparkle or similar)
+        // TODO(reddwarf03): Implement native Windows updater (WinSparkle or similar)
         debugPrint('Windows native updater not yet implemented');
         state = state.copyWith(
           status: UpdateStatus.error,
@@ -74,7 +74,7 @@ class NativeUpdateNotifier extends StateNotifier<NativeUpdateState> {
         );
         return;
       } else if (Platform.isLinux) {
-        // TODO: Implement Linux updater (AppImage updater or package manager)
+        // TODO(reddwarf03): Implement Linux updater (AppImage updater or package manager)
         debugPrint('Linux native updater not yet implemented');
         state = state.copyWith(
           status: UpdateStatus.error,
@@ -112,8 +112,6 @@ class NativeUpdateNotifier extends StateNotifier<NativeUpdateState> {
 
     await _sparkleUpdater!.initialize(
       appcastUrl: appcastUrl,
-      automaticallyChecksForUpdates: true,
-      automaticallyDownloadsUpdates: false, // Let user choose
     );
 
     // Get current version
@@ -127,7 +125,9 @@ class NativeUpdateNotifier extends StateNotifier<NativeUpdateState> {
   Future<void> checkForUpdates() async {
     if (!state.isInitialized || !mounted) return;
 
-    state = state.copyWith(status: UpdateStatus.checking, error: null);
+    state = state.copyWith(
+      status: UpdateStatus.checking,
+    );
 
     try {
       if (Platform.isMacOS && _sparkleUpdater != null) {

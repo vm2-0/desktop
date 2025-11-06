@@ -75,7 +75,7 @@ class _DemoDetailInfosState extends ConsumerState<DemoDetailInfos> {
               child: MessageBox(
                 messageBoxType: MessageBoxType.warning,
                 content: Text(
-                  'Upload Error: ${demoDetail.uploadError}',
+                  demoDetail.uploadError ?? 'Unknown error',
                   style: theme.textTheme.bodySmall,
                 ),
               ),

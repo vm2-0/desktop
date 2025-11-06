@@ -5,7 +5,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'token_balance.freezed.dart';
 part 'token_balance.g.dart';
 
-// TODO: Doublon with wallet/token_balance.dart ?
+// TODO(reddwarf03): Doublon with wallet/token_balance.dart ?
 @freezed
 class TokenBalance with _$TokenBalance {
   const factory TokenBalance({

@@ -13,6 +13,7 @@ import 'package:clones_desktop/ui/components/design_widget/dialog/dialog.dart';
 import 'package:clones_desktop/ui/components/score_indicator.dart';
 import 'package:clones_desktop/ui/views/demo_detail/layouts/demo_detail_view.dart';
 import 'package:clones_desktop/utils/format_time.dart';
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,7 +21,7 @@ import 'package:intl/intl.dart';
 
 /// Check if the recording has already been claimed on-chain
 /// Ignore CLAIMING_ markers (temporary locks)
-// TODO: Doublon. Extract to a utility function.
+// TODO(reddwarf03): Extract to a utility function.
 bool _isAlreadyClaimed(ApiRecording recording) {
   final txHash = recording.submission?.onChainReward?.txHash;
   if (txHash == null || txHash.isEmpty) {
@@ -306,7 +307,7 @@ class RecordingCard extends ConsumerWidget {
   Widget _rewardClaimedBadge(BuildContext context) {
     if (recording.submission?.clampedScore == null ||
         recording.submission?.reward == null ||
-        recording.submission?.reward! == 0) {
+        recording.submission?.reward! == Decimal.zero) {
       return const SizedBox.shrink();
     }
     final isClaimed = _isAlreadyClaimed(recording);

@@ -167,7 +167,7 @@ class _PermissionsModalState extends ConsumerState<PermissionsModal> {
                             description:
                                 "This allows Clones to understand what's on your screen and provide relevant assistance.",
                             status: permissionsState.accessibilityStatus,
-                            // TODO: Clean this
+                            // TODO(reddwarf03): Clean this
                             onRequest: () => ref
                                 .read(permissionsNotifierProvider.notifier)
                                 .requestAccessibilityPermission(),
@@ -184,7 +184,7 @@ class _PermissionsModalState extends ConsumerState<PermissionsModal> {
                             description:
                                 'This allows Clones to record your screen for training and assistance purposes.',
                             status: permissionsState.screenRecordingStatus,
-                            // TODO: Clean this
+                            // TODO(reddwarf03): Clean this
                             onRequest: () => ref
                                 .read(permissionsNotifierProvider.notifier)
                                 .requestScreenRecordingPermission(),

@@ -139,7 +139,7 @@ class _DemoDetailVideoPreviewState
   }
 
   bool _hasAxTreeEvents() {
-    // TODO: Hardcoded for now, we need to improve this
+    // TODO(reddwarf03): Hardcoded for now, we need to improve this
     return false;
     final state = ref.read(demoDetailNotifierProvider);
     return state.events.any((e) => e.event.contains('axtree'));
@@ -229,7 +229,7 @@ class _DemoDetailVideoPreviewState
 
     if (isAbsoluteTimestamp) {
       // For now, just return the first AxTree event for testing
-      // TODO: We need to convert absolute timestamps to relative ones
+      // TODO(reddwarf03): We need to convert absolute timestamps to relative ones
       return firstEvent;
     }
 

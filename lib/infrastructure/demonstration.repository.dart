@@ -26,7 +26,7 @@ class DemonstrationRepositoryImpl {
       fromJson: (json) => Demonstration.fromJson(json as Map<String, dynamic>),
     );
 
-    // TODO: The reward system has been migrated to an on-chain factory system.
+    // TODO(reddwarf03): The reward system has been migrated to an on-chain factory system.
     // The previous `getReward` endpoint was part of the off-chain `pools.ts` API and has been removed.
     // This logic needs to be re-implemented to fetch reward data from the new on-chain system,
     // likely by querying the subgraph or a new backend endpoint that interacts with the factory contracts.

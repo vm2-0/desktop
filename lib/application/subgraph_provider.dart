@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Provider for SubgraphRepository instance
 final subgraphRepositoryProvider = Provider<SubgraphRepository>((ref) {
-  // TODO: Configure network based on app settings/environment
+  // TODO(reddwarf03): Configure network based on app settings/environment
 // Default to Sepolia for testing
   return SubgraphRepository();
 });
