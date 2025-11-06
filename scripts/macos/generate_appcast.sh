@@ -2,6 +2,12 @@
 
 set -euo pipefail
 
+# Enable verbose debug output if requested
+if [ "${VERBOSE:-false}" = true ]; then
+    set -x
+    echo "VERBOSE MODE ENABLED"
+fi
+
 echo "🔗 Generating Sparkle Appcast"
 
 ROOT_DIR=$(pwd)
@@ -97,13 +103,36 @@ GEN_APPCAST=""
 check_prerequisites() {
     log_info "Checking prerequisites..."
     
+    # Verify Xcode Command Line Tools
+    if ! xcode-select -p >/dev/null 2>&1; then
+        log_error "Xcode Command Line Tools not found"
+        log_info "Install with: xcode-select --install"
+        exit 1
+    fi
+    
+    # Check xcrun availability and version
+    if ! command -v xcrun >/dev/null 2>&1; then
+        log_error "xcrun not found"
+        exit 1
+    fi
+    
+    local xcode_version
+    xcode_version=$(xcrun xcodebuild -version 2>/dev/null | head -1 | awk '{print $2}' || echo "unknown")
+    log_info "Xcode version: $xcode_version"
+    
     # Check if Sparkle's generate_appcast tool is available
     GEN_APPCAST=$(resolve_generate_appcast)
     if [ -z "$GEN_APPCAST" ]; then
         log_error "Sparkle's generate_appcast tool not found"
         log_info "Install it with: brew install sparkle"
+        log_info "Recommended version: 2.8.x"
         exit 1
     fi
+    
+    # Check Sparkle version if possible
+    local sparkle_version
+    sparkle_version=$("$GEN_APPCAST" --version 2>/dev/null | head -1 || echo "unknown")
+    log_info "Sparkle generate_appcast: $sparkle_version"
     
     # Check if we have signing keys for the environment
     local env_file=".env.${ENVIRONMENT}"
@@ -154,6 +183,15 @@ generate_signing_keys() {
 generate_appcast_from_build() {
     log_info "Generating appcast for $ENVIRONMENT environment..."
     
+    # Set up secure cleanup trap for temporary files
+    local temp_key_file=""
+    cleanup_temp_files() {
+        if [ -n "${temp_key_file:-}" ] && [ -f "${temp_key_file:-}" ]; then
+            shred -u "$temp_key_file" 2>/dev/null || rm -f "$temp_key_file"
+        fi
+    }
+    trap cleanup_temp_files EXIT INT TERM
+    
     # Determine build directory (latest)
     local latest_build=$(find . -maxdepth 1 -name "build_output_*" -type d | sort -r | head -n 1)
     if [ -z "$latest_build" ]; then
@@ -201,8 +239,11 @@ generate_appcast_from_build() {
     local appcast_file="${releases_dir}/appcast.xml"
     local private_key_file="sparkle_${ENVIRONMENT}_private.pem"
     
-    # Create temporary private key file from environment variable
-    echo "$SPARKLE_PRIVATE_KEY" > "/tmp/sparkle_private.pem"
+    # Create temporary private key file from environment variable (secure)
+    temp_key_file="/tmp/sparkle_private_$$_$(date +%s).pem"
+    umask 077  # Ensure only owner can read/write
+    echo "$SPARKLE_PRIVATE_KEY" > "$temp_key_file"
+    chmod 600 "$temp_key_file"
     
     # Use Sparkle's generate_appcast tool (resolved absolute path)
     local download_url_prefix
@@ -221,10 +262,10 @@ generate_appcast_from_build() {
     # Clean existing appcast to ensure fresh generation
     rm -f "${releases_dir}/appcast.xml"
     
-    "$GEN_APPCAST" --ed-key-file "/tmp/sparkle_private.pem" --download-url-prefix "$download_url_prefix" "$releases_dir"
+    "$GEN_APPCAST" --ed-key-file "$temp_key_file" --download-url-prefix "$download_url_prefix" "$releases_dir"
     
-    # Clean up temporary key file
-    rm "/tmp/sparkle_private.pem"
+    # Clean up temporary key file securely
+    shred -u "$temp_key_file" 2>/dev/null || rm -f "$temp_key_file"
     
     if [ -f "$appcast_file" ]; then
         log_success "Appcast generated: $appcast_file"
@@ -240,27 +281,30 @@ generate_appcast_from_build() {
     fi
 }
 
-# Upload to release server (optional)
+# Upload to release server (informational - actual upload handled by upload_sparkle_macos.sh)
 upload_appcast() {
     local releases_dir="releases/${ENVIRONMENT}/darwin"
     
-    log_info "Upload appcast to release server..."
-    log_warning "Manual upload required to:"
+    log_info "Appcast files ready for upload..."
+    log_info "Target destination:"
     
     case "$ENVIRONMENT" in
         "prod")
-            echo "  URL: https://releases.clones-ai.com/latest/darwin/"
+            echo "  📡 URL: https://releases.clones-ai.com/latest/darwin/"
             ;;
         "test")
-            echo "  URL: https://releases-test.clones-ai.com/latest/darwin/"
+            echo "  📡 URL: https://releases-test.clones-ai.com/latest/darwin/"
             ;;
     esac
     
     echo ""
-    log_info "Files to upload:"
+    log_info "Generated files:"
     find "$releases_dir" -type f | while read -r file; do
-        echo "  FILE: $(basename "$file")"
+        echo "  📄 $(basename "$file")"
     done
+    
+    echo ""
+    log_info "ℹ️  Upload will be handled automatically by upload_sparkle_macos.sh"
 }
 
 # Main execution
