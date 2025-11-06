@@ -104,8 +104,9 @@ class GenerateFactoryModalStep3 extends ConsumerWidget {
                         app.tasks.map<String>((task) => task.prompt).toList(),
                     showLimits: true,
                     tokenSymbol: generateFactory.selectedTokenSymbol,
-                    taskRewardLimits:
-                        app.tasks.map((task) => task.rewardLimit?.toDouble()).toList(),
+                    taskRewardLimits: app.tasks
+                        .map((task) => task.rewardLimit?.toDouble())
+                        .toList(),
                     taskUploadLimits:
                         app.tasks.map((task) => task.uploadLimit).toList(),
                     onAppNameChanged: (newName) {
@@ -124,7 +125,9 @@ class GenerateFactoryModalStep3 extends ConsumerWidget {
                         appIdx,
                         taskIdx,
                         task.prompt,
-                        rewardLimit != null ? Decimal.parse(rewardLimit.toString()) : null,
+                        rewardLimit != null
+                            ? Decimal.parse(rewardLimit.toString())
+                            : null,
                         task.uploadLimit,
                       );
                     },
@@ -152,7 +155,7 @@ class GenerateFactoryModalStep3 extends ConsumerWidget {
                   );
                 },
               ),
-            // TODO: Add app button
+            // TODO(reddwarf03): Add app button
             /*if (!generateFactory.isCreating && !generateFactory.isCreated)
             AddAppCard(
               onAddApp: () {

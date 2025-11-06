@@ -8,6 +8,7 @@ import 'package:clones_desktop/application/submissions.dart';
 import 'package:clones_desktop/application/tauri_api.dart';
 import 'package:clones_desktop/application/upload/provider.dart';
 import 'package:clones_desktop/application/upload/state.dart';
+import 'package:clones_desktop/domain/models/api/api_error.dart';
 import 'package:clones_desktop/domain/models/message/sft_message.dart';
 import 'package:clones_desktop/domain/models/recording/api_recording.dart';
 import 'package:clones_desktop/domain/models/recording/recording_event.dart';
@@ -902,7 +903,7 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
             deletedRanges: deletedRanges,
           );
     } catch (e) {
-      if (e.toString().contains('Upload data is not allowed')) {
+      if (e is ApiError && e.message.contains('Upload data is not allowed')) {
         state = state.copyWith(
           showUploadConfirmModal: true,
           isUploading: false,
@@ -911,7 +912,7 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       }
       state = state.copyWith(
         isUploading: false,
-        uploadError: e.toString(),
+        uploadError: e is ApiError ? e.message : e.toString(),
       );
     }
   }
