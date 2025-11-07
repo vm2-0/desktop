@@ -4,33 +4,33 @@
 param(
     [Parameter(Mandatory=$false)]
     [ValidateSet("dev", "test", "prod")]
-    [string]$Environment = "prod",
-    [switch]$Verbose
+    [string]$Environment = "prod"
 )
 
 $ErrorActionPreference = "Stop"
 
 # Functions for colored output
+
 function Write-LogInfo($Message) {
-    Write-Host "ℹ️  $Message" -ForegroundColor Blue
+    Write-Host "$Message" -ForegroundColor Blue
 }
 
 function Write-LogSuccess($Message) {
-    Write-Host "✅ $Message" -ForegroundColor Green
+    Write-Host "$Message" -ForegroundColor Green
 }
 
 function Write-LogWarning($Message) {
-    Write-Host "⚠️  $Message" -ForegroundColor Yellow
+    Write-Host "$Message" -ForegroundColor Yellow
 }
 
 function Write-LogError($Message) {
-    Write-Host "❌ $Message" -ForegroundColor Red
+    Write-Host "$Message" -ForegroundColor Red
 }
 
 # Main execution
 function Main {
-    Write-Host "🏪 Clones Desktop - Windows Store Build" -ForegroundColor Cyan
-    Write-Host "=======================================" -ForegroundColor Cyan
+    Write-Host "Clones Desktop - Windows Store Build" -ForegroundColor Cyan
+    Write-Host "====================================" -ForegroundColor Cyan
     Write-Host ""
 
     # Check prerequisites
@@ -136,8 +136,8 @@ function Main {
         $latestMsix = $msixFiles[0]
         Write-Host ""
         Write-LogSuccess "Store package ready for submission:"
-        Write-Host "  📦 File: $($latestMsix.FullName)" -ForegroundColor Cyan
-        Write-Host "  📏 Size: $([math]::Round($latestMsix.Length / 1MB, 2)) MB" -ForegroundColor Cyan
+        Write-Host "  File: $($latestMsix.FullName)" -ForegroundColor Cyan
+        Write-Host "  Size: $([math]::Round($latestMsix.Length / 1MB, 2)) MB" -ForegroundColor Cyan
         Write-Host ""
         
         # Create releases directory structure
