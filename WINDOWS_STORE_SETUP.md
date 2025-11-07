@@ -43,15 +43,28 @@ display_name: Clones Desktop          # Must match app name
 # Build Store package
 .\scripts\windows\build_store.ps1 -Environment prod
 
-# Test local installation (requires developer mode)
-Add-AppxPackage -Path "clones-desktop-*.msix" -DeveloperMode
+# Test local installation
+# Note: You may need to enable Windows Developer Mode in Settings
+Add-AppxPackage -Path "clones-desktop-*.msix"
+
+# Or for development testing, register from build folder:
+# Add-AppxPackage -Register "build\windows\x64\runner\Release\AppxManifest.xml"
 ```
 
 ### 2. Package Validation
 ```powershell
-# Windows App Certification Kit (install from Microsoft)
-# Run after building MSIX
-"C:\Program Files (x86)\Windows Kits\10\App Certification Kit\appcert.exe" -appxpackagepath "clones-desktop-*.msix"
+# Windows App Certification Kit (WACK) - install from Microsoft
+# IMPORTANT: Must run PowerShell as Administrator
+# Find your MSIX file first
+Get-ChildItem -Path "." -Filter "*.msix" -Recurse | ForEach-Object { $_.FullName }
+
+# Run WACK tests (takes 5-15 minutes)
+& "C:\Program Files (x86)\Windows Kits\10\App Certification Kit\appcert.exe" test -appxpackagepath "C:\SSe\app\Clones-workspace\clones-desktop\releases\prod\windows\store\clones_desktop.msix" -reportoutputpath "wack-report.xml"
+
+# Or use GUI (easier - just launch without parameters):
+& "C:\Program Files (x86)\Windows Kits\10\App Certification Kit\appcert.exe"
+
+# After tests complete, open the report in a browser to see results
 ```
 
 ## Partner Center Submission Process

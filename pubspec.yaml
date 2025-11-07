@@ -60,9 +60,10 @@ dependency_overrides:
 
 
 msix_config:
-  display_name: Clones Desktop
-  publisher_display_name: Clones AI
-  identity_name: com.clones-ai.desktop
+  display_name: Clones AI Desktop
+  publisher_display_name: Clones
+  publisher: CN=ED6E50CB-2C1F-484F-B7E7-07431405E106
+  identity_name: Clones.ClonesAIDesktop
   msix_version: 0.2.99.0
   logo_path: assets/icons-app/icon.png
   start_menu_icon_path: assets/icons-app/icon.png
