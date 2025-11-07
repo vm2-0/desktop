@@ -2,7 +2,7 @@ name: clones_desktop
 description: "A desktop application for contributing to the world's largest dataset for multimodal computer-use agents."
 publish_to: 'none'
 
-version: 0.2.98+98
+version: 0.2.99+99
 
 environment:
   sdk: ">=3.6.0 <4.0.0"
@@ -30,9 +30,9 @@ dependencies:
   intl: ^0.20.2
   json_annotation: ^4.8.1
   media_kit: ^1.1.11
-  media_kit_video: ^1.2.5
   media_kit_libs_macos_video: ^1.0.8
   media_kit_libs_windows_video: ^1.0.10
+  media_kit_video: ^1.2.5
   msix: ^3.16.12
   package_info_plus: ^8.0.2
   path_provider: ^2.1.4
@@ -63,8 +63,25 @@ msix_config:
   display_name: Clones Desktop
   publisher_display_name: Clones AI
   identity_name: com.clones-ai.desktop
+  msix_version: 0.2.99.0
   logo_path: assets/icons-app/icon.png
+  start_menu_icon_path: assets/icons-app/icon.png
+  tile_icon_path: assets/icons-app/icon.png
   languages: en-us
+  capabilities: 'internetClient'
+  
+  # Store-specific configuration
+  store: true
+  
+  # Architecture support
+  architecture: x64
+  
+  # App description for Store
+  description: 'A desktop application for contributing to the world largest dataset for multimodal computer-use agents.'
+  
+  # Additional metadata
+  execution_alias: clones
+  protocol_activation: clones
 
 flutter:
 
