@@ -32,7 +32,7 @@ function Main {
     Write-Info "      Otherwise, only ZIP package will be available"
     Write-Host ""
 
-    Write-Info "Step 1/3: Building release..."
+    Write-Info "Step 1/4: Building release..."
 
     # Execute build script
     try {
@@ -54,7 +54,26 @@ function Main {
 
     Write-Success "Build completed successfully!"
 
-    Write-Info "Step 2/3: Generating manifests..."
+    Write-Info "Step 2/4: Building Windows Store package..."
+
+    # Execute Store build script
+    try {
+        if ($Verbose) {
+            & "scripts\windows\build_store.ps1" -Environment $Environment -Verbose
+        } else {
+            & "scripts\windows\build_store.ps1" -Environment $Environment
+        }
+
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warning "Store package build failed, continuing with standard deployment"
+        } else {
+            Write-Success "Store package created successfully!"
+        }
+    } catch {
+        Write-Warning "Store package build script execution failed: $_"
+    }
+
+    Write-Info "Step 3/4: Generating manifests..."
 
     # Execute manifest generation script
     try {
@@ -75,7 +94,7 @@ function Main {
 
     Write-Success "Manifests generated successfully!"
 
-    Write-Info "Step 3/3: Uploading to Tigris ($Environment)..."
+    Write-Info "Step 4/4: Uploading to Tigris ($Environment)..."
 
     # Execute upload script
     try {
@@ -99,6 +118,8 @@ function Main {
     
     # Check what was deployed
     $releaseDir = "releases\$Environment\windows"
+    $storeDir = "releases\$Environment\windows\store"
+    
     if (Test-Path $releaseDir) {
         $msiFiles = Get-ChildItem -Path $releaseDir -Filter "*.msi" -ErrorAction SilentlyContinue
         $zipFiles = Get-ChildItem -Path $releaseDir -Filter "*.zip" -ErrorAction SilentlyContinue
@@ -108,6 +129,14 @@ function Main {
         }
         if ($zipFiles) {
             Write-Info "ZIP Package also available: $($zipFiles[0].Name)"
+        }
+    }
+    
+    if (Test-Path $storeDir) {
+        $msixFiles = Get-ChildItem -Path $storeDir -Filter "*.msix" -ErrorAction SilentlyContinue
+        if ($msixFiles) {
+            Write-Success "Windows Store Package ready: $($msixFiles[0].Name)"
+            Write-Info "Submit to Partner Center: https://partner.microsoft.com/dashboard"
         }
     }
     
