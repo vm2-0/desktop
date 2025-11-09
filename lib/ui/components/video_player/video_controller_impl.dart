@@ -25,8 +25,14 @@ class VideoControllerImpl with VideoControllerMixin {
   StreamSubscription? _playingSubscription;
   StreamSubscription? _rateSubscription;
   Timer? _fallbackTimer;
+  Timer? _positionDebounceTimer;
+  Duration? _lastReportedPosition;
   String? _tempFilePath;
   bool _isDisposed = false;
+  // Coalesce player position events immediately following a seek to avoid UI "flash"
+  Timer? _postSeekCoalesceTimer;
+  Duration? _postSeekLatestPosition;
+  bool _coalescingSeek = false;
 
   /// Returns the media_kit video controller for the widget
   VideoController? get videoController => _videoController;
@@ -66,16 +72,30 @@ class VideoControllerImpl with VideoControllerMixin {
           .read(videoStateNotifierProvider(_videoId).notifier)
           .setReady(duration);
 
-      // Setup position listener
+      // Setup position listener with coalescing (post-seek) & debouncing to prevent rapid UI updates
       _positionSubscription = _player!.stream.position.listen((position) {
         if (!_isDisposed) {
-          final notifier =
-              ref.read(videoStateNotifierProvider(_videoId).notifier);
-          notifier.updatePosition(position);
+          // During the post-seek coalescing window, accumulate the latest position and return.
+          if (_coalescingSeek) {
+            _postSeekLatestPosition = position;
+            return;
+          }
 
-          // Check if we're in a deleted zone and skip if needed
-          if (_player!.state.playing) {
-            _checkAndSkipDeletedZones(position);
+          // Cancel any pending debounced update
+          _positionDebounceTimer?.cancel();
+
+          // If this is very similar to the last reported position (within 150ms), debounce it
+          if (_lastReportedPosition != null &&
+              (position - _lastReportedPosition!).inMilliseconds.abs() < 150) {
+            _positionDebounceTimer =
+                Timer(const Duration(milliseconds: 120), () {
+              if (!_isDisposed) {
+                _updatePositionAndCheck(position);
+              }
+            });
+          } else {
+            // Position change is significant, update immediately
+            _updatePositionAndCheck(position);
           }
         }
       });
@@ -178,13 +198,24 @@ class VideoControllerImpl with VideoControllerMixin {
     if (_player == null) {
       throw VideoControllerException('Cannot seek: player not initialized');
     }
+    // Begin coalescing position events to avoid showing the unsynchronized position
+    _coalescingSeek = true;
+    _postSeekLatestPosition = null;
+    _postSeekCoalesceTimer?.cancel();
+    // At ~30fps, frame-step granularity is ~33ms. Use a conservative window to allow libmpv to settle.
+    _postSeekCoalesceTimer = Timer(const Duration(milliseconds: 200), () {
+      if (_isDisposed) return;
+      // Push the latest known position (ideally the synced one) after coalescing window
+      if (_postSeekLatestPosition != null) {
+        _updatePositionAndCheck(_postSeekLatestPosition!);
+      }
+      _postSeekLatestPosition = null;
+      _coalescingSeek = false;
+    });
     await withOperationTimeout(
       _player!.seek(position),
       'seek to position',
     );
-    ref
-        .read(videoStateNotifierProvider(_videoId).notifier)
-        .updatePosition(position);
   }
 
   Future<void> setSpeed(double speed) async {
@@ -198,6 +229,18 @@ class VideoControllerImpl with VideoControllerMixin {
       'set playback speed',
     );
     ref.read(videoStateNotifierProvider(_videoId).notifier).setSpeed(speed);
+  }
+
+  /// Helper method to update position and check deleted zones
+  void _updatePositionAndCheck(Duration position) {
+    final notifier = ref.read(videoStateNotifierProvider(_videoId).notifier);
+    notifier.updatePosition(position);
+    _lastReportedPosition = position;
+
+    // Check if we're in a deleted zone and skip if needed
+    if (_player!.state.playing) {
+      _checkAndSkipDeletedZones(position);
+    }
   }
 
   /// Check if current position is in a deleted zone and skip to next valid position
@@ -230,6 +273,8 @@ class VideoControllerImpl with VideoControllerMixin {
     _isDisposed = true;
 
     _fallbackTimer?.cancel();
+    _positionDebounceTimer?.cancel();
+    _postSeekCoalesceTimer?.cancel();
     _positionSubscription?.cancel();
     _playingSubscription?.cancel();
     _rateSubscription?.cancel();

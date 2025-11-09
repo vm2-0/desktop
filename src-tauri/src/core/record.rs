@@ -20,7 +20,7 @@ use chrono::Local;
 use display_info::DisplayInfo;
 use serde::{Deserialize, Serialize};
 use std::fs::{self, create_dir_all, File};
-use std::io::{BufReader, Cursor, Read, Write};
+use std::io::{BufRead, BufReader, Cursor, Read, Write};
 use std::path::PathBuf;
 #[cfg(target_os = "macos")]
 use std::sync::{Arc, Mutex};
@@ -807,20 +807,59 @@ pub async fn stop_recording(
             );
             recorder_dur.round() as u64
         } else if video_path.exists() {
-            match get_video_duration(&video_path) {
-                Ok(duration_f64) => {
-                    log::info!(
-                        "[stop_recording] Video duration from FFprobe: {:.2}s",
-                        duration_f64
-                    );
-                    duration_f64.round() as u64
+            log::info!("[stop_recording] Video file exists, checking if readable before FFprobe...");
+            
+            // Check if file is readable and has size
+            match std::fs::metadata(&video_path) {
+                Ok(metadata) => {
+                    let file_size = metadata.len();
+                    log::info!("[stop_recording] Video file size: {} bytes", file_size);
+                    
+                    if file_size == 0 {
+                        log::warn!("[stop_recording] Video file is empty, using wallclock time");
+                        if let Ok(global_state) = DEMONSTRATION_STATE.lock() {
+                            if let Some(start_time) = global_state.recording_start_time {
+                                Local::now().signed_duration_since(start_time).num_seconds() as u64
+                            } else {
+                                0
+                            }
+                        } else {
+                            0
+                        }
+                    } else {
+                        // Add a small delay to ensure file is fully written
+                        std::thread::sleep(std::time::Duration::from_millis(500));
+                        
+                        log::info!("[stop_recording] Attempting to get video duration via FFprobe...");
+                        match get_video_duration(&video_path) {
+                            Ok(duration_f64) => {
+                                log::info!(
+                                    "[stop_recording] Video duration from FFprobe: {:.2}s",
+                                    duration_f64
+                                );
+                                duration_f64.round() as u64
+                            }
+                            Err(e) => {
+                                log::warn!(
+                                    "[stop_recording] Failed to get video duration from FFprobe: {}. Using wallclock time as fallback.",
+                                    e
+                                );
+                                // Fallback to wallclock time if FFprobe fails
+                                if let Ok(global_state) = DEMONSTRATION_STATE.lock() {
+                                    if let Some(start_time) = global_state.recording_start_time {
+                                        Local::now().signed_duration_since(start_time).num_seconds() as u64
+                                    } else {
+                                        0
+                                    }
+                                } else {
+                                    0
+                                }
+                            }
+                        }
+                    }
                 }
                 Err(e) => {
-                    log::warn!(
-                        "[stop_recording] Failed to get video duration from FFprobe: {}. Using wallclock time as fallback.",
-                        e
-                    );
-                    // Fallback to wallclock time if FFprobe fails
+                    log::warn!("[stop_recording] Failed to read video file metadata: {}, using wallclock time", e);
                     if let Ok(global_state) = DEMONSTRATION_STATE.lock() {
                         if let Some(start_time) = global_state.recording_start_time {
                             Local::now().signed_duration_since(start_time).num_seconds() as u64
@@ -867,13 +906,25 @@ pub async fn stop_recording(
             // Generate input_log_meta.json
             let input_log_path = latest_dir.path().join("input_log.jsonl");
             if input_log_path.exists() {
-                let input_log_content = fs::read_to_string(&input_log_path)
-                    .map_err(|e| format!("Failed to read input_log.jsonl: {}", e))?;
-
-                let event_count = input_log_content
-                    .lines()
-                    .filter(|line| !line.trim().is_empty())
-                    .count() as u32;
+                // Count lines efficiently without loading entire file into memory
+                let file = File::open(&input_log_path)
+                    .map_err(|e| format!("Failed to open input_log.jsonl: {}", e))?;
+                let reader = BufReader::new(file);
+                
+                let mut event_count = 0u32;
+                for line_result in reader.lines() {
+                    match line_result {
+                        Ok(line) => {
+                            if !line.trim().is_empty() {
+                                event_count += 1;
+                            }
+                        }
+                        Err(e) => {
+                            log::warn!("Failed to read line from input_log.jsonl: {}", e);
+                            break; // Continue with partial count
+                        }
+                    }
+                }
 
                 let input_log_meta = InputLogMeta {
                     schema_version: SchemaVersion::default(),
@@ -1248,6 +1299,50 @@ fn read_file_contents(file_path: &std::path::Path) -> Result<Vec<u8>, String> {
     Ok(contents)
 }
 
+/// Calculate which segments to keep (same logic for video AND input logs)
+fn calculate_keep_segments(deleted_ranges_seconds: &[(f64, f64)], duration_seconds: f64) -> Vec<(f64, f64)> {
+    let mut keep_segments = Vec::new();
+    let mut current_start = 0.0;
+
+    // Sort by start time
+    let mut sorted_ranges = deleted_ranges_seconds.to_vec();
+    sorted_ranges.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+
+    for (delete_start, delete_end) in sorted_ranges {
+        if current_start < delete_start {
+            keep_segments.push((current_start, delete_start));
+        }
+        current_start = delete_end;
+    }
+
+    // Add final segment if there's meaningful remaining video (>100ms)
+    if current_start < duration_seconds {
+        let remaining_duration = duration_seconds - current_start;
+        if remaining_duration > 0.1 {
+            keep_segments.push((current_start, duration_seconds));
+        }
+    }
+
+    keep_segments
+}
+
+/// Map original timestamp to new timestamp based on kept segments
+fn map_timestamp_to_new_timeline(original_seconds: f64, keep_segments: &[(f64, f64)]) -> Option<f64> {
+    let mut accumulated_time = 0.0;
+    
+    for (seg_start, seg_end) in keep_segments {
+        if original_seconds >= *seg_start && original_seconds <= *seg_end {
+            // Timestamp is within this kept segment
+            let offset_in_segment = original_seconds - seg_start;
+            return Some(accumulated_time + offset_in_segment);
+        }
+        // Add this segment's duration to accumulated time
+        accumulated_time += seg_end - seg_start;
+    }
+    
+    None // Timestamp was in a deleted segment
+}
+
 fn filter_input_log(
     file_path: &std::path::Path,
     deleted_ranges: &[(f64, f64)],
@@ -1264,6 +1359,21 @@ fn filter_input_log(
         .iter()
         .map(|(start_ms, end_ms)| (start_ms / 1000.0, end_ms / 1000.0))
         .collect();
+
+    // Estimate video duration from the highest timestamp
+    let estimated_duration = deleted_ranges_seconds
+        .iter()
+        .map(|(_, end)| *end)
+        .fold(0.0, f64::max) + 5.0; // Add small buffer
+
+    // Use SAME logic as video processing
+    let keep_segments = calculate_keep_segments(&deleted_ranges_seconds, estimated_duration);
+    
+    log::info!(
+        "[filter_input_log] Keep segments: {:?} (total duration: {:.2}s)",
+        keep_segments,
+        keep_segments.iter().map(|(s, e)| e - s).sum::<f64>()
+    );
 
     let mut filtered_lines: Vec<String> = Vec::new();
 
@@ -1285,44 +1395,39 @@ fn filter_input_log(
                 if let Some(time_ms) = json.get("time").and_then(|t| t.as_f64()) {
                     let time_seconds = time_ms / 1000.0;
 
-                    // Check if this timestamp is in any deleted range
-                    let is_deleted = deleted_ranges_seconds
-                        .iter()
-                        .any(|(start, end)| time_seconds >= *start && time_seconds <= *end);
+                    // Use the SAME mapping logic as video processing
+                    if let Some(new_time_seconds) = map_timestamp_to_new_timeline(time_seconds, &keep_segments) {
+                        let new_time_ms = new_time_seconds * 1000.0;
 
-                    if !is_deleted {
-                        // Calculate how much time was deleted before this timestamp
-                        let deleted_time_before: f64 = deleted_ranges_seconds
-                            .iter()
-                            .filter(|(start, _end)| *start < time_seconds)
-                            .map(|(start, end)| end - start)
-                            .sum();
-
-                        // Adjust the timestamp by subtracting deleted time
-                        let adjusted_time_seconds = time_seconds - deleted_time_before;
-                        let adjusted_time_ms = adjusted_time_seconds * 1000.0;
-
-                        // Update the timestamp in the JSON entry (convert to integer)
+                        // Update the timestamp in the JSON entry
                         let mut json_entry = json.clone();
-                        json_entry["time"] = serde_json::Value::from(adjusted_time_ms as i64);
+                        json_entry["time"] = serde_json::Value::from(new_time_ms as i64);
 
                         // Serialize the adjusted entry
                         match serde_json::to_string(&json_entry) {
                             Ok(adjusted_line) => filtered_lines.push(adjusted_line),
-                            Err(_) => filtered_lines.push(line.to_string()), // Fallback to original
+                            Err(_) => {
+                                log::warn!("[filter_input_log] Failed to serialize adjusted entry, skipping");
+                            }
                         }
                     }
+                    // If timestamp maps to None, it was in a deleted segment - skip entirely
                 } else {
                     // Keep lines without timestamp
                     filtered_lines.push(line.to_string());
                 }
             }
             Err(_) => {
-                // Keep malformed lines
-                filtered_lines.push(line.to_string());
+                log::warn!("[filter_input_log] Failed to parse JSON line, skipping: {}", line);
+                // Skip malformed lines instead of keeping them
             }
         }
     }
+
+    log::info!(
+        "[filter_input_log] Processing complete - {} events remain after filtering",
+        filtered_lines.len()
+    );
 
     let filtered_content = filtered_lines.join("\n");
     if !filtered_content.is_empty() {
@@ -1466,47 +1571,33 @@ fn apply_video_edits(
         duration
     );
 
-    // Create segments to keep (inverse of deleted ranges)
-    let mut keep_segments = Vec::new();
-    let mut current_start = 0.0;
-
-    // Convert ranges from milliseconds to seconds and sort by start time
-    let mut sorted_ranges: Vec<(f64, f64)> = deleted_ranges
+    // Convert ranges from milliseconds to seconds
+    let deleted_ranges_seconds: Vec<(f64, f64)> = deleted_ranges
         .iter()
         .map(|(start_ms, end_ms)| (start_ms / 1000.0, end_ms / 1000.0))
         .collect();
-    sorted_ranges.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
 
-    log::info!(
-        "[apply_video_edits] Converted deleted ranges from ms to seconds: {:?}",
-        sorted_ranges
-    );
-    log::info!(
-        "[apply_video_edits] Video duration: {:.2}s, Processing deletion from {:.2}s to {:.2}s",
-        duration,
-        sorted_ranges.get(0).map(|(s, _)| *s).unwrap_or(0.0),
-        sorted_ranges.get(0).map(|(_, e)| *e).unwrap_or(0.0)
-    );
-
-    for (delete_start, delete_end) in sorted_ranges {
-        if current_start < delete_start {
-            keep_segments.push((current_start, delete_start));
-        }
-        current_start = delete_end.max(current_start);
-    }
-
-    // Add final segment if there's remaining video
-    if current_start < duration {
-        keep_segments.push((current_start, duration));
-    }
+    // Use the SAME logic as input log processing
+    let keep_segments = calculate_keep_segments(&deleted_ranges_seconds, duration);
 
     if keep_segments.is_empty() {
+        log::error!(
+            "[apply_video_edits] CRITICAL: No video segments left after processing {} deleted ranges over {:.2}s video",
+            deleted_ranges.len(),
+            duration
+        );
         return Err("No video segments left after applying edits".to_string());
     }
 
+    let total_kept_duration: f64 = keep_segments
+        .iter()
+        .map(|(start, end)| end - start)
+        .sum();
+
     log::info!(
-        "[apply_video_edits] Keeping {} segments: {:?}",
+        "[apply_video_edits] Using unified logic - keeping {} segments with total duration {:.2}s: {:?}",
         keep_segments.len(),
+        total_kept_duration,
         keep_segments
     );
 
@@ -1542,10 +1633,19 @@ fn trim_video_segment(
         .ok_or("FFmpeg binary not found")?;
 
     log::info!(
-        "[trim_video_segment] Trimming from {:.2}s for {:.2}s",
+        "[trim_video_segment] Trimming from {:.3}s for {:.3}s (end: {:.3}s)",
         start_seconds,
-        duration_seconds
+        duration_seconds,
+        start_seconds + duration_seconds
     );
+
+    // Input validation
+    if start_seconds < 0.0 {
+        return Err(format!("Invalid start time: {:.3}s", start_seconds));
+    }
+    if duration_seconds <= 0.0 {
+        return Err(format!("Invalid duration: {:.3}s", duration_seconds));
+    }
 
     let mut command = std::process::Command::new(ffmpeg_path);
 
@@ -1555,22 +1655,30 @@ fn trim_video_segment(
         command.creation_flags(0x08000000); // CREATE_NO_WINDOW
     }
 
+    // Use precise seek with microsecond precision
+    let start_time_str = format!("{:.6}", start_seconds);
+    let duration_str = format!("{:.6}", duration_seconds);
+
     let output = command
         .args([
             "-i",
             input_path.to_str().unwrap(),
             "-ss",
-            &start_seconds.to_string(),
+            &start_time_str,
             "-t",
-            &duration_seconds.to_string(),
+            &duration_str,
             "-c:v",
             "libx264", // Re-encode for precision
             "-c:a",
             "aac", // Re-encode audio
             "-preset",
-            "ultrafast", // Fast encoding
+            "veryfast", // Balance between speed and quality
+            "-crf",
+            "18", // High quality
             "-avoid_negative_ts",
             "make_zero",
+            "-fflags",
+            "+genpts", // Generate presentation timestamps
             "-y", // Overwrite output file
             output_path.to_str().unwrap(),
         ])
@@ -1579,8 +1687,31 @@ fn trim_video_segment(
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("FFmpeg failed: {}", stderr));
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        log::error!(
+            "[trim_video_segment] FFmpeg failed. stderr: {}, stdout: {}",
+            stderr,
+            stdout
+        );
+        return Err(format!("FFmpeg trim failed: {}", stderr));
     }
+
+    // Verify output file exists and has content
+    if !output_path.exists() {
+        return Err("Output file was not created".to_string());
+    }
+    
+    let metadata = std::fs::metadata(output_path)
+        .map_err(|e| format!("Failed to check output file: {}", e))?;
+    
+    if metadata.len() == 0 {
+        return Err("Output file is empty".to_string());
+    }
+
+    log::info!(
+        "[trim_video_segment] Successfully created segment: {} bytes",
+        metadata.len()
+    );
 
     Ok(())
 }
@@ -1722,10 +1853,16 @@ fn get_video_duration(video_path: &std::path::Path) -> Result<f64, String> {
 /// Get video duration on macOS - use embedded ffprobe first, then external fallbacks
 #[cfg(target_os = "macos")]
 fn get_video_duration(video_path: &std::path::Path) -> Result<f64, String> {
+    log::info!("[get_video_duration] Starting video duration detection for: {:?}", video_path);
+    
     // First try embedded ffprobe (should always be available)
     if let Some(embedded_ffprobe) = crate::tools::ffmpeg::get_embedded_ffprobe_path() {
+        log::info!("[get_video_duration] Found embedded ffprobe path: {:?}", embedded_ffprobe);
         if embedded_ffprobe.exists() {
-            let output = std::process::Command::new(&embedded_ffprobe)
+            log::info!("[get_video_duration] Embedded ffprobe exists, attempting to use it...");
+            
+            // Use spawn with timeout to prevent hanging
+            let mut child = match std::process::Command::new(&embedded_ffprobe)
                 .args([
                     "-v",
                     "quiet",
@@ -1734,7 +1871,40 @@ fn get_video_duration(video_path: &std::path::Path) -> Result<f64, String> {
                     "-show_format",
                     video_path.to_str().unwrap(),
                 ])
-                .output();
+                .spawn() {
+                Ok(child) => child,
+                Err(e) => {
+                    log::warn!("[get_video_duration] Failed to spawn embedded ffprobe: {}", e);
+                    return Err(format!("Failed to spawn embedded ffprobe: {}", e));
+                }
+            };
+            
+            // Wait with timeout (5 seconds should be enough for FFprobe)
+            let timeout = std::time::Duration::from_secs(5);
+            let start = std::time::Instant::now();
+            let output = loop {
+                match child.try_wait() {
+                    Ok(Some(status)) => {
+                        // Process finished
+                        let output = child.wait_with_output();
+                        break output;
+                    }
+                    Ok(None) => {
+                        // Process still running
+                        if start.elapsed() > timeout {
+                            log::warn!("[get_video_duration] FFprobe timeout after 5s, killing process");
+                            let _ = child.kill();
+                            let _ = child.wait(); // Clean up zombie
+                            return Err("FFprobe timeout after 5 seconds".to_string());
+                        }
+                        std::thread::sleep(std::time::Duration::from_millis(100));
+                    }
+                    Err(e) => {
+                        log::warn!("[get_video_duration] Error checking FFprobe status: {}", e);
+                        return Err(format!("Error checking FFprobe status: {}", e));
+                    }
+                }
+            };
 
             if let Ok(output) = output {
                 if output.status.success() {

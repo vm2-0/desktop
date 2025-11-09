@@ -960,17 +960,57 @@ async fn create_filtered_recording_zip_handler(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(payload): Json<FilteredZipPayload>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    let deleted_ranges: Vec<(f64, f64)> = payload
+    let mut deleted_ranges: Vec<(f64, f64)> = payload
         .deleted_ranges
         .into_iter()
         .map(|r| (r.start, r.end))
         .collect();
 
+    // Validate and sort deleted ranges
+    deleted_ranges.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+    
+    // Validate ranges are non-overlapping and positive
+    for (i, (start, end)) in deleted_ranges.iter().enumerate() {
+        if *start < 0.0 || *end <= *start {
+            log::error!(
+                "🚨 [create_filtered_recording_zip_handler] Invalid range at index {}: {:.2}ms to {:.2}ms",
+                i, start, end
+            );
+            return Err((
+                StatusCode::BAD_REQUEST,
+                format!("Invalid deleted range: {:.2}ms to {:.2}ms", start, end)
+            ));
+        }
+        
+        if i > 0 && deleted_ranges[i-1].1 > *start {
+            log::error!(
+                "🚨 [create_filtered_recording_zip_handler] Overlapping ranges: {:?} and {:?}",
+                deleted_ranges[i-1], (start, end)
+            );
+            return Err((
+                StatusCode::BAD_REQUEST,
+                "Deleted ranges must not overlap".to_string()
+            ));
+        }
+    }
+
     log::info!(
-        "🔍 [create_filtered_recording_zip_handler] Called for recording {}, deleted_ranges: {:?}",
+        "🔍 [create_filtered_recording_zip_handler] Processing recording {} with {} validated deleted ranges (ms): {:?}",
         id,
+        deleted_ranges.len(),
         deleted_ranges
     );
+
+    // Log each range for debugging
+    for (i, (start_ms, end_ms)) in deleted_ranges.iter().enumerate() {
+        log::info!(
+            "🔍 [Range {}] Deleting {:.3}s to {:.3}s (duration: {:.3}s)",
+            i,
+            start_ms / 1000.0,
+            end_ms / 1000.0,
+            (end_ms - start_ms) / 1000.0
+        );
+    }
 
     match record::create_filtered_recording_zip(state.app_handle, id.clone(), deleted_ranges).await
     {

@@ -16,11 +16,14 @@ class TimelineProgressBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final durationMs = totalDuration.inMilliseconds.toDouble();
-    if (durationMs > 0) {
+    if (durationMs > 0 && timelineWidth > 0) {
+      final progressWidth = (currentPosition.inMilliseconds / durationMs) * timelineWidth;
+      final clampedWidth = progressWidth.clamp(0.0, timelineWidth);
+      
       return Align(
         alignment: Alignment.centerLeft,
         child: Container(
-          width: (currentPosition.inMilliseconds / durationMs) * timelineWidth,
+          width: clampedWidth,
           height: 4,
           decoration: BoxDecoration(
             color: ClonesColors.secondary,

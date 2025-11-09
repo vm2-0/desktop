@@ -18,36 +18,44 @@ class TimelineEventMarkers extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final videoState = ref.watch(videoStateNotifierProvider(videoId));
     final durationMs = videoState.totalDuration.inMilliseconds.toDouble();
-    final events = ref.watch(demoDetailNotifierProvider).events;
-    final enabledEventTypes =
-        ref.watch(demoDetailNotifierProvider).enabledEventTypes;
+    final demoDetail = ref.watch(demoDetailNotifierProvider);
+    final events = demoDetail.events;
+    final enabledEventTypes = demoDetail.enabledEventTypes;
+    final startTime = demoDetail.startTime;
 
     if (durationMs > 0) {
       return Stack(
-        children: events
-            .where(
-              (event) =>
-                  enabledEventTypes.contains(event.event) &&
-                  event.time <= durationMs,
-            )
-            .map(
-              (event) => Positioned(
-                left: (event.time / durationMs) * timelineWidth,
-                top: 0,
-                bottom: 0,
-                child: Center(
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: ClonesColors.getEventTypeColor(event.event),
-                      shape: BoxShape.circle,
-                    ),
+        children: events.where(
+          (event) {
+            final relativeTimeMs = (event.time - startTime).toDouble();
+            return enabledEventTypes.contains(event.event) &&
+                relativeTimeMs >= 0 &&
+                relativeTimeMs <= durationMs;
+          },
+        ).map(
+          (event) {
+            // Calculate relative time since recording start (should now be just event.time since startTime = 0)
+            final relativeTimeMs = (event.time - startTime).toDouble();
+            final position = (relativeTimeMs / durationMs) * timelineWidth -
+                4; // Center 8px circle: -4px offset
+
+            return Positioned(
+              left: position,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: ClonesColors.getEventTypeColor(event.event),
+                    shape: BoxShape.circle,
                   ),
                 ),
               ),
-            )
-            .toList(),
+            );
+          },
+        ).toList(),
       );
     }
     return const SizedBox.shrink();

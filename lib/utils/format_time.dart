@@ -40,17 +40,22 @@ String formatDuration(Duration duration) {
   }
 }
 
-String formatVideoTime(Duration duration) {
+String formatVideoTime(Duration duration, {bool includeMilliseconds = false}) {
   final totalSeconds = duration.inSeconds;
   final hours = totalSeconds ~/ 3600;
   final minutes = (totalSeconds % 3600) ~/ 60;
   final seconds = totalSeconds % 60;
+  final milliseconds = duration.inMilliseconds % 1000;
 
   if (hours > 0) {
     return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   } else if (minutes > 0) {
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   } else {
-    return '0:${seconds.toString().padLeft(2, '0')}';
+    if (includeMilliseconds) {
+      return '0:${seconds.toString().padLeft(2, '0')}:${milliseconds.toString().padLeft(2, '0')}';
+    } else {
+      return '0:${seconds.toString().padLeft(2, '0')}';
+    }
   }
 }
