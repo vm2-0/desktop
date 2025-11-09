@@ -356,7 +356,7 @@ impl FFmpegRecorder {
             .spawn()
             .map_err(|e| format!("Failed to start FFmpeg: {}", e))?;
 
-        // Handle stderr for ready signal
+        // Handle stderr for ready signal AND true video start notification
         if let Some(stderr) = process.stderr.take() {
             let ready_signal = self.ready_signal.clone();
             thread::spawn(move || {
@@ -368,6 +368,11 @@ impl FFmpegRecorder {
                         if line.contains("Press [q] to stop") {
                             log::info!("[FFmpeg] Ready signal detected");
                             ready_signal.store(true, Ordering::Relaxed);
+                            
+                            // Notify true video start
+                            let true_start = std::time::Instant::now();
+                            crate::core::synchronization::notify_video_started(true_start);
+                            log::info!("[FFmpeg] TRUE video start signal sent");
                         }
                     }
                 }

@@ -3,6 +3,7 @@
 //! This module provides the main types and functions for managing recording sessions, metadata, demonstrations, and file operations.
 
 use crate::core::input;
+use crate::core::synchronization::{start_sync, stop_sync, set_video_start_callback};
 use crate::tools::axtree;
 #[cfg(not(target_os = "macos"))]
 use crate::tools::ffmpeg::{init_ffmpeg, FFmpegRecorder, FFMPEG_PATH};
@@ -136,6 +137,7 @@ enum Recorder {
 }
 
 impl Recorder {
+
     fn start(&mut self) -> Result<(), String> {
         match self {
             #[cfg(target_os = "macos")]
@@ -199,7 +201,7 @@ impl Recorder {
             #[cfg(target_os = "macos")]
             Recorder::Native(recorder) => recorder.set_reference_time(reference_time_millis),
             #[cfg(not(target_os = "macos"))]
-            Recorder::FFmpeg(_recorder) => {} // FFmpeg recorder doesn't need sync
+            Recorder::FFmpeg(_recorder) => {}
         }
     }
 
@@ -638,45 +640,42 @@ pub async fn start_recording(
         primary.height
     );
 
-    set_rec_state(&app, "recording".to_string(), None)?;
-
+    // Set up callback to be notified when video ACTUALLY starts
+    let sync_established = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let sync_flag = sync_established.clone();
+    
+    set_video_start_callback(move |video_start_instant| {
+        let reference_timestamp = start_sync(video_start_instant);
+        log::info!("[sync] ⏱️ TRUE video start detected - sync established: {}", reference_timestamp.to_rfc3339());
+        sync_flag.store(true, std::sync::atomic::Ordering::SeqCst);
+    });
+    
+    // Start recording - it will callback when video actually begins
     let mut recorder = Recorder::new(&video_path, &primary, fps)?;
-
-    // Start recording process
     recorder.start()?;
-
-    log::info!("[record] Recording process started, waiting for ready signal...");
-
-    // Wait for recorder to signal it's ready
-    let recorder_ready = match &recorder {
-        #[cfg(target_os = "macos")]
-        Recorder::Native(r) => r.wait_until_ready(5000),
-        #[cfg(not(target_os = "macos"))]
-        Recorder::FFmpeg(r) => r.wait_until_ready(5000),
-    };
-
-    if !recorder_ready {
-        log::warn!(
-            "[record] Recorder ready signal timeout - proceeding anyway with fallback delay"
-        );
-        std::thread::sleep(std::time::Duration::from_millis(1500));
+    
+    log::info!("[record] Recorder started, waiting for TRUE video start signal...");
+    
+    // Wait for the true video start callback
+    let timeout = std::time::Duration::from_secs(10);
+    let start_wait = std::time::Instant::now();
+    while !sync_established.load(std::sync::atomic::Ordering::SeqCst) {
+        if start_wait.elapsed() > timeout {
+            return Err("Timeout waiting for true video start signal".to_string());
+        }
+        std::thread::sleep(std::time::Duration::from_millis(10));
     }
-
-    // NOW capture recording_start_time - recorder is capturing frames
-    // CRITICAL: Capture the exact same timestamp for both video and input synchronization
-    let recording_start = Local::now();
-    let recording_start_millis = recording_start.timestamp_millis();
-
-    log::info!(
-        "[record] ⏱️  Recording start time captured (recorder ready: {}): {} ({}ms)",
-        recorder_ready,
-        recording_start.to_rfc3339(),
-        recording_start_millis
-    );
-
-    // SYNCHRONIZATION: Set the same reference time in the recorder for timeline alignment
-    recorder.set_reference_time(recording_start_millis);
-
+    
+    log::info!("[record] True video start confirmed - proceeding with input sync");
+    
+    set_rec_state(&app, "recording".to_string(), None)?;
+    
+    // Reference time will be stored by the callback when video actually starts
+    // For compatibility with existing code, use current time as fallback
+    let fallback_time = chrono::Local::now().timestamp_millis();
+    RECORDING_START_TIME_MILLIS.store(fallback_time, Ordering::Relaxed);
+    // The NativeRecorder will call start_sync() when first frame is captured
+    
     // Store in DEMONSTRATION_STATE with poison recovery
     {
         let mut global_state = match DEMONSTRATION_STATE.lock() {
@@ -686,11 +685,8 @@ pub async fn start_recording(
                 poisoned.into_inner()
             }
         };
-        global_state.recording_start_time = Some(recording_start);
+        global_state.recording_start_time = Some(Local::now());
     }
-
-    // Store in atomic variable (lock-free access for input/ffmpeg threads)
-    RECORDING_START_TIME_MILLIS.store(recording_start_millis, Ordering::Relaxed);
 
     // Set the recorder state
     {
@@ -706,7 +702,7 @@ pub async fn start_recording(
 
     log::info!("[record] Video recorder synchronized and ready");
 
-    // Start input logging and listening with poison recovery
+    // PHASE 5: Start input logging and listening with poison recovery
     {
         let mut log_state = match LOGGER_STATE.lock() {
             Ok(state) => state,
@@ -720,9 +716,9 @@ pub async fn start_recording(
         }
     } // Logger mutex guard dropped here
 
-    // CRITICAL: Start input listener AFTER video timeline is synchronized
-    // This ensures inputs are captured with the same reference time as video
-    log::info!("[record] Starting input listener with synchronized timeline");
+    // PHASE 6: Start synchronized input listener
+    // This ensures inputs are captured with the EXACT same reference time as video
+    log::info!("[record] Starting synchronized input listener");
 
     #[cfg(target_os = "macos")]
     {
@@ -733,21 +729,17 @@ pub async fn start_recording(
             // Optionally prompt the user (no-op in headless runs)
             let _ = request_ax_perms().await;
         } else {
-            input::start_input_listener(app.clone(), Some(recording_start))?;
+            input::start_input_listener(app.clone(), Some(Local::now()))?;
             axtree::set_recording_mode(true)?;
         }
     }
 
     #[cfg(not(target_os = "macos"))]
     {
-        input::start_input_listener(app.clone(), Some(recording_start))?;
+        input::start_input_listener(app.clone(), Some(Local::now()))?;
         axtree::set_recording_mode(true)?;
     }
 
-    log::info!(
-        "[record] 🎬 Recording fully synchronized: video + inputs using timestamp {}",
-        recording_start_millis
-    );
 
     Ok(())
 }
@@ -768,11 +760,12 @@ pub async fn stop_recording(
 ) -> Result<String, String> {
     // Emit recording stopping event
     set_rec_state(&app, "stopping".to_string(), None)?;
+    
+    // Stop synchronization
+    stop_sync();
 
     // Stop event-driven UI dumps
     axtree::set_recording_mode(false)?;
-
-    // Note: No post-recording AXTree capture since it would only show Clones app
 
     // Stop input logging and listening after capturing final state
     let mut log_state = LOGGER_STATE.lock().map_err(|e| e.to_string())?;
@@ -922,6 +915,7 @@ pub async fn stop_recording(
 
     // Reset atomic recording start time
     RECORDING_START_TIME_MILLIS.store(0, Ordering::Relaxed);
+    
 
     if let Some(recording_id) = recording_id_opt {
         set_rec_state(&app, "saved".to_string(), Some(recording_id.clone()))?;
