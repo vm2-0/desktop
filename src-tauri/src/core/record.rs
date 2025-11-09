@@ -270,7 +270,7 @@ impl Recorder {
                 video_path.to_path_buf(),
                 input_format.to_string(),
                 input_device,
-            )?))
+            )))
         }
     }
 }
@@ -781,6 +781,12 @@ pub async fn stop_recording(
     // Stop input listener
     input::stop_input_listener()?;
 
+    // Get duration from recorder before stopping (for native recorder timeline tracking)
+    let recorder_duration = {
+        let rec_state = RECORDER_STATE.lock().map_err(|e| e.to_string())?;
+        rec_state.as_ref().and_then(|r| r.get_duration())
+    };
+
     let mut rec_state = RECORDER_STATE.lock().map_err(|e| e.to_string())?;
     if let Some(mut recorder) = rec_state.take() {
         recorder.stop()?;
@@ -800,9 +806,14 @@ pub async fn stop_recording(
     if let Some(latest_dir) = entries.first() {
         let video_path = latest_dir.path().join("recording.mp4");
 
-        // Get the actual video duration from the file using FFprobe
-        // This ensures meta.json duration matches the real video file duration
-        let duration = if video_path.exists() {
+        // Get the actual video duration - prefer recorder duration on macOS, FFprobe elsewhere
+        let duration = if let Some(recorder_dur) = recorder_duration {
+            log::info!(
+                "[stop_recording] Video duration from native recorder: {:.2}s",
+                recorder_dur
+            );
+            recorder_dur.round() as u64
+        } else if video_path.exists() {
             match get_video_duration(&video_path) {
                 Ok(duration_f64) => {
                     log::info!(
@@ -1438,9 +1449,14 @@ fn apply_video_edits(
         deleted_ranges.len()
     );
 
-    // Ensure FFmpeg is initialized (only needed for non-macOS platforms where we use FFmpeg for editing)
+    // Ensure FFmpeg is initialized (needed for video editing on all platforms)
+    crate::tools::ffmpeg::init_ffmpeg().map_err(|e| format!("Failed to initialize FFmpeg for video editing: {}", e))?;
+    
     #[cfg(not(target_os = "macos"))]
-    FFMPEG_PATH.get().ok_or("FFmpeg not initialized")?;
+    {
+        use crate::tools::ffmpeg::FFMPEG_PATH;
+        FFMPEG_PATH.get().ok_or("FFmpeg not initialized")?;
+    }
 
     // Create temporary output file
     let temp_dir = std::env::temp_dir();
@@ -1521,15 +1537,15 @@ fn apply_video_edits(
     result
 }
 
-/// Trim a single video segment using FFmpeg
-#[cfg(not(target_os = "macos"))]
+/// Trim a single video segment using FFmpeg (all platforms)
 fn trim_video_segment(
     input_path: &std::path::Path,
     output_path: &std::path::Path,
     start_seconds: f64,
     duration_seconds: f64,
 ) -> Result<(), String> {
-    let ffmpeg_path = FFMPEG_PATH.get().ok_or("FFmpeg not initialized")?;
+    let ffmpeg_path = crate::tools::ffmpeg::get_embedded_ffmpeg_path()
+        .ok_or("FFmpeg binary not found")?;
 
     log::info!(
         "[trim_video_segment] Trimming from {:.2}s for {:.2}s",
@@ -1575,25 +1591,15 @@ fn trim_video_segment(
     Ok(())
 }
 
-/// Trim a single video segment (macOS stub)
-#[cfg(target_os = "macos")]
-fn trim_video_segment(
-    _input_path: &std::path::Path,
-    _output_path: &std::path::Path,
-    _start_seconds: f64,
-    _duration_seconds: f64,
-) -> Result<(), String> {
-    Err("Video editing not supported with native recorder on macOS".to_string())
-}
 
-/// Concatenate multiple video segments using FFmpeg
-#[cfg(not(target_os = "macos"))]
+/// Concatenate multiple video segments using FFmpeg (all platforms)
 fn concatenate_video_segments(
     input_path: &std::path::Path,
     output_path: &std::path::Path,
     segments: &[(f64, f64)],
 ) -> Result<(), String> {
-    let ffmpeg_path = FFMPEG_PATH.get().ok_or("FFmpeg not initialized")?;
+    let ffmpeg_path = crate::tools::ffmpeg::get_embedded_ffmpeg_path()
+        .ok_or("FFmpeg binary not found")?;
 
     log::info!(
         "[concatenate_video_segments] Concatenating {} segments",
@@ -1674,22 +1680,12 @@ fn concatenate_video_segments(
     Ok(())
 }
 
-/// Concatenate multiple video segments (macOS stub)
-#[cfg(target_os = "macos")]
-fn concatenate_video_segments(
-    _input_path: &std::path::Path,
-    _output_path: &std::path::Path,
-    _segments: &[(f64, f64)],
-) -> Result<(), String> {
-    Err("Video editing not supported with native recorder on macOS".to_string())
-}
 
-/// Get video duration using FFprobe
+/// Get video duration using FFprobe (non-macOS platforms)
 #[cfg(not(target_os = "macos"))]
 fn get_video_duration(video_path: &std::path::Path) -> Result<f64, String> {
-    use crate::tools::ffmpeg::FFPROBE_PATH;
-
-    let ffprobe_path = FFPROBE_PATH.get().ok_or("FFprobe not initialized")?;
+    let ffprobe_path = crate::tools::ffmpeg::get_embedded_ffprobe_path()
+        .ok_or("FFprobe binary not found")?;
 
     let mut command = std::process::Command::new(ffprobe_path);
 
