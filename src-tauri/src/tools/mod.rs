@@ -6,4 +6,5 @@ pub mod axtree;
 pub mod axtree_native;
 pub mod ffmpeg;
 pub mod helpers;
+pub mod native_recorder;
 pub use helpers::sanitize_and_check_path;

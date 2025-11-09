@@ -61,6 +61,19 @@ pub fn setup_builder() -> tauri::Builder<tauri::Wry> {
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin({
+            #[cfg(target_os = "macos")]
+            {
+                log::info!("[Setup] Initializing tauri-plugin-macos-permissions for macOS...");
+                tauri_plugin_macos_permissions::init()
+            }
+            #[cfg(not(target_os = "macos"))]
+            {
+                log::info!("[Setup] Skipping tauri-plugin-macos-permissions (not on macOS)");
+                // Return a no-op plugin builder for non-macOS platforms
+                tauri::plugin::Builder::new("noop").build()
+            }
+        })
         .manage(DeepLinkState(std::sync::Arc::new(std::sync::Mutex::new(None))))
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
@@ -117,6 +130,18 @@ pub fn run() {
             {
                 // Hide the app icon from the Dock - this is a background agent
                 app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+                
+                // Log system information for debugging permissions on different architectures
+                let arch = tauri_plugin_os::arch().to_string();
+                let version = tauri_plugin_os::version().to_string();
+                log::info!("[Setup] macOS system info - Version: {}, Architecture: {}", version, arch);
+                
+                // Detect Apple Silicon generation for M2/M4 specific handling
+                if arch.contains("arm64") || arch.contains("aarch64") {
+                    log::info!("[Setup] Detected Apple Silicon (ARM64) - applying M2/M4 compatibility enhancements");
+                } else {
+                    log::info!("[Setup] Detected Intel architecture");
+                }
             }
 
             // Pre-initialize FFmpeg binaries to trigger macOS code signature verification

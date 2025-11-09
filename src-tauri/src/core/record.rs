@@ -4,7 +4,10 @@
 
 use crate::core::input;
 use crate::tools::axtree;
+#[cfg(not(target_os = "macos"))]
 use crate::tools::ffmpeg::{init_ffmpeg, FFmpegRecorder, FFMPEG_PATH};
+#[cfg(target_os = "macos")]
+use crate::tools::native_recorder::macos::NativeRecorder;
 #[cfg(not(target_os = "macos"))]
 use crate::utils::keyboard_layout;
 use crate::utils::logger::Logger;
@@ -19,7 +22,6 @@ use std::fs::{self, create_dir_all, File};
 use std::io::{BufReader, Cursor, Read, Write};
 use std::path::PathBuf;
 #[cfg(target_os = "macos")]
-use std::process::Command;
 use std::sync::{Arc, Mutex};
 use tauri::Emitter;
 use zip::{write::FileOptions, ZipWriter};
@@ -127,12 +129,18 @@ pub struct MonitorInfo {
 }
 
 enum Recorder {
+    #[cfg(target_os = "macos")]
+    Native(NativeRecorder),
+    #[cfg(not(target_os = "macos"))]
     FFmpeg(FFmpegRecorder),
 }
 
 impl Recorder {
     fn start(&mut self) -> Result<(), String> {
         match self {
+            #[cfg(target_os = "macos")]
+            Recorder::Native(recorder) => recorder.start(),
+            #[cfg(not(target_os = "macos"))]
             Recorder::FFmpeg(recorder) => {
                 #[cfg(target_os = "linux")]
                 {
@@ -157,6 +165,9 @@ impl Recorder {
 
     fn stop(&mut self) -> Result<(), String> {
         match self {
+            #[cfg(target_os = "macos")]
+            Recorder::Native(recorder) => recorder.stop(),
+            #[cfg(not(target_os = "macos"))]
             Recorder::FFmpeg(recorder) => recorder.stop(),
         }
     }
@@ -164,12 +175,52 @@ impl Recorder {
     /// Force kill underlying recording process immediately.
     fn force_kill(&mut self) {
         match self {
+            #[cfg(target_os = "macos")]
+            Recorder::Native(recorder) => recorder.force_kill(),
+            #[cfg(not(target_os = "macos"))]
             Recorder::FFmpeg(recorder) => recorder.force_kill(),
+        }
+    }
+
+    /// Get the recording duration from the recorder if available
+    fn get_duration(&self) -> Option<f64> {
+        match self {
+            #[cfg(target_os = "macos")]
+            Recorder::Native(recorder) => recorder.get_recording_duration(),
+            #[cfg(not(target_os = "macos"))]
+            Recorder::FFmpeg(_recorder) => None, // FFmpeg recorder doesn't track duration
+        }
+    }
+
+    /// Set synchronized reference time for timeline synchronization
+    fn set_reference_time(&mut self, reference_time_millis: i64) {
+        match self {
+            #[cfg(target_os = "macos")]
+            Recorder::Native(recorder) => recorder.set_reference_time(reference_time_millis),
+            #[cfg(not(target_os = "macos"))]
+            Recorder::FFmpeg(_recorder) => {}, // FFmpeg recorder doesn't need sync
         }
     }
 
     fn new(video_path: &PathBuf, primary: &DisplayInfo, fps: u32) -> Result<Self, String> {
         log::info!("[record] Starting new recorder");
+        
+        #[cfg(target_os = "macos")]
+        {
+            // Use native ScreenCaptureKit recorder on macOS
+            // Align with Windows behavior: record at LOGICAL resolution (not retina-scaled)
+            let logical_width = primary.width;
+            let logical_height = primary.height;
+            
+            Ok(Recorder::Native(NativeRecorder::new(
+                logical_width,
+                logical_height,
+                fps,
+                video_path.to_path_buf(),
+            )?))
+        }
+        
+        #[cfg(not(target_os = "macos"))]
         {
             let (input_format, input_device) = {
                 #[cfg(target_os = "windows")]
@@ -185,8 +236,6 @@ impl Recorder {
                         log::info!(
                             "[record] Wayland session detected, using pipewire for screen capture"
                         );
-                        // pipewire requires ffmpeg compiled with --enable-libpipewire
-                        // and pipewire running on the user side
                         ("pipewire", "default".to_string())
                     } else {
                         log::info!(
@@ -195,87 +244,18 @@ impl Recorder {
                         ("x11grab", ":0.0".to_string())
                     }
                 }
-                #[cfg(target_os = "macos")]
-                {
-                    // Run ffmpeg to list availabkle devices
-                    let ffmpeg = FFMPEG_PATH.get().ok_or_else(|| {
-                        log::info!("[FFmpeg] Error: FFmpeg not initialized");
-                        PathBuf::from("ffmpeg")
-                    });
-                    let output =
-                        Command::new(ffmpeg.unwrap_or(&PathBuf::from("ffmpeg")).as_os_str())
-                            .env("LANG", "en_US.UTF-8")
-                            .args(["-f", "avfoundation", "-list_devices", "true", "-i", ""])
-                            .output()
-                            .map_err(|e| {
-                                format!("Failed to execute ffmpeg to list devices: {}", e)
-                            })?;
-
-                    let output_str = String::from_utf8_lossy(&output.stderr);
-
-                    log::info!("[record] FFmpeg screen devices output:\n{}", output_str);
-
-                    // Find the screen capture device
-                    let mut screen_device_index = None;
-
-                    // Parse the output to find the screen capture device
-                    for line in output_str.lines() {
-                        if line.contains("Capture screen") {
-                            // This is a screen capture device
-                            log::info!("[record] Found screen capture line: {}", line);
-
-                            // Find the opening bracket
-                            if let Some(first_bracket) = line.find('[') {
-                                // Find the second opening bracket
-                                if let Some(start_idx) = line[first_bracket + 1..].find('[') {
-                                    // Adjust index to be relative to the original string
-                                    let start_idx = first_bracket + 1 + start_idx;
-
-                                    // Find the closing bracket after the second opening bracket
-                                    if let Some(end_idx) = line[start_idx + 1..].find(']') {
-                                        // Extract the content between brackets
-                                        let number_str =
-                                            &line[start_idx + 1..start_idx + 1 + end_idx];
-
-                                        // Parse as integer
-                                        if let Ok(index) = number_str.parse::<i32>() {
-                                            screen_device_index = Some(index);
-                                            log::info!(
-                                                "[record] Found screen capture device at index: {}",
-                                                index
-                                            );
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Format the input device string - just the video device index with a colon
-                    let input_device = if let Some(index) = screen_device_index {
-                        format!("{}:", index)
-                    } else {
-                        log::info!("[record] No screen capture device found.");
-                        log::info!("[record] Defualting to device [1].");
-                        // Fallback to a default if no screen capture device found
-                        "1".to_string() // Common default for screen capture
-                    };
-
-                    ("avfoundation", input_device)
-                }
-                #[cfg(not(any(target_os = "windows", target_os = "linux", target_os = "macos")))]
+                #[cfg(not(any(target_os = "windows", target_os = "linux")))]
                 {
                     return Err("Unsupported platform".to_string());
                 }
             };
 
             // Windows gdigrab requires LOGICAL dimensions, not physical
-            // macOS and Linux can handle physical dimensions
+            // Linux can handle physical dimensions
             #[cfg(target_os = "windows")]
             let (capture_width, capture_height) = (primary.width, primary.height);
             
-            #[cfg(not(target_os = "windows"))]
+            #[cfg(target_os = "linux")]
             let (capture_width, capture_height) = {
                 let physical_width = (primary.width as f32 * primary.scale_factor).round() as u32;
                 let physical_height = (primary.height as f32 * primary.scale_factor).round() as u32;
@@ -540,10 +520,13 @@ pub async fn start_recording(
 
     set_rec_state(&app, "starting".to_string(), None)?;
 
-    // Initialize FFmpeg and FFprobe
-    init_ffmpeg()?;
-    crate::tools::ffmpeg::init_ffprobe()
-        .map_err(|e| format!("Failed to initialize FFprobe: {}", e))?;
+    // Initialize FFmpeg and FFprobe (only for non-macOS platforms)
+    #[cfg(not(target_os = "macos"))]
+    {
+        init_ffmpeg()?;
+        crate::tools::ffmpeg::init_ffprobe()
+            .map_err(|e| format!("Failed to initialize FFprobe: {}", e))?;
+    }
 
     let (session_dir, timestamp) = get_session_path(&app)?;
 
@@ -580,12 +563,15 @@ pub async fn start_recording(
     let physical_width = (primary.width as f32 * primary.scale_factor).round() as u32;
     let physical_height = (primary.height as f32 * primary.scale_factor).round() as u32;
     
-    // On Windows, gdigrab records at logical resolution, not physical
-    // On macOS/Linux, we record at physical resolution
+    // On Windows and macOS, record at LOGICAL resolution (avoid retina doubling)
+    // On Linux, record at physical resolution
     #[cfg(target_os = "windows")]
     let (video_width, video_height) = (primary.width, primary.height);
     
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(target_os = "macos")]
+    let (video_width, video_height) = (primary.width, primary.height);
+    
+    #[cfg(target_os = "linux")]
     let (video_width, video_height) = (physical_width, physical_height);
     
     log::info!(
@@ -653,30 +639,38 @@ pub async fn start_recording(
 
     let mut recorder = Recorder::new(&video_path, &primary, fps)?;
 
-    // Start FFmpeg process
+    // Start recording process
     recorder.start()?;
 
-    log::info!("[record] FFmpeg process started, waiting for ready signal...");
+    log::info!("[record] Recording process started, waiting for ready signal...");
 
-    // CRITICAL: Wait dynamically for FFmpeg to signal it's ready
-    // FFmpeg will set ready_signal when it outputs "Press [q] to stop"
-    // Timeout after 5 seconds if something goes wrong
-    let ffmpeg_ready = match &recorder {
+    // Wait for recorder to signal it's ready
+    let recorder_ready = match &recorder {
+        #[cfg(target_os = "macos")]
+        Recorder::Native(r) => r.wait_until_ready(5000),
+        #[cfg(not(target_os = "macos"))]
         Recorder::FFmpeg(r) => r.wait_until_ready(5000),
     };
 
-    if !ffmpeg_ready {
-        log::warn!("[record] FFmpeg ready signal timeout - proceeding anyway with fallback delay");
+    if !recorder_ready {
+        log::warn!("[record] Recorder ready signal timeout - proceeding anyway with fallback delay");
         std::thread::sleep(std::time::Duration::from_millis(1500));
     }
 
-    // NOW capture recording_start_time - FFmpeg is capturing frames
+    // NOW capture recording_start_time - recorder is capturing frames
+    // CRITICAL: Capture the exact same timestamp for both video and input synchronization
     let recording_start = Local::now();
+    let recording_start_millis = recording_start.timestamp_millis();
+    
     log::info!(
-        "[record] ⏱️  Recording start time captured (FFmpeg ready: {}): {}",
-        ffmpeg_ready,
-        recording_start.to_rfc3339()
+        "[record] ⏱️  Recording start time captured (recorder ready: {}): {} ({}ms)",
+        recorder_ready,
+        recording_start.to_rfc3339(),
+        recording_start_millis
     );
+
+    // SYNCHRONIZATION: Set the same reference time in the recorder for timeline alignment
+    recorder.set_reference_time(recording_start_millis);
 
     // Store in DEMONSTRATION_STATE with poison recovery
     {
@@ -691,11 +685,11 @@ pub async fn start_recording(
     }
 
     // Store in atomic variable (lock-free access for input/ffmpeg threads)
-    RECORDING_START_TIME_MILLIS.store(recording_start.timestamp_millis(), Ordering::Relaxed);
+    RECORDING_START_TIME_MILLIS.store(recording_start_millis, Ordering::Relaxed);
 
     *recorder_state = Some(recorder);
 
-    log::info!("[record] Timestamp synchronized with actual video capture start");
+    log::info!("[record] Video recorder synchronized and ready");
 
     // Start input logging and listening with poison recovery
     let mut log_state = match LOGGER_STATE.lock() {
@@ -709,6 +703,10 @@ pub async fn start_recording(
         *log_state = Some(Logger::new(session_dir.clone())?);
     }
 
+    // CRITICAL: Start input listener AFTER video timeline is synchronized
+    // This ensures inputs are captured with the same reference time as video
+    log::info!("[record] Starting input listener with synchronized timeline");
+
     #[cfg(target_os = "macos")]
     {
         if !has_ax_perms() {
@@ -716,7 +714,7 @@ pub async fn start_recording(
                 "[Input] Accessibility permission missing; skipping input listener and AX dumps. Go to System Settings → Privacy & Security → Accessibility and enable permissions for Clones."
             );
             // Optionally prompt the user (no-op in headless runs)
-            request_ax_perms();
+            let _ = request_ax_perms();
         } else {
             input::start_input_listener(app.clone(), Some(recording_start))?;
             axtree::set_recording_mode(true)?;
@@ -728,6 +726,8 @@ pub async fn start_recording(
         input::start_input_listener(app.clone(), Some(recording_start))?;
         axtree::set_recording_mode(true)?;
     }
+
+    log::info!("[record] 🎬 Recording fully synchronized: video + inputs using timestamp {}", recording_start_millis);
 
     Ok(())
 }
@@ -1412,7 +1412,8 @@ fn apply_video_edits(
         deleted_ranges.len()
     );
 
-    // Ensure FFmpeg is initialized
+    // Ensure FFmpeg is initialized (only needed for non-macOS platforms where we use FFmpeg for editing)
+    #[cfg(not(target_os = "macos"))]
     FFMPEG_PATH.get().ok_or("FFmpeg not initialized")?;
 
     // Create temporary output file
@@ -1495,6 +1496,7 @@ fn apply_video_edits(
 }
 
 /// Trim a single video segment using FFmpeg
+#[cfg(not(target_os = "macos"))]
 fn trim_video_segment(
     input_path: &std::path::Path,
     output_path: &std::path::Path,
@@ -1547,7 +1549,19 @@ fn trim_video_segment(
     Ok(())
 }
 
+/// Trim a single video segment (macOS stub)
+#[cfg(target_os = "macos")]
+fn trim_video_segment(
+    _input_path: &std::path::Path,
+    _output_path: &std::path::Path,
+    _start_seconds: f64,
+    _duration_seconds: f64,
+) -> Result<(), String> {
+    Err("Video editing not supported with native recorder on macOS".to_string())
+}
+
 /// Concatenate multiple video segments using FFmpeg
+#[cfg(not(target_os = "macos"))]
 fn concatenate_video_segments(
     input_path: &std::path::Path,
     output_path: &std::path::Path,
@@ -1634,7 +1648,18 @@ fn concatenate_video_segments(
     Ok(())
 }
 
+/// Concatenate multiple video segments (macOS stub)
+#[cfg(target_os = "macos")]
+fn concatenate_video_segments(
+    _input_path: &std::path::Path,
+    _output_path: &std::path::Path,
+    _segments: &[(f64, f64)],
+) -> Result<(), String> {
+    Err("Video editing not supported with native recorder on macOS".to_string())
+}
+
 /// Get video duration using FFprobe
+#[cfg(not(target_os = "macos"))]
 fn get_video_duration(video_path: &std::path::Path) -> Result<f64, String> {
     use crate::tools::ffmpeg::FFPROBE_PATH;
 
@@ -1676,6 +1701,41 @@ fn get_video_duration(video_path: &std::path::Path) -> Result<f64, String> {
     duration_str
         .parse::<f64>()
         .map_err(|e| format!("Failed to parse duration: {}", e))
+}
+
+/// Get video duration on macOS - try ffprobe if available, otherwise use wallclock fallback
+#[cfg(target_os = "macos")]
+fn get_video_duration(video_path: &std::path::Path) -> Result<f64, String> {
+    // Try using ffprobe if available (from external ffmpeg installation)
+    let ffprobe_commands = ["ffprobe", "/opt/homebrew/bin/ffprobe", "/usr/local/bin/ffprobe"];
+    
+    for ffprobe_cmd in &ffprobe_commands {
+        let output = std::process::Command::new(ffprobe_cmd)
+            .args([
+                "-v", "quiet",
+                "-print_format", "json",
+                "-show_format",
+                video_path.to_str().unwrap(),
+            ])
+            .output();
+
+        if let Ok(output) = output {
+            if output.status.success() {
+                let output_str = String::from_utf8_lossy(&output.stdout);
+                if let Ok(json) = serde_json::from_str::<serde_json::Value>(&output_str) {
+                    if let Some(duration_str) = json["format"]["duration"].as_str() {
+                        if let Ok(duration) = duration_str.parse::<f64>() {
+                            log::info!("[get_video_duration] Got duration from {}: {:.2}s", ffprobe_cmd, duration);
+                            return Ok(duration);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Final fallback: return error to use wallclock time (this is actually fine)
+    Err("Video duration detection not available - ffprobe not found. Using wallclock time as fallback.".to_string())
 }
 
 pub async fn get_current_demonstration() -> Result<Option<Demonstration>, String> {

@@ -37,13 +37,11 @@ class PermissionsNotifier extends _$PermissionsNotifier {
 
     try {
       final tauriClient = ref.read(tauriApiClientProvider);
-      await tauriClient.requestAxPerms();
-
-      // After request, check the actual status
-      final hasPerms = await tauriClient.hasAxPerms();
+      final granted = await tauriClient.requestAxPerms();
+      
       state = state.copyWith(
-        accessibilityStatus: hasPerms
-            ? PermissionStatus.restartRequired
+        accessibilityStatus: granted
+            ? PermissionStatus.granted
             : PermissionStatus.denied,
       );
     } catch (e) {
@@ -57,13 +55,11 @@ class PermissionsNotifier extends _$PermissionsNotifier {
 
     try {
       final tauriClient = ref.read(tauriApiClientProvider);
-      await tauriClient.requestRecordPerms();
-
-      // After request, check the actual status
-      final hasPerms = await tauriClient.hasRecordPerms();
+      final granted = await tauriClient.requestRecordPerms();
+      
       state = state.copyWith(
-        screenRecordingStatus: hasPerms
-            ? PermissionStatus.restartRequired
+        screenRecordingStatus: granted
+            ? PermissionStatus.granted
             : PermissionStatus.denied,
       );
     } catch (e) {

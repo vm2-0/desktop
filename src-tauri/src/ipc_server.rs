@@ -690,7 +690,9 @@ async fn set_upload_data_allowed_handler(
 
 // Handler for `has_ax_perms`
 async fn has_ax_perms_handler() -> impl IntoResponse {
+    log::info!("[IPC] Processing has_ax_perms request");
     let status = has_ax_perms();
+    log::info!("[IPC] has_ax_perms result: {}", status);
     (
         StatusCode::OK,
         Json(PermissionStatus {
@@ -702,22 +704,43 @@ async fn has_ax_perms_handler() -> impl IntoResponse {
 // --- Handlers for permissions and settings ---
 
 async fn has_record_perms_handler() -> impl IntoResponse {
+    log::info!("[IPC] Processing has_record_perms request");
+    let status = has_record_perms();
+    log::info!("[IPC] has_record_perms result: {}", status);
     (
         StatusCode::OK,
         Json(PermissionStatus {
-            has_permission: has_record_perms(),
+            has_permission: status,
         }),
     )
 }
 
-async fn request_record_perms_handler() -> StatusCode {
-    request_record_perms();
-    StatusCode::OK
+async fn request_record_perms_handler() -> Result<impl IntoResponse, (StatusCode, String)> {
+    log::info!("[IPC] Processing request_record_perms request");
+    match request_record_perms().await {
+        Ok(granted) => {
+            log::info!("[IPC] request_record_perms result: {}", granted);
+            Ok((StatusCode::OK, Json(serde_json::json!({"granted": granted}))))
+        },
+        Err(e) => {
+            log::error!("[IPC] request_record_perms error: {}", e);
+            Err((StatusCode::INTERNAL_SERVER_ERROR, e))
+        }
+    }
 }
 
-async fn request_ax_perms_handler() -> StatusCode {
-    request_ax_perms();
-    StatusCode::OK
+async fn request_ax_perms_handler() -> Result<impl IntoResponse, (StatusCode, String)> {
+    log::info!("[IPC] Processing request_ax_perms request");
+    match request_ax_perms().await {
+        Ok(granted) => {
+            log::info!("[IPC] request_ax_perms result: {}", granted);
+            Ok((StatusCode::OK, Json(serde_json::json!({"granted": granted}))))
+        },
+        Err(e) => {
+            log::error!("[IPC] request_ax_perms error: {}", e);
+            Err((StatusCode::INTERNAL_SERVER_ERROR, e))
+        }
+    }
 }
 
 // --- Handlers for tools ---

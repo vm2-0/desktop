@@ -225,17 +225,16 @@ generate_appcast_from_build() {
         log_info "Copied $dmg_name to releases directory"
     done
     
-    # Get app version from Info.plist or config
+    # Get app version from pubspec.yaml
     local app_version
     if [ -f "pubspec.yaml" ]; then
         app_version=$(grep "^version:" pubspec.yaml | cut -d' ' -f2 | cut -d'+' -f1)
     else
         app_version="0.1.0"
     fi
-    
     log_info "App version: $app_version"
     
-    # Generate appcast using Sparkle's tool
+    # Generate appcast using Sparkle's tool (versioned download URLs to avoid CDN staleness)
     local appcast_file="${releases_dir}/appcast.xml"
     local private_key_file="sparkle_${ENVIRONMENT}_private.pem"
     
@@ -249,13 +248,13 @@ generate_appcast_from_build() {
     local download_url_prefix
     case "$ENVIRONMENT" in
         "prod")
-            download_url_prefix="https://releases.clones-ai.com/latest/darwin/"
+            download_url_prefix="https://releases.clones-ai.com/versions/${app_version}/darwin/"
             ;;
         "test")
-            download_url_prefix="https://releases-test.clones-ai.com/latest/darwin/"
+            download_url_prefix="https://releases-test.clones-ai.com/versions/${app_version}/darwin/"
             ;;
         *)
-            download_url_prefix="https://releases-${ENVIRONMENT}.clones-ai.com/latest/darwin/"
+            download_url_prefix="https://releases-${ENVIRONMENT}.clones-ai.com/versions/${app_version}/darwin/"
             ;;
     esac
     

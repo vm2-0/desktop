@@ -27,6 +27,11 @@ core-foundation = "0.10.1"
 macos-accessibility-client = "0.0.1"
 window-vibrancy = "0.6.0"
 nix = { version = "0.29", features = ["event"] }
+tauri-plugin-macos-permissions = "2.3.0"
+# Native recording dependencies - ScreenCaptureKit + AVFoundation
+objc = "0.2"
+cocoa = "0.25"
+block = "0.1"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.52", features = [

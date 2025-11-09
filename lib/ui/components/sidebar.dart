@@ -36,17 +36,17 @@ class Sidebar extends ConsumerWidget {
       SidebarButtonData(
         path: ForgeView.routeName,
         imagePath: Assets.forgeIcon,
-        label: 'Forge',
+        label: 'Factory',
       ),
       SidebarButtonData(
         path: FactoryView.routeName,
         imagePath: Assets.farmerIcon,
-        label: 'Factory',
+        label: 'Farm',
       ),
       SidebarButtonData(
         path: FactoryHistoryView.routeName,
         imagePath: Assets.farmerHistoryIcon,
-        label: 'Factory History',
+        label: 'Demos',
       ),
       SidebarButtonData(
         path: LeaderboardsView.routeName,
@@ -155,7 +155,7 @@ class AnimatedSidebarSection extends StatelessWidget {
     const double sidebarWidth = 100;
     const double highlightSize = 70;
     final totalHeight = buttons.length * buttonHeight;
-
+    final theme = Theme.of(context);
     return LayoutBuilder(
       builder: (context, constraints) {
         final availableHeight = constraints.maxHeight;
@@ -201,53 +201,70 @@ class AnimatedSidebarSection extends StatelessWidget {
               child: Column(
                 children: List.generate(buttons.length, (i) {
                   final button = buttons[i];
-                  return SizedBox(
-                    height: buttonHeight,
-                    child: Center(
-                      child: MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: GestureDetector(
-                          onTap: () => onTap(i),
-                          child: ShaderMask(
-                            shaderCallback: (Rect bounds) {
-                              return LinearGradient(
-                                colors: [
-                                  ClonesColors.primary.withValues(alpha: 0.5),
-                                  ClonesColors.secondary.withValues(alpha: 0.9),
-                                ],
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                              ).createShader(bounds);
-                            },
-                            blendMode: BlendMode.dstIn,
-                            child: activeIndex == i
-                                ? Stack(
-                                    children: [
-                                      Image.asset(
-                                        button.imagePath,
-                                        width: 40,
-                                        height: 40,
-                                        color: ClonesColors.primary,
-                                      ),
-                                      Opacity(
-                                        opacity: 0.7,
-                                        child: Image.asset(
-                                          button.imagePath,
-                                          width: 40,
-                                          height: 40,
-                                        ),
-                                      ),
-                                    ],
-                                  )
-                                : Image.asset(
-                                    button.imagePath,
-                                    width: 40,
-                                    height: 40,
-                                  ),
+                  return Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Positioned(
+                        bottom: 12,
+                        child: Text(
+                          button.label,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontSize: 7,
+                            color: ClonesColors.primary.withValues(alpha: 1),
                           ),
                         ),
                       ),
-                    ),
+                      SizedBox(
+                        height: buttonHeight,
+                        child: Center(
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: GestureDetector(
+                              onTap: () => onTap(i),
+                              child: ShaderMask(
+                                shaderCallback: (Rect bounds) {
+                                  return LinearGradient(
+                                    colors: [
+                                      ClonesColors.primary
+                                          .withValues(alpha: 0.5),
+                                      ClonesColors.secondary
+                                          .withValues(alpha: 0.9),
+                                    ],
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                  ).createShader(bounds);
+                                },
+                                blendMode: BlendMode.dstIn,
+                                child: activeIndex == i
+                                    ? Stack(
+                                        children: [
+                                          Image.asset(
+                                            button.imagePath,
+                                            width: 40,
+                                            height: 40,
+                                            color: ClonesColors.primary,
+                                          ),
+                                          Opacity(
+                                            opacity: 0.7,
+                                            child: Image.asset(
+                                              button.imagePath,
+                                              width: 40,
+                                              height: 40,
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : Image.asset(
+                                        button.imagePath,
+                                        width: 40,
+                                        height: 40,
+                                      ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   );
                 }),
               ),
