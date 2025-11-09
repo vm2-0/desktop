@@ -68,10 +68,12 @@ class UploadQueueNotifier extends StateNotifier<Map<String, UploadTaskState>> {
 
     final useFiltered = deletedRanges != null && deletedRanges.isNotEmpty;
 
+    debugPrint('[UploadQueueNotifier] Upload mode: ${useFiltered ? 'filtered' : 'full'}, deleted ranges: ${deletedRanges?.length ?? 0}');
+
     final zipBytes = useFiltered
         ? await ref
             .read(tauriApiClientProvider)
-            .getFilteredRecordingZip(recordingId, deletedRanges)
+            .getFilteredRecordingZip(recordingId, deletedRanges!)
         : await ref.read(getRecordingZipProvider(recordingId).future);
 
     final chunks = _splitIntoChunks(zipBytes, 15 * 1024 * 1024);

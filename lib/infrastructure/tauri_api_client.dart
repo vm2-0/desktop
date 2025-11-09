@@ -245,10 +245,31 @@ class TauriApiClient {
     String recordingId,
     List<Map<String, double>> deletedRanges,
   ) async {
+    // Validate deleted ranges before sending
+    for (int i = 0; i < deletedRanges.length; i++) {
+      final range = deletedRanges[i];
+      final start = range['start'];
+      final end = range['end'];
+      
+      if (start == null || end == null) {
+        throw Exception('Invalid deleted range at index $i: missing start or end');
+      }
+      
+      if (start < 0 || end <= start) {
+        throw Exception('Invalid deleted range at index $i: start=$start, end=$end');
+      }
+    }
+
+    // Sort ranges by start time to ensure consistent processing
+    final sortedRanges = List<Map<String, double>>.from(deletedRanges);
+    sortedRanges.sort((a, b) => a['start']!.compareTo(b['start']!));
+
+    debugPrint('[TauriApiClient] Sending ${sortedRanges.length} deleted ranges: $sortedRanges');
+
     final response = await _client.post(
       Uri.parse('$_baseUrl/recordings/$recordingId/filtered-zip'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode({'deleted_ranges': deletedRanges}),
+      body: json.encode({'deleted_ranges': sortedRanges}),
     );
     if (response.statusCode == 200) {
       return response.bodyBytes;

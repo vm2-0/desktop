@@ -235,7 +235,7 @@ class DemoDetailEvents extends ConsumerWidget {
                     top: 0,
                     left: 0,
                     child: GestureDetector(
-                      onTap: videoSeekCallback != null && startTime > 0
+                      onTap: videoSeekCallback != null && events.isNotEmpty
                           ? () {
                               videoSeekCallback(
                                 Duration(milliseconds: relativeTime),

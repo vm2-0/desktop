@@ -37,7 +37,7 @@ class TimelineHoverIndicator extends StatelessWidget {
     if (hoverPosition != null && durationMs > 0) {
       children.add(
         Positioned(
-          top: -25,
+          top: 10,
           left: (hoverPosition!.dx - 20).clamp(0.0, timelineWidth - 40),
           child: Container(
             padding: const EdgeInsets.symmetric(
@@ -55,8 +55,12 @@ class TimelineHoverIndicator extends StatelessWidget {
                       ((hoverPosition!.dx / timelineWidth) * durationMs)
                           .toInt(),
                 ),
+                includeMilliseconds: true,
               ),
-              style: theme.textTheme.bodySmall?.copyWith(color: Colors.white),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: Colors.white,
+                fontSize: 8,
+              ),
             ),
           ),
         ),

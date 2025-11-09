@@ -33,6 +33,7 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
   Offset? _lastRightClickGlobal;
   double _lastRightClickTimeMs = 0;
   final FocusNode _timelineFocus = FocusNode(debugLabel: 'timeline');
+  Duration? _overridePosition;
 
   @override
   void dispose() {
@@ -80,6 +81,19 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
     final demoDetail = ref.watch(demoDetailNotifierProvider);
     final canEdit = demoDetail.recording?.submission?.status != 'completed';
 
+    // If video starts playing, clear any override so visuals follow the real player
+    if (_overridePosition != null && videoState.isPlaying) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _overridePosition = null;
+          });
+        }
+      });
+    }
+
+    // Keep override until playback resumes; do not clear on proximity to avoid visual snap
+
     // Initialize clips if they are empty (defer to avoid modifying provider during build)
     if (canEdit && demoDetail.clips.isEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -105,8 +119,9 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
           final isCtrlOrCmd = HardwareKeyboard.instance.isControlPressed ||
               HardwareKeyboard.instance.isMetaPressed;
           final notifier = ref.read(demoDetailNotifierProvider.notifier);
-          final playheadMs =
-              videoState.currentPosition.inMilliseconds.toDouble();
+          final playheadMs = (_overridePosition ?? videoState.currentPosition)
+              .inMilliseconds
+              .toDouble();
 
           if (key == LogicalKeyboardKey.keyB ||
               (isCtrlOrCmd && key == LogicalKeyboardKey.keyB)) {
@@ -134,20 +149,24 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
                   TapGestureRecognizer.new,
                   (instance) {
                     instance.onTapUp = (details) {
+                      // Adjust for horizontal padding (8px on each side)
                       final clickPosition = details.localPosition.dx;
                       final seekTime =
                           (clickPosition / timelineWidth * durationMs).round();
                       final seekDuration = Duration(milliseconds: seekTime);
 
                       if (widget.onSeek != null) {
+                        // Snap timeline visuals immediately to the clicked position for precise editing UX
+                        setState(() {
+                          _overridePosition = seekDuration;
+                        });
                         widget.onSeek!(seekDuration);
                       } else {
-                        ref
-                            .read(
-                              videoStateNotifierProvider(widget.videoId)
-                                  .notifier,
-                            )
-                            .updatePosition(seekDuration);
+                        // Intentionally do nothing when onSeek is not provided.
+                        // Avoid updating UI position directly to prevent a flash before the player syncs.
+                        setState(() {
+                          _overridePosition = seekDuration;
+                        });
                       }
                       _timelineFocus.requestFocus();
 
@@ -211,7 +230,8 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
                     ),
                     const TimelineBaseTrack(),
                     TimelineProgressBar(
-                      currentPosition: videoState.currentPosition,
+                      currentPosition:
+                          _overridePosition ?? videoState.currentPosition,
                       totalDuration: videoState.totalDuration,
                       timelineWidth: timelineWidth,
                     ),
@@ -221,7 +241,8 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
                       timelineWidth: timelineWidth,
                     ),
                     TimelinePlayhead(
-                      currentPosition: videoState.currentPosition,
+                      currentPosition:
+                          _overridePosition ?? videoState.currentPosition,
                       totalDuration: videoState.totalDuration,
                       timelineWidth: timelineWidth,
                     ),
