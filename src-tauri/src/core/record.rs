@@ -1725,10 +1725,43 @@ fn get_video_duration(video_path: &std::path::Path) -> Result<f64, String> {
         .map_err(|e| format!("Failed to parse duration: {}", e))
 }
 
-/// Get video duration on macOS - try ffprobe if available, otherwise use wallclock fallback
+/// Get video duration on macOS - use embedded ffprobe first, then external fallbacks
 #[cfg(target_os = "macos")]
 fn get_video_duration(video_path: &std::path::Path) -> Result<f64, String> {
-    // Try using ffprobe if available (from external ffmpeg installation)
+    // First try embedded ffprobe (should always be available)
+    if let Some(embedded_ffprobe) = crate::tools::ffmpeg::get_embedded_ffprobe_path() {
+        if embedded_ffprobe.exists() {
+            let output = std::process::Command::new(&embedded_ffprobe)
+                .args([
+                    "-v",
+                    "quiet",
+                    "-print_format",
+                    "json",
+                    "-show_format",
+                    video_path.to_str().unwrap(),
+                ])
+                .output();
+
+            if let Ok(output) = output {
+                if output.status.success() {
+                    let output_str = String::from_utf8_lossy(&output.stdout);
+                    if let Ok(json) = serde_json::from_str::<serde_json::Value>(&output_str) {
+                        if let Some(duration_str) = json["format"]["duration"].as_str() {
+                            if let Ok(duration) = duration_str.parse::<f64>() {
+                                log::info!(
+                                    "[get_video_duration] Got duration from embedded ffprobe: {:.2}s",
+                                    duration
+                                );
+                                return Ok(duration);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Fallback to external ffprobe installations
     let ffprobe_commands = [
         "ffprobe",
         "/opt/homebrew/bin/ffprobe",
