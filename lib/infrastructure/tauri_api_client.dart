@@ -173,18 +173,24 @@ class TauriApiClient {
     throw Exception('Failed to get record permissions: ${response.body}');
   }
 
-  Future<void> requestRecordPerms() async {
+  Future<bool> requestRecordPerms() async {
     final response =
         await _client.post(Uri.parse('$_baseUrl/permissions/record/request'));
-    if (response.statusCode != 200) {
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = json.decode(response.body);
+      return data['granted'] ?? false;
+    } else {
       throw Exception('Failed to request record permissions: ${response.body}');
     }
   }
 
-  Future<void> requestAxPerms() async {
+  Future<bool> requestAxPerms() async {
     final response =
         await _client.post(Uri.parse('$_baseUrl/permissions/ax/request'));
-    if (response.statusCode != 200) {
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = json.decode(response.body);
+      return data['granted'] ?? false;
+    } else {
       throw Exception(
         'Failed to request accessibility permissions: ${response.body}',
       );

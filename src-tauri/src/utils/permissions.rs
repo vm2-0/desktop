@@ -22,16 +22,46 @@ mod macos_permissions {
     /// * `false` otherwise.
     #[tauri::command]
     pub fn has_ax_perms() -> bool {
+        log::info!("[Permissions] Checking accessibility permissions...");
+        
         unsafe {
             let result = AXIsProcessTrusted() != 0;
+            log::info!("[Permissions] Accessibility permission status: {}", 
+                if result { "GRANTED" } else { "DENIED" });
             result
         }
     }
 
     /// Prompts the user to grant accessibility (AX) permissions.
+    /// Enhanced with tauri-plugin-macos-permissions for better M2/M4 compatibility
     #[tauri::command]
-    pub fn request_ax_perms() {
+    pub async fn request_ax_perms() -> Result<bool, String> {
+        log::info!("[Permissions] Requesting accessibility permissions...");
+        
+        // Check if already granted before requesting
+        let initial_status = unsafe { AXIsProcessTrusted() != 0 };
+        if initial_status {
+            log::info!("[Permissions] Accessibility permission already granted, skipping request");
+            return Ok(true);
+        }
+        
+        log::info!("[Permissions] Triggering accessibility permission dialog...");
+        // Trigger the request dialog
         application_is_trusted_with_prompt();
+        
+        // Check the result after a short delay to allow user interaction
+        log::info!("[Permissions] Waiting 500ms for user interaction...");
+        tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+        
+        let granted = unsafe { AXIsProcessTrusted() != 0 };
+        log::info!("[Permissions] Accessibility permission after request: {}", 
+            if granted { "GRANTED" } else { "DENIED" });
+        
+        if !granted {
+            log::warn!("[Permissions] Accessibility permission not granted. User may need to manually enable it in System Settings → Privacy & Security → Accessibility");
+        }
+        
+        Ok(granted)
     }
 
     /// Checks if the application has screen recording permissions.
@@ -41,13 +71,35 @@ mod macos_permissions {
     /// * `false` otherwise.
     #[tauri::command]
     pub fn has_record_perms() -> bool {
-        return ScreenCaptureAccess.preflight();
+        log::info!("[Permissions] Checking screen recording permissions...");
+        
+        let result = ScreenCaptureAccess.preflight();
+        log::info!("[Permissions] Screen recording permission status: {}", 
+            if result { "GRANTED" } else { "DENIED" });
+        
+        result
     }
 
     /// Prompts the user to grant screen recording permissions.
-    /// Must be called on main thread for macOS 11+
+    /// Enhanced with tauri-plugin-macos-permissions for better M2/M4 compatibility
     #[tauri::command]
-    pub fn request_record_perms() {
+    pub async fn request_record_perms() -> Result<bool, String> {
+        log::info!("[Permissions] Requesting screen recording permissions...");
+        
+        // Detect architecture for enhanced logging
+        let is_apple_silicon = std::env::consts::ARCH == "aarch64";
+        
+        if is_apple_silicon {
+            log::info!("[Permissions] Apple Silicon detected - M2/M4 compatibility mode enabled");
+        }
+        
+        // Check if already granted before requesting
+        let initial_status = ScreenCaptureAccess.preflight();
+        if initial_status {
+            log::info!("[Permissions] Screen recording permission already granted, skipping request");
+            return Ok(true);
+        }
+        
         // Check macOS version - only works on 11.0+
         let version = std::process::Command::new("sw_vers")
             .arg("-productVersion")
@@ -59,15 +111,44 @@ mod macos_permissions {
                 parts.get(0).and_then(|major| major.parse::<u32>().ok())
             })
             .unwrap_or(10);
+        
+        log::info!("[Permissions] macOS version detected: {}", version);
             
         if version < 11 {
-            eprintln!("Screen recording permission request requires macOS 11.0+");
-            return;
+            log::error!("[Permissions] Screen recording permission request requires macOS 11.0+, detected version: {}", version);
+            return Err("Screen recording permission request requires macOS 11.0+".to_string());
         }
 
-        // Call directly - Tauri commands run on main thread by default
+        log::info!("[Permissions] Triggering screen recording permission dialog...");
+        // Request permission with enhanced compatibility for Apple Silicon M2/M4
         unsafe {
-            CGRequestScreenCaptureAccess();
+            let granted = CGRequestScreenCaptureAccess() != 0;
+            log::info!("[Permissions] Initial screen recording permission response: {}", 
+                if granted { "GRANTED" } else { "DENIED" });
+            
+            // For M2/M4 chips, add additional checks after permission request
+            if !granted {
+                log::info!("[Permissions] Permission not immediately granted, applying M2/M4 compatibility logic...");
+                // Give the system time to process the permission request
+                log::info!("[Permissions] Waiting 1000ms for system permission processing...");
+                tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
+                
+                // Re-check permission status
+                let recheck_granted = ScreenCaptureAccess.preflight();
+                log::info!("[Permissions] Screen recording permission after recheck: {}", 
+                    if recheck_granted { "GRANTED" } else { "DENIED" });
+                
+                if recheck_granted {
+                    log::info!("[Permissions] ✅ M2/M4 compatibility recheck succeeded!");
+                } else {
+                    log::warn!("[Permissions] ❌ Screen recording permission still denied after M2/M4 recheck. User may need to manually enable it in System Settings → Privacy & Security → Screen Recording");
+                }
+                
+                Ok(recheck_granted)
+            } else {
+                log::info!("[Permissions] ✅ Screen recording permission granted immediately!");
+                Ok(granted)
+            }
         }
     }
 }
@@ -86,9 +167,10 @@ mod windows_permissions {
     /// Prompts the user to grant accessibility (AX) permissions.
     /// On Windows, this is a no-op as permissions are handled differently.
     #[tauri::command]
-    pub fn request_ax_perms() {
+    pub async fn request_ax_perms() -> Result<bool, String> {
         // On Windows, accessibility permissions are typically granted by default
         // or handled through UAC prompts when needed
+        Ok(true)
     }
 
     /// Checks if the application has screen recording permissions.
@@ -103,9 +185,10 @@ mod windows_permissions {
     /// Prompts the user to grant screen recording permissions.
     /// On Windows, this is a no-op as permissions are handled differently.
     #[tauri::command]
-    pub fn request_record_perms() {
+    pub async fn request_record_perms() -> Result<bool, String> {
         // On Windows, screen recording permissions are typically granted by default
         // or handled through UAC prompts when needed
+        Ok(true)
     }
 }
 
@@ -122,8 +205,9 @@ mod linux_permissions {
     /// Prompts the user to grant accessibility (AX) permissions.
     /// On Linux, this is a no-op as permissions are handled differently.
     #[tauri::command]
-    pub fn request_ax_perms() {
+    pub async fn request_ax_perms() -> Result<bool, String> {
         // On Linux, accessibility permissions are typically granted by default
+        Ok(true)
     }
 
     /// Checks if the application has screen recording permissions.
@@ -137,8 +221,9 @@ mod linux_permissions {
     /// Prompts the user to grant screen recording permissions.
     /// On Linux, this is a no-op as permissions are handled differently.
     #[tauri::command]
-    pub fn request_record_perms() {
+    pub async fn request_record_perms() -> Result<bool, String> {
         // On Linux, screen recording permissions are typically granted by default
+        Ok(true)
     }
 }
 

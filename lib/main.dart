@@ -148,6 +148,26 @@ final _router = GoRouter(
   ],
 );
 
+Future<Size> _calculateAdaptiveWindowSize() async {
+  const fallbackSize = Size(1200, 700);
+  const minSize = Size(769, 600);
+  const maxSize = Size(1440, 900);
+  
+  try {
+    final binding = WidgetsFlutterBinding.ensureInitialized();
+    final display = binding.platformDispatcher.views.first.display;
+    final screenSize = display.size / display.devicePixelRatio;
+    
+    final adaptiveWidth = (screenSize.width * 0.8).clamp(minSize.width, maxSize.width);
+    final adaptiveHeight = (screenSize.height * 0.75).clamp(minSize.height, maxSize.height);
+    
+    return Size(adaptiveWidth, adaptiveHeight);
+  } catch (e) {
+    developer.log('Failed to calculate adaptive window size: $e', name: 'WindowManager');
+    return fallbackSize;
+  }
+}
+
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -157,12 +177,16 @@ Future<void> main(List<String> args) async {
   // Initialize window manager for desktop platforms
   if (!kIsWeb && (Platform.isMacOS || Platform.isWindows || Platform.isLinux)) {
     await windowManager.ensureInitialized();
-    const windowOptions = WindowOptions(
-      size: Size(1440, 900),
+    
+    final adaptiveSize = await _calculateAdaptiveWindowSize();
+    
+    final windowOptions = WindowOptions(
+      size: adaptiveSize,
       center: true,
       backgroundColor: Colors.black,
       skipTaskbar: false,
       titleBarStyle: TitleBarStyle.normal,
+      minimumSize: const Size(769, 600),
     );
 
     await windowManager.waitUntilReadyToShow(windowOptions, () async {

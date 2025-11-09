@@ -475,6 +475,17 @@ create_universal_app() {
     # Copy FFmpeg binaries if they exist (from build.rs)
     copy_ffmpeg_binaries_to_bundle "$universal_app"
     
+    # Copy screen recorder binary for native macOS recording
+    copy_screen_recorder_to_bundle "$universal_app"
+    
+    # Ensure screen_recorder exists in bundle (hard requirement)
+    local sr_path="$universal_app/Contents/Helpers/screen_recorder"
+    if [ ! -f "$sr_path" ]; then
+        log_error "screen_recorder was not found in app bundle at: $sr_path"
+        log_error "Native ScreenCaptureKit recorder is required for macOS production builds."
+        return 1
+    fi
+    
     log_success "Universal app bundle created"
 }
 
@@ -530,6 +541,39 @@ copy_ffmpeg_binaries_to_bundle() {
         for dir in "${source_dirs[@]}"; do
             log_info "  - $dir"
         done
+    fi
+}
+
+# Copy screen recorder binary from source to app bundle
+copy_screen_recorder_to_bundle() {
+    local app_path="$1"
+    local helpers_dir="$app_path/Contents/Helpers"
+    
+    # Look for screen recorder binary in src-tauri/src/tools directory
+    local screen_recorder_source="$PROJECT_DIR/src-tauri/src/tools/screen_recorder"
+    
+    if [ -f "$screen_recorder_source" ]; then
+        log_info "Copying screen recorder binary to app bundle..."
+        
+        # Ensure Helpers directory exists
+        mkdir -p "$helpers_dir"
+        
+        # Copy the binary to Helpers directory
+        cp "$screen_recorder_source" "$helpers_dir/"
+        chmod +x "$helpers_dir/screen_recorder"
+        
+        log_success "Screen recorder binary copied to app bundle: $helpers_dir/screen_recorder"
+        
+        # Verify the copy
+        if [ -f "$helpers_dir/screen_recorder" ]; then
+            log_info "Screen recorder binary size: $(stat -f%z "$helpers_dir/screen_recorder") bytes"
+        else
+            log_error "Failed to copy screen recorder binary"
+            return 1
+        fi
+    else
+        log_warning "Screen recorder binary not found at: $screen_recorder_source"
+        log_info "This is expected if using FFmpeg-only recording mode"
     fi
 }
 
@@ -660,6 +704,17 @@ code_sign_app() {
         fi
     fi
     
+    # Sign screen recorder binary (native ScreenCaptureKit recorder)
+    local screen_recorder_binary="$app_path/Contents/Helpers/screen_recorder"
+    if [ -f "$screen_recorder_binary" ]; then
+        log_info "Signing screen recorder binary..."
+        codesign --force --timestamp --options runtime --entitlements "$entitlements" --sign "$APPLE_SIGNING_IDENTITY" "$screen_recorder_binary" || {
+            log_error "Failed to sign screen recorder binary"
+            return 1
+        }
+        log_success "Screen recorder binary signed"
+    fi
+    
     # Sign all frameworks (skip core Flutter frameworks to avoid VM snapshot issues)
     log_info "Signing frameworks..."
     
@@ -752,6 +807,163 @@ code_sign_app() {
     log_success "App bundle signed and verified successfully"
 }
 
+# Compile screen recorder binary from Objective-C source
+compile_screen_recorder() {
+    log_info "Compiling ScreenCaptureKit native recorder..."
+    
+    if [ "$DRY_RUN" = true ]; then
+        log_info "DRY RUN: Would compile screen_recorder.m to screen_recorder binary"
+        return 0
+    fi
+    
+    local source_file="$PROJECT_DIR/src-tauri/src/tools/screen_recorder.m"
+    local output_binary="$PROJECT_DIR/src-tauri/src/tools/screen_recorder"
+    
+    # Check if binary already exists
+    if [ -f "$output_binary" ]; then
+        local file_size=$(wc -c < "$output_binary" 2>/dev/null || echo "0")
+        if [ "$file_size" -gt 0 ]; then
+            log_info "screen_recorder binary already exists: $file_size bytes"
+            log_info "Binary architectures: $(lipo -archs "$output_binary" 2>/dev/null || echo "unknown")"
+            return 0
+        fi
+    fi
+    
+    # Check if source file exists
+    if [ ! -f "$source_file" ]; then
+        log_error "screen_recorder.m source file not found at: $source_file"
+        return 1
+    fi
+    
+    # Try using the dedicated compilation script first
+    local compile_script="$PROJECT_DIR/scripts/macos/compile_screen_recorder.sh"
+    if [ -x "$compile_script" ]; then
+        log_info "Using dedicated compilation script..."
+        if "$compile_script" >/dev/null 2>&1; then
+            if [ -f "$output_binary" ] && [ -s "$output_binary" ]; then
+                local file_size=$(wc -c < "$output_binary" 2>/dev/null || echo "0")
+                log_success "screen_recorder binary compiled successfully: $file_size bytes"
+                return 0
+            fi
+        fi
+    fi
+    
+    # Remove existing binary
+    rm -f "$output_binary" "$output_binary.arm64" "$output_binary.x86_64"
+    
+    # Resolve SDK path
+    local sdk_path
+    if ! sdk_path=$(xcrun --sdk macosx --show-sdk-path 2>/dev/null); then
+        log_error "Failed to resolve macOS SDK path via xcrun"
+        return 1
+    fi
+    log_verbose "Using macOS SDK: $sdk_path"
+    
+    # Common flags
+    local common_flags=(
+        -fobjc-arc
+        -mmacos-version-min=12.3
+        -isysroot "$sdk_path"
+        -framework Foundation
+        -framework ScreenCaptureKit
+        -framework AVFoundation
+        -framework CoreMedia
+        -framework CoreVideo
+        -O2
+    )
+    
+    # Compile arm64 slice
+    log_info "Compiling screen_recorder (arm64)..."
+    if ! xcrun clang -arch arm64 "${common_flags[@]}" -o "$output_binary.arm64" "$source_file" >/dev/null 2>&1; then
+        log_error "Failed to compile arm64 slice for screen_recorder"
+        return 1
+    fi
+    
+    # Compile x86_64 slice
+    log_info "Compiling screen_recorder (x86_64)..."
+    if ! xcrun clang -arch x86_64 "${common_flags[@]}" -o "$output_binary.x86_64" "$source_file" >/dev/null 2>&1; then
+        log_error "Failed to compile x86_64 slice for screen_recorder"
+        return 1
+    fi
+    
+    # Create universal binary
+    log_info "Creating universal screen_recorder with lipo..."
+    if ! lipo -create -output "$output_binary" "$output_binary.arm64" "$output_binary.x86_64" >/dev/null 2>&1; then
+        log_error "Failed to create universal screen_recorder with lipo"
+        return 1
+    fi
+    
+    # Make executable and clean up slices
+    chmod +x "$output_binary" || true
+    rm -f "$output_binary.arm64" "$output_binary.x86_64" || true
+    
+    local file_size=$(wc -c < "$output_binary" 2>/dev/null || echo "0")
+    log_success "screen_recorder universal binary compiled successfully: $file_size bytes"
+    log_info "Binary architectures: $(lipo -archs "$output_binary" 2>/dev/null || echo "unknown")"
+    return 0
+}
+
+# Notarize app bundle for Sparkle update validation
+notarize_app_bundle() {
+    local app_path="$1"
+    
+    log_info "Notarizing app bundle for Sparkle update validation..."
+    
+    if [ "$DRY_RUN" = true ]; then
+        log_info "DRY RUN: Would notarize app bundle: $app_path"
+        log_info "DRY RUN: Would submit to Apple notary service and wait for approval"
+        log_info "DRY RUN: Would staple notarization ticket to app bundle"
+        return 0
+    fi
+    
+    # Check if we have notarization credentials
+    if [ -z "$NOTARIZATION_KEYCHAIN_PROFILE" ]; then
+        log_error "NOTARIZATION_KEYCHAIN_PROFILE not set. Skipping app bundle notarization."
+        return 1
+    fi
+    
+    # Create a temporary zip for notarization (required for app bundles)
+    local temp_zip="$BUILD_DIR/$(basename "$app_path" .app)-notarization.zip"
+    log_info "Creating temporary zip for notarization: $(basename "$temp_zip")"
+    
+    # Remove existing zip
+    rm -f "$temp_zip"
+    
+    # Create zip preserving symlinks and permissions
+    (cd "$(dirname "$app_path")" && zip -r -y "$temp_zip" "$(basename "$app_path")") || {
+        log_error "Failed to create notarization zip"
+        return 1
+    }
+    
+    # Submit for notarization and wait for completion
+    log_info "Submitting app bundle for notarization and waiting for approval..."
+    xcrun notarytool submit "$temp_zip" \
+        --keychain-profile "$NOTARIZATION_KEYCHAIN_PROFILE" \
+        --wait --timeout 10m || {
+        log_error "Notarization failed or timed out for app bundle"
+        rm -f "$temp_zip"
+        return 1
+    }
+    
+    # Clean up temporary zip
+    rm -f "$temp_zip"
+    
+    # Staple notarization ticket to app bundle
+    log_info "Stapling notarization ticket to app bundle..."
+    xcrun stapler staple "$app_path" || {
+        log_error "Failed to staple notarization ticket to app bundle"
+        return 1
+    }
+    
+    # Verify stapling
+    log_info "Verifying notarization ticket..."
+    xcrun stapler validate "$app_path" || {
+        log_error "App bundle notarization ticket validation failed"
+        return 1
+    }
+    
+    log_success "App bundle notarized and stapled successfully"
+}
 
 # Create DMG
 create_dmg() {
@@ -898,6 +1110,9 @@ main() {
     
     log_info "Starting Flutter Native + Tauri Agent build process..."
     
+    # Compile native screen recorder binary
+    compile_screen_recorder
+    
     if [ "$DRY_RUN" = true ]; then
         log_info "DRY RUN: Would create build directory: $BUILD_DIR"
     else
@@ -943,7 +1158,10 @@ main() {
     local universal_app="$BUILD_DIR/universal/clones.app"
     code_sign_app "$universal_app"
     
-    # Create DMG (notarization + stapling happens later in deploy process)
+    # Notarize app bundle for Sparkle update validation
+    notarize_app_bundle "$universal_app"
+    
+    # Create DMG (DMG notarization + stapling happens later in deploy process)
     create_dmg "$universal_app" "clones-desktop-universal.dmg"
     
     log_success "Build completed!"
