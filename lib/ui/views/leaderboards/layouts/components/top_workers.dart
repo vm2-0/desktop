@@ -265,15 +265,15 @@ class _TopWorkersState extends ConsumerState<TopWorkers> {
     }
 
     if (worker.tokens.isEmpty) {
-      return '${worker.rewards.toStringAsFixedLowValue(2, 5)} Tokens';
+      return '${worker.rewards?.toStringAsFixedLowValue(2, 5)} Tokens';
     }
 
     if (worker.tokens.length == 1) {
       final token = worker.tokens.first.token;
-      return '${worker.rewards.toStringAsFixedLowValue(2, 5)} ${token.symbol}';
+      return '${worker.rewards?.toStringAsFixedLowValue(2, 5)} ${token.symbol}';
     }
 
     // Multiple tokens - show total with "Mixed" indicator
-    return '${worker.rewards.toStringAsFixedLowValue(2, 5)} Mixed';
+    return '${worker.rewards?.toStringAsFixedLowValue(2, 5)} Mixed';
   }
 }

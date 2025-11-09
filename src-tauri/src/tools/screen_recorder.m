@@ -277,6 +277,11 @@
     if (!self.startTimeSet) {
         self.startTime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer);
         self.startTimeSet = YES;
+        
+        // Signal that we're truly capturing frames now
+        printf("RECORDING_STARTED\n");
+        fflush(stdout);
+        NSLog(@"[ScreenRecorder] First frame captured - recording truly started");
     }
     
     // Get the pixel buffer

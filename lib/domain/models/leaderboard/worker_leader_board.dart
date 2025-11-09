@@ -1,4 +1,6 @@
 import 'package:clones_desktop/domain/models/factory/factory_token.dart';
+import 'package:clones_desktop/utils/decimal_json.dart';
+import 'package:decimal/decimal.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'worker_leader_board.freezed.dart';
@@ -21,9 +23,13 @@ class WorkerLeaderboard with _$WorkerLeaderboard {
     required int rank,
     required String address,
     required int tasks,
-    required double rewards,
+    @JsonKey(
+      toJson: DecimalJson.toJson,
+      fromJson: DecimalJson.fromJson,
+    )
+    Decimal? rewards,
     required double avgScore,
-    @Default([]) List<WorkerTokenReward> tokens,
+    @Default(<WorkerTokenReward>[]) List<WorkerTokenReward> tokens,
     @Default(0.0) double totalUSD,
   }) = _WorkerLeaderboard;
 

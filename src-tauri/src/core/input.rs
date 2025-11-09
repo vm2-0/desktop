@@ -1,6 +1,7 @@
 //! Input event listening and logging utilities for capturing keyboard, mouse, and joystick events across platforms.
 
 use crate::core::record;
+use crate::core::synchronization::get_relative_timestamp;
 use crate::tools::helpers::lock_with_timeout;
 use log::{error, info};
 use rdev::{listen, Event as RdevEvent, EventType as RdevEventType};
@@ -137,18 +138,13 @@ impl InputEvent {
     /// Converts the input event to a log entry with a timestamp relative to recording start.
     pub fn to_log_entry(
         &self,
-        recording_start_time: Option<chrono::DateTime<chrono::Local>>,
+        _recording_start_time: Option<chrono::DateTime<chrono::Local>>,
     ) -> serde_json::Value {
-        let timestamp = if let Some(start_time) = recording_start_time {
-            // Calculate milliseconds since recording started
-            chrono::Local::now()
-                .signed_duration_since(start_time)
-                .num_milliseconds()
-                .max(0) // Ensure non-negative
-        } else {
-            // Fallback to absolute timestamp if no recording start time
-            chrono::Local::now().timestamp_millis()
-        };
+        let timestamp = get_relative_timestamp()
+            .unwrap_or_else(|| {
+                log::warn!("Sync not active, using absolute timestamp");
+                chrono::Local::now().timestamp_millis()
+            });
 
         serde_json::json!({
             "event": self.event,
@@ -191,7 +187,11 @@ pub fn start_input_listener<R: Runtime>(
     app_handle: tauri::AppHandle<R>,
     recording_start_time: Option<chrono::DateTime<chrono::Local>>,
 ) -> Result<(), String> {
-    info!("[Input] Starting input listener");
+    info!("[Input] Starting synchronized input listener");
+    
+    if get_relative_timestamp().is_none() {
+        log::warn!("[Input] Synchronization not active yet - inputs will use absolute timestamps initially");
+    }
 
     // Check if already listening
     let lock = lock_with_timeout(&INPUT_LISTENER_STATE, std::time::Duration::from_secs(2));

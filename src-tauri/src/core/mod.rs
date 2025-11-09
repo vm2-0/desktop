@@ -10,4 +10,5 @@
 pub mod archive;
 pub mod input;
 pub mod record;
+pub mod synchronization;
 pub mod video_server;

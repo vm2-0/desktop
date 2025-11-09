@@ -145,11 +145,37 @@ pub mod macos {
             match command.spawn() {
                 Ok(child) => {
                     log::info!("[NativeRecorder] ScreenCaptureKit recorder process started");
-
+                    
                     self.recording_process = Some(child);
                     self.ready_signal.store(true, Ordering::Relaxed);
                     self.is_recording.store(true, Ordering::Relaxed);
                     self.start_time = Some(Instant::now());
+                    
+                    // Monitor child process stdout/stderr for REAL video start signal
+                    if let Some(child_ref) = self.recording_process.as_mut() {
+                        if let Some(stdout) = child_ref.stdout.take() {
+                            std::thread::spawn(move || {
+                                use std::io::{BufRead, BufReader};
+                                let stdout_reader = BufReader::new(stdout);
+                                
+                                log::info!("[NativeRecorder] Monitoring stdout for true video start signal...");
+                                
+                                for line in stdout_reader.lines() {
+                                    if let Ok(line) = line {
+                                        log::info!("[NativeRecorder] stdout: {}", line);
+                                        
+                                        // Look for signal that ScreenCaptureKit actually started capturing
+                                        if line.contains("RECORDING_STARTED") || line.contains("First frame captured") {
+                                            let true_start = std::time::Instant::now();
+                                            crate::core::synchronization::notify_video_started(true_start);
+                                            log::info!("[NativeRecorder] TRUE video start signal detected from stdout");
+                                            break;
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    }
 
                     Ok(())
                 }

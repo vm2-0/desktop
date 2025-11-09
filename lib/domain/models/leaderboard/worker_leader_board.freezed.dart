@@ -208,7 +208,8 @@ mixin _$WorkerLeaderboard {
   int get rank => throw _privateConstructorUsedError;
   String get address => throw _privateConstructorUsedError;
   int get tasks => throw _privateConstructorUsedError;
-  double get rewards => throw _privateConstructorUsedError;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get rewards => throw _privateConstructorUsedError;
   double get avgScore => throw _privateConstructorUsedError;
   List<WorkerTokenReward> get tokens => throw _privateConstructorUsedError;
   double get totalUSD => throw _privateConstructorUsedError;
@@ -233,7 +234,8 @@ abstract class $WorkerLeaderboardCopyWith<$Res> {
       {int rank,
       String address,
       int tasks,
-      double rewards,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? rewards,
       double avgScore,
       List<WorkerTokenReward> tokens,
       double totalUSD});
@@ -257,7 +259,7 @@ class _$WorkerLeaderboardCopyWithImpl<$Res, $Val extends WorkerLeaderboard>
     Object? rank = null,
     Object? address = null,
     Object? tasks = null,
-    Object? rewards = null,
+    Object? rewards = freezed,
     Object? avgScore = null,
     Object? tokens = null,
     Object? totalUSD = null,
@@ -275,10 +277,10 @@ class _$WorkerLeaderboardCopyWithImpl<$Res, $Val extends WorkerLeaderboard>
           ? _value.tasks
           : tasks // ignore: cast_nullable_to_non_nullable
               as int,
-      rewards: null == rewards
+      rewards: freezed == rewards
           ? _value.rewards
           : rewards // ignore: cast_nullable_to_non_nullable
-              as double,
+              as Decimal?,
       avgScore: null == avgScore
           ? _value.avgScore
           : avgScore // ignore: cast_nullable_to_non_nullable
@@ -307,7 +309,8 @@ abstract class _$$WorkerLeaderboardImplCopyWith<$Res>
       {int rank,
       String address,
       int tasks,
-      double rewards,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      Decimal? rewards,
       double avgScore,
       List<WorkerTokenReward> tokens,
       double totalUSD});
@@ -329,7 +332,7 @@ class __$$WorkerLeaderboardImplCopyWithImpl<$Res>
     Object? rank = null,
     Object? address = null,
     Object? tasks = null,
-    Object? rewards = null,
+    Object? rewards = freezed,
     Object? avgScore = null,
     Object? tokens = null,
     Object? totalUSD = null,
@@ -347,10 +350,10 @@ class __$$WorkerLeaderboardImplCopyWithImpl<$Res>
           ? _value.tasks
           : tasks // ignore: cast_nullable_to_non_nullable
               as int,
-      rewards: null == rewards
+      rewards: freezed == rewards
           ? _value.rewards
           : rewards // ignore: cast_nullable_to_non_nullable
-              as double,
+              as Decimal?,
       avgScore: null == avgScore
           ? _value.avgScore
           : avgScore // ignore: cast_nullable_to_non_nullable
@@ -374,7 +377,8 @@ class _$WorkerLeaderboardImpl implements _WorkerLeaderboard {
       {required this.rank,
       required this.address,
       required this.tasks,
-      required this.rewards,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      this.rewards,
       required this.avgScore,
       final List<WorkerTokenReward> tokens = const [],
       this.totalUSD = 0.0})
@@ -390,7 +394,8 @@ class _$WorkerLeaderboardImpl implements _WorkerLeaderboard {
   @override
   final int tasks;
   @override
-  final double rewards;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  final Decimal? rewards;
   @override
   final double avgScore;
   final List<WorkerTokenReward> _tokens;
@@ -454,7 +459,8 @@ abstract class _WorkerLeaderboard implements WorkerLeaderboard {
       {required final int rank,
       required final String address,
       required final int tasks,
-      required final double rewards,
+      @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+      final Decimal? rewards,
       required final double avgScore,
       final List<WorkerTokenReward> tokens,
       final double totalUSD}) = _$WorkerLeaderboardImpl;
@@ -469,7 +475,8 @@ abstract class _WorkerLeaderboard implements WorkerLeaderboard {
   @override
   int get tasks;
   @override
-  double get rewards;
+  @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
+  Decimal? get rewards;
   @override
   double get avgScore;
   @override

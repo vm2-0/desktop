@@ -26,7 +26,7 @@ _$WorkerLeaderboardImpl _$$WorkerLeaderboardImplFromJson(
       rank: (json['rank'] as num).toInt(),
       address: json['address'] as String,
       tasks: (json['tasks'] as num).toInt(),
-      rewards: (json['rewards'] as num).toDouble(),
+      rewards: DecimalJson.fromJson(json['rewards']),
       avgScore: (json['avgScore'] as num).toDouble(),
       tokens: (json['tokens'] as List<dynamic>?)
               ?.map(
@@ -42,7 +42,7 @@ Map<String, dynamic> _$$WorkerLeaderboardImplToJson(
       'rank': instance.rank,
       'address': instance.address,
       'tasks': instance.tasks,
-      'rewards': instance.rewards,
+      'rewards': DecimalJson.toJson(instance.rewards),
       'avgScore': instance.avgScore,
       'tokens': instance.tokens,
       'totalUSD': instance.totalUSD,

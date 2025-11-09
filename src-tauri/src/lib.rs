@@ -41,14 +41,17 @@ pub fn setup_builder() -> tauri::Builder<tauri::Wry> {
             tauri_plugin_log::Builder::new()
                 .level_for("tao::platform_impl::platform", log::LevelFilter::Error)
                 .level_for("reqwest::blocking::wait", log::LevelFilter::Error)
-                .target(tauri_plugin_log::Target::new(
-                    tauri_plugin_log::TargetKind::Stdout,
-                ))
-                .target(tauri_plugin_log::Target::new(
-                    tauri_plugin_log::TargetKind::LogDir {
-                        file_name: Some("logs".to_string()),
-                    },
-                ))
+                .targets([
+                    tauri_plugin_log::Target::new(
+                        tauri_plugin_log::TargetKind::Stdout,
+                    ),
+                    tauri_plugin_log::Target::new(
+                        tauri_plugin_log::TargetKind::LogDir {
+                            // Use default file name derived from productName (e.g., clones-agent.log)
+                            file_name: None,
+                        },
+                    ),
+                ])
                 .build(),
         )
     } else {
