@@ -79,7 +79,15 @@
         config.pixelFormat = kCVPixelFormatType_32BGRA;
         config.showsCursor = YES;
         
-        // Create content filter for the main display
+        // Disable screenshot sound and system notifications
+        if (@available(macOS 14.0, *)) {
+            config.includeChildWindows = NO;
+        }
+        config.capturesShadowsOnly = NO;
+        
+        // Create content filter for the main display  
+        // Note: This may still trigger system notification sounds on first use
+        // The system sound cannot be completely disabled programmatically for security reasons
         SCContentFilter *filter = [[SCContentFilter alloc] initWithDisplay:mainDisplay excludingApplications:@[] exceptingWindows:@[]];
         
         // Create stream

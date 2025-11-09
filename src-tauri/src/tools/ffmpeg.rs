@@ -217,7 +217,7 @@ impl FFmpegRecorder {
         output_path: PathBuf,
         input_format: String,
         input_device: String,
-    ) -> Result<Self, String> {
+    ) -> Self {
         log::info!(
             "[FFmpeg] Creating new recorder with input format {}: {}x{} @ {} fps -> {}",
             input_format,
@@ -227,7 +227,7 @@ impl FFmpegRecorder {
             output_path.display()
         );
 
-        Ok(Self {
+        Self {
             width,
             height,
             fps,
@@ -236,7 +236,7 @@ impl FFmpegRecorder {
             input_format: Some(input_format),
             input_device: Some(input_device),
             ready_signal: Arc::new(AtomicBool::new(false)),
-        })
+        }
     }
 
     /// Get the input format for this recorder

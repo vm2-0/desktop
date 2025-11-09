@@ -49,19 +49,32 @@ mod macos_permissions {
         // Trigger the request dialog
         application_is_trusted_with_prompt();
         
-        // Check the result after a short delay to allow user interaction
-        log::info!("[Permissions] Waiting 500ms for user interaction...");
-        tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+        // Poll for permission with timeout (user might take time to respond)
+        log::info!("[Permissions] Polling for permission grant with 30 second timeout...");
+        const TIMEOUT_SECONDS: u64 = 30;
+        const POLL_INTERVAL_MS: u64 = 500;
+        const MAX_ATTEMPTS: usize = (TIMEOUT_SECONDS * 1000 / POLL_INTERVAL_MS) as usize;
         
-        let granted = unsafe { AXIsProcessTrusted() != 0 };
-        log::info!("[Permissions] Accessibility permission after request: {}", 
-            if granted { "GRANTED" } else { "DENIED" });
-        
-        if !granted {
-            log::warn!("[Permissions] Accessibility permission not granted. User may need to manually enable it in System Settings → Privacy & Security → Accessibility");
+        for attempt in 0..MAX_ATTEMPTS {
+            let granted = unsafe { AXIsProcessTrusted() != 0 };
+            
+            if granted {
+                log::info!("[Permissions] Accessibility permission GRANTED after {:.1}s", 
+                    (attempt as f64 * POLL_INTERVAL_MS as f64) / 1000.0);
+                return Ok(true);
+            }
+            
+            // Log progress every 5 seconds
+            if attempt % 10 == 0 && attempt > 0 {
+                log::info!("[Permissions] Still waiting for permission grant... ({}/{}s)", 
+                    (attempt * POLL_INTERVAL_MS as usize) / 1000, TIMEOUT_SECONDS);
+            }
+            
+            tokio::time::sleep(tokio::time::Duration::from_millis(POLL_INTERVAL_MS)).await;
         }
         
-        Ok(granted)
+        log::warn!("[Permissions] Accessibility permission request timed out after {}s. User may need to manually enable it in System Settings → Privacy & Security → Accessibility", TIMEOUT_SECONDS);
+        Ok(false)
     }
 
     /// Checks if the application has screen recording permissions.

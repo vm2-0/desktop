@@ -380,34 +380,8 @@ class RecordingCard extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
-    final tokenSymbol = factory.token.symbol;
-
     return Row(
       children: [
-        if (recording.status == 'completed' &&
-            recording.submission == null &&
-            !isCompleted)
-          BtnPrimary(
-            onTap: isUploading || isQueued
-                ? null
-                : () {
-                    ref.read(uploadQueueProvider.notifier).upload(
-                          recording.id,
-                          recording.demonstration?.poolId ?? '',
-                          recording.title,
-                        );
-                  },
-            isLoading: isUploading,
-            icon: Icons.upload,
-            btnPrimaryType: BtnPrimaryType.outlinePrimary,
-            buttonText: isUploading
-                ? 'Uploading...'
-                : isQueued
-                    ? 'Queued'
-                    : maxReward > 0
-                        ? 'Upload for ${maxReward.toStringAsFixed(2)} $tokenSymbol'
-                        : 'Upload Recording',
-          ),
         if (recording.submission == null)
           PopupMenuButton<String>(
             icon: Icon(Icons.more_vert, color: ClonesColors.secondaryText),
