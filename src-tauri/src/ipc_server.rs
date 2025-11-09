@@ -592,12 +592,12 @@ async fn get_recording_file_handler(
 async fn start_recording_handler(
     State(state): State<AppState>,
     Json(payload): Json<StartRecordingPayload>,
-) -> Result<StatusCode, (StatusCode, String)> {
+) -> impl IntoResponse {
     match record::start_recording(state.app_handle.clone(), payload.demonstration, payload.fps)
         .await
     {
-        Ok(_) => Ok(StatusCode::OK),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+        Ok(_) => StatusCode::OK.into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
     }
 }
 

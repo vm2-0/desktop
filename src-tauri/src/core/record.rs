@@ -183,6 +183,7 @@ impl Recorder {
     }
 
     /// Get the recording duration from the recorder if available
+    #[allow(dead_code)]
     fn get_duration(&self) -> Option<f64> {
         match self {
             #[cfg(target_os = "macos")]
@@ -198,20 +199,20 @@ impl Recorder {
             #[cfg(target_os = "macos")]
             Recorder::Native(recorder) => recorder.set_reference_time(reference_time_millis),
             #[cfg(not(target_os = "macos"))]
-            Recorder::FFmpeg(_recorder) => {}, // FFmpeg recorder doesn't need sync
+            Recorder::FFmpeg(_recorder) => {} // FFmpeg recorder doesn't need sync
         }
     }
 
     fn new(video_path: &PathBuf, primary: &DisplayInfo, fps: u32) -> Result<Self, String> {
         log::info!("[record] Starting new recorder");
-        
+
         #[cfg(target_os = "macos")]
         {
             // Use native ScreenCaptureKit recorder on macOS
             // Align with Windows behavior: record at LOGICAL resolution (not retina-scaled)
             let logical_width = primary.width;
             let logical_height = primary.height;
-            
+
             Ok(Recorder::Native(NativeRecorder::new(
                 logical_width,
                 logical_height,
@@ -219,7 +220,7 @@ impl Recorder {
                 video_path.to_path_buf(),
             )?))
         }
-        
+
         #[cfg(not(target_os = "macos"))]
         {
             let (input_format, input_device) = {
@@ -254,7 +255,7 @@ impl Recorder {
             // Linux can handle physical dimensions
             #[cfg(target_os = "windows")]
             let (capture_width, capture_height) = (primary.width, primary.height);
-            
+
             #[cfg(target_os = "linux")]
             let (capture_width, capture_height) = {
                 let physical_width = (primary.width as f32 * primary.scale_factor).round() as u32;
@@ -504,19 +505,21 @@ pub async fn start_recording(
     demonstration: Option<Demonstration>,
     fps: u32,
 ) -> Result<(), String> {
-    // Start screen recording with poison recovery
-    let mut recorder_state = match RECORDER_STATE.lock() {
-        Ok(state) => state,
-        Err(poisoned) => {
-            log::warn!("[record] RECORDER_STATE mutex was poisoned, recovering...");
-            poisoned.into_inner()
-        }
-    };
+    // Check if recording already in progress (early return to avoid holding mutex)
+    {
+        let recorder_state = match RECORDER_STATE.lock() {
+            Ok(state) => state,
+            Err(poisoned) => {
+                log::warn!("[record] RECORDER_STATE mutex was poisoned, recovering...");
+                poisoned.into_inner()
+            }
+        };
 
-    if recorder_state.is_some() {
-        set_rec_state(&app, "recording".to_string(), None)?;
-        return Err("Recording already in progress".to_string());
-    }
+        if recorder_state.is_some() {
+            set_rec_state(&app, "recording".to_string(), None)?;
+            return Err("Recording already in progress".to_string());
+        }
+    } // Mutex guard dropped here
 
     set_rec_state(&app, "starting".to_string(), None)?;
 
@@ -562,18 +565,18 @@ pub async fn start_recording(
 
     let physical_width = (primary.width as f32 * primary.scale_factor).round() as u32;
     let physical_height = (primary.height as f32 * primary.scale_factor).round() as u32;
-    
+
     // On Windows and macOS, record at LOGICAL resolution (avoid retina doubling)
     // On Linux, record at physical resolution
     #[cfg(target_os = "windows")]
     let (video_width, video_height) = (primary.width, primary.height);
-    
+
     #[cfg(target_os = "macos")]
     let (video_width, video_height) = (primary.width, primary.height);
-    
+
     #[cfg(target_os = "linux")]
     let (video_width, video_height) = (physical_width, physical_height);
-    
+
     log::info!(
         "[record] Display info: logical {}x{}, scale_factor: {}, physical {}x{}, video will be {}x{}",
         primary.width,
@@ -653,7 +656,9 @@ pub async fn start_recording(
     };
 
     if !recorder_ready {
-        log::warn!("[record] Recorder ready signal timeout - proceeding anyway with fallback delay");
+        log::warn!(
+            "[record] Recorder ready signal timeout - proceeding anyway with fallback delay"
+        );
         std::thread::sleep(std::time::Duration::from_millis(1500));
     }
 
@@ -661,7 +666,7 @@ pub async fn start_recording(
     // CRITICAL: Capture the exact same timestamp for both video and input synchronization
     let recording_start = Local::now();
     let recording_start_millis = recording_start.timestamp_millis();
-    
+
     log::info!(
         "[record] ⏱️  Recording start time captured (recorder ready: {}): {} ({}ms)",
         recorder_ready,
@@ -687,21 +692,33 @@ pub async fn start_recording(
     // Store in atomic variable (lock-free access for input/ffmpeg threads)
     RECORDING_START_TIME_MILLIS.store(recording_start_millis, Ordering::Relaxed);
 
-    *recorder_state = Some(recorder);
+    // Set the recorder state
+    {
+        let mut recorder_state = match RECORDER_STATE.lock() {
+            Ok(state) => state,
+            Err(poisoned) => {
+                log::warn!("[record] RECORDER_STATE mutex was poisoned during recorder storage, recovering...");
+                poisoned.into_inner()
+            }
+        };
+        *recorder_state = Some(recorder);
+    }
 
     log::info!("[record] Video recorder synchronized and ready");
 
     // Start input logging and listening with poison recovery
-    let mut log_state = match LOGGER_STATE.lock() {
-        Ok(state) => state,
-        Err(poisoned) => {
-            log::warn!("[record] LOGGER_STATE mutex was poisoned, recovering...");
-            poisoned.into_inner()
+    {
+        let mut log_state = match LOGGER_STATE.lock() {
+            Ok(state) => state,
+            Err(poisoned) => {
+                log::warn!("[record] LOGGER_STATE mutex was poisoned, recovering...");
+                poisoned.into_inner()
+            }
+        };
+        if log_state.is_none() {
+            *log_state = Some(Logger::new(session_dir.clone())?);
         }
-    };
-    if log_state.is_none() {
-        *log_state = Some(Logger::new(session_dir.clone())?);
-    }
+    } // Logger mutex guard dropped here
 
     // CRITICAL: Start input listener AFTER video timeline is synchronized
     // This ensures inputs are captured with the same reference time as video
@@ -714,7 +731,7 @@ pub async fn start_recording(
                 "[Input] Accessibility permission missing; skipping input listener and AX dumps. Go to System Settings → Privacy & Security → Accessibility and enable permissions for Clones."
             );
             // Optionally prompt the user (no-op in headless runs)
-            let _ = request_ax_perms();
+            let _ = request_ax_perms().await;
         } else {
             input::start_input_listener(app.clone(), Some(recording_start))?;
             axtree::set_recording_mode(true)?;
@@ -727,7 +744,10 @@ pub async fn start_recording(
         axtree::set_recording_mode(true)?;
     }
 
-    log::info!("[record] 🎬 Recording fully synchronized: video + inputs using timestamp {}", recording_start_millis);
+    log::info!(
+        "[record] 🎬 Recording fully synchronized: video + inputs using timestamp {}",
+        recording_start_millis
+    );
 
     Ok(())
 }
@@ -1063,8 +1083,14 @@ pub async fn get_recording_file(
     }
 }
 
-pub async fn process_recording(app: tauri::AppHandle, recording_id: String, connect_token: Option<String>, backend_url: String) -> Result<(), String> {
-    crate::services::cqa_api::process_recording(&app, &recording_id, connect_token, backend_url).await
+pub async fn process_recording(
+    app: tauri::AppHandle,
+    recording_id: String,
+    connect_token: Option<String>,
+    backend_url: String,
+) -> Result<(), String> {
+    crate::services::cqa_api::process_recording(&app, &recording_id, connect_token, backend_url)
+        .await
 }
 
 pub async fn write_file(
@@ -1707,13 +1733,19 @@ fn get_video_duration(video_path: &std::path::Path) -> Result<f64, String> {
 #[cfg(target_os = "macos")]
 fn get_video_duration(video_path: &std::path::Path) -> Result<f64, String> {
     // Try using ffprobe if available (from external ffmpeg installation)
-    let ffprobe_commands = ["ffprobe", "/opt/homebrew/bin/ffprobe", "/usr/local/bin/ffprobe"];
-    
+    let ffprobe_commands = [
+        "ffprobe",
+        "/opt/homebrew/bin/ffprobe",
+        "/usr/local/bin/ffprobe",
+    ];
+
     for ffprobe_cmd in &ffprobe_commands {
         let output = std::process::Command::new(ffprobe_cmd)
             .args([
-                "-v", "quiet",
-                "-print_format", "json",
+                "-v",
+                "quiet",
+                "-print_format",
+                "json",
                 "-show_format",
                 video_path.to_str().unwrap(),
             ])
@@ -1725,7 +1757,11 @@ fn get_video_duration(video_path: &std::path::Path) -> Result<f64, String> {
                 if let Ok(json) = serde_json::from_str::<serde_json::Value>(&output_str) {
                     if let Some(duration_str) = json["format"]["duration"].as_str() {
                         if let Ok(duration) = duration_str.parse::<f64>() {
-                            log::info!("[get_video_duration] Got duration from {}: {:.2}s", ffprobe_cmd, duration);
+                            log::info!(
+                                "[get_video_duration] Got duration from {}: {:.2}s",
+                                ffprobe_cmd,
+                                duration
+                            );
                             return Ok(duration);
                         }
                     }

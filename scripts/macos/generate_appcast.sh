@@ -187,7 +187,16 @@ generate_appcast_from_build() {
     local temp_key_file=""
     cleanup_temp_files() {
         if [ -n "${temp_key_file:-}" ] && [ -f "${temp_key_file:-}" ]; then
-            shred -u "$temp_key_file" 2>/dev/null || rm -f "$temp_key_file"
+            # Securely overwrite file before deletion (macOS-compatible)
+            if command -v gshred >/dev/null 2>&1; then
+                gshred -u "$temp_key_file" 2>/dev/null
+            elif command -v shred >/dev/null 2>&1; then
+                shred -u "$temp_key_file" 2>/dev/null
+            else
+                # Fallback: overwrite with random data before deletion
+                dd if=/dev/urandom of="$temp_key_file" bs=1024 count=1 2>/dev/null || true
+                rm -f "$temp_key_file"
+            fi
         fi
     }
     trap cleanup_temp_files EXIT INT TERM
@@ -264,7 +273,15 @@ generate_appcast_from_build() {
     "$GEN_APPCAST" --ed-key-file "$temp_key_file" --download-url-prefix "$download_url_prefix" "$releases_dir"
     
     # Clean up temporary key file securely
-    shred -u "$temp_key_file" 2>/dev/null || rm -f "$temp_key_file"
+    if command -v gshred >/dev/null 2>&1; then
+        gshred -u "$temp_key_file" 2>/dev/null
+    elif command -v shred >/dev/null 2>&1; then
+        shred -u "$temp_key_file" 2>/dev/null
+    else
+        # Fallback: overwrite with random data before deletion
+        dd if=/dev/urandom of="$temp_key_file" bs=1024 count=1 2>/dev/null || true
+        rm -f "$temp_key_file"
+    fi
     
     if [ -f "$appcast_file" ]; then
         log_success "Appcast generated: $appcast_file"
