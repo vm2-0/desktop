@@ -179,16 +179,22 @@ pub fn is_ffprobe_available() -> bool {
     get_embedded_ffprobe_path().map_or(false, |p| p.exists())
 }
 
+#[cfg(not(target_os = "macos"))]
 use std::io::Write;
+#[cfg(not(target_os = "macos"))]
 use std::process::{Command, Stdio};
+#[cfg(not(target_os = "macos"))]
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc,
 };
+#[cfg(not(target_os = "macos"))]
 use std::thread;
+#[cfg(not(target_os = "macos"))]
 use std::time::Duration;
 
 /// FFmpeg recorder structure for video recording
+#[cfg(not(target_os = "macos"))]
 pub struct FFmpegRecorder {
     width: u32,
     height: u32,
@@ -201,6 +207,7 @@ pub struct FFmpegRecorder {
     pub ready_signal: Arc<AtomicBool>,
 }
 
+#[cfg(not(target_os = "macos"))]
 impl FFmpegRecorder {
     /// Create a new FFmpeg recorder with input
     pub fn new_with_input(
@@ -230,6 +237,11 @@ impl FFmpegRecorder {
             input_device: Some(input_device),
             ready_signal: Arc::new(AtomicBool::new(false)),
         })
+    }
+
+    /// Get the input format for this recorder
+    pub fn input_format(&self) -> Option<&String> {
+        self.input_format.as_ref()
     }
 
     /// Wait for FFmpeg to be ready (capturing frames)
@@ -279,7 +291,23 @@ impl FFmpegRecorder {
 
             // Platform specific options
             if format == "gdigrab" {
-                args.extend(["-draw_mouse".to_string(), "1".to_string()]);
+                // Windows gdigrab: enable cursor and add stability-related options
+                args.extend([
+                    "-draw_mouse".to_string(),
+                    "1".to_string(),
+                    // Keep zero offsets by default (full desktop). If you later add region capture,
+                    // these can be overridden.
+                    "-offset_x".to_string(),
+                    "0".to_string(),
+                    "-offset_y".to_string(),
+                    "0".to_string(),
+                    // Increase probe size to help FFmpeg detect properties reliably on some GPUs
+                    "-probesize".to_string(),
+                    "10M".to_string(),
+                    // Prevent buffer overflows on high-resolution/hi-fps displays
+                    "-thread_queue_size".to_string(),
+                    "1024".to_string(),
+                ]);
             } else if format == "avfoundation" {
                 args.extend(["-capture_cursor".to_string(), "1".to_string()]);
             }
@@ -296,7 +324,13 @@ impl FFmpegRecorder {
             "-crf".to_string(),
             "23".to_string(),
             "-pix_fmt".to_string(),
-            "yuv420p".to_string(),
+            "yuv420p".to_string(), // Required for compatibility
+            "-movflags".to_string(),
+            "+faststart".to_string(), // Enable streaming playback
+            "-profile:v".to_string(),
+            "high".to_string(),
+            "-tune".to_string(),
+            "zerolatency".to_string(), // Reduce encoding latency
             "-y".to_string(),
             self.output_path.to_str().unwrap().to_string(),
         ]);
@@ -344,24 +378,83 @@ impl FFmpegRecorder {
         Ok(())
     }
 
-    /// Stop the recorder
+    /// Stop the recorder with timeout and validation
     pub fn stop(&mut self) -> Result<(), String> {
         log::info!("[FFmpeg] Stopping recording");
         if let Some(mut process) = self.process.take() {
-            // Send 'q' to FFmpeg
+            // Send 'q' to FFmpeg for graceful shutdown
             if let Some(mut stdin) = process.stdin.take() {
-                let _ = stdin.write_all(b"q");
+                if let Err(e) = stdin.write_all(b"q") {
+                    log::warn!("[FFmpeg] Failed to send 'q' command: {}", e);
+                }
             }
 
-            // Wait for process to exit
-            match process.wait() {
-                Ok(_) => {
-                    log::info!("[FFmpeg] Recording stopped successfully");
-                    Ok(())
+            // Wait for graceful exit with timeout
+            let start_time = std::time::Instant::now();
+            let timeout = Duration::from_secs(15);
+            let mut exit_status = None;
+
+            while start_time.elapsed() < timeout {
+                match process.try_wait() {
+                    Ok(Some(status)) => {
+                        exit_status = Some(status);
+                        break;
+                    }
+                    Ok(None) => {
+                        // Process still running, continue waiting
+                        std::thread::sleep(Duration::from_millis(100));
+                    }
+                    Err(e) => {
+                        return Err(format!("Error checking FFmpeg process status: {}", e));
+                    }
                 }
-                Err(e) => Err(format!("Failed to stop FFmpeg: {}", e)),
             }
+
+            // If timeout, force kill
+            if exit_status.is_none() {
+                log::warn!("[FFmpeg] Graceful shutdown timed out, force killing process");
+                if let Err(e) = process.kill() {
+                    log::error!("[FFmpeg] Failed to force kill process: {}", e);
+                }
+                if let Err(e) = process.wait() {
+                    log::error!("[FFmpeg] Failed to wait for killed process: {}", e);
+                }
+            }
+
+            // Validate output file
+            if self.output_path.exists() {
+                match std::fs::metadata(&self.output_path) {
+                    Ok(metadata) => {
+                        if metadata.len() > 0 {
+                            log::info!(
+                                "[FFmpeg] Recording completed successfully: {} ({} bytes)",
+                                self.output_path.display(),
+                                metadata.len()
+                            );
+                        } else {
+                            return Err(format!(
+                                "Output file is empty: {}",
+                                self.output_path.display()
+                            ));
+                        }
+                    }
+                    Err(e) => {
+                        return Err(format!(
+                            "Failed to check output file metadata: {}",
+                            e
+                        ));
+                    }
+                }
+            } else {
+                return Err(format!(
+                    "Output file was not created: {}",
+                    self.output_path.display()
+                ));
+            }
+
+            Ok(())
         } else {
+            log::warn!("[FFmpeg] No process to stop");
             Ok(())
         }
     }

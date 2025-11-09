@@ -7,7 +7,6 @@
 #[cfg(target_os = "macos")]
 pub mod macos {
     use chrono;
-    use std::io::{BufRead, BufReader};
     use std::path::PathBuf;
     use std::process::{Child, Command, Stdio};
     use std::sync::atomic::{AtomicBool, Ordering};
@@ -285,6 +284,7 @@ pub mod macos {
         }
 
         // Set recording duration in seconds (useful for manual termination)
+        #[allow(dead_code)]
         pub fn set_duration(&mut self, seconds: u32) {
             self.duration_seconds = seconds;
         }
@@ -299,6 +299,7 @@ pub mod macos {
         }
 
         // Get the actual recording duration in seconds using synchronized timeline
+        #[allow(dead_code)]
         pub fn get_recording_duration(&self) -> Option<f64> {
             if let (Some(_start_time), Some(ref_time)) =
                 (self.start_time, self.reference_time_millis)
