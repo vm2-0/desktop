@@ -22,7 +22,6 @@ use serde::{Deserialize, Serialize};
 use std::fs::{self, create_dir_all, File};
 use std::io::{BufRead, BufReader, Cursor, Read, Write};
 use std::path::PathBuf;
-#[cfg(target_os = "macos")]
 use std::sync::{Arc, Mutex};
 use tauri::Emitter;
 use zip::{write::FileOptions, ZipWriter};
