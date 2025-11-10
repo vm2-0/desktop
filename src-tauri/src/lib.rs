@@ -74,7 +74,7 @@ pub fn setup_builder() -> tauri::Builder<tauri::Wry> {
             {
                 log::info!("[Setup] Skipping tauri-plugin-macos-permissions (not on macOS)");
                 // Return a no-op plugin builder for non-macOS platforms
-                tauri::plugin::Builder::new("noop").build()
+                tauri::plugin::Builder::<tauri::Wry, ()>::new("noop").build()
             }
         })
         .manage(DeepLinkState(std::sync::Arc::new(std::sync::Mutex::new(None))))
