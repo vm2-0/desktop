@@ -30,31 +30,39 @@ class TaskItemWidget extends StatelessWidget {
       child: CardWidget(
         padding: CardPadding.small,
         variant: CardVariant.secondary,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final promptWidth = constraints.maxWidth * 0.8;
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  task.prompt,
-                  style: theme.textTheme.bodyMedium,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: promptWidth,
+                      child: Text(
+                        task.prompt,
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    ),
+                    TaskLimitsWidget(
+                      factory: factory,
+                      task: task,
+                      factoryToken: factory.token,
+                    ),
+                  ],
                 ),
-                TaskLimitsWidget(
-                  factory: factory,
+                TaskActionsWidget(
                   task: task,
-                  factoryToken: factory.token,
+                  app: app,
+                  appIdx: appIdx,
+                  taskIdx: taskIdx,
+                  forgeId: factory.id,
                 ),
               ],
-            ),
-            TaskActionsWidget(
-              task: task,
-              app: app,
-              appIdx: appIdx,
-              taskIdx: taskIdx,
-              forgeId: factory.id,
-            ),
-          ],
+            );
+          },
         ),
       ),
     );

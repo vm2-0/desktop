@@ -28,6 +28,7 @@ class TaskLimitsWidget extends ConsumerWidget {
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
           padding: const EdgeInsets.only(left: 10),
@@ -70,7 +71,8 @@ class TaskLimitsWidget extends ConsumerWidget {
           ),
         ),
         if (task.limitReason != null && task.limitReason!.isNotEmpty)
-          Flexible(
+          Container(
+            padding: const EdgeInsets.only(left: 10),
             child: Text(
               'Limit reason: ${task.limitReason}',
               style: const TextStyle(
