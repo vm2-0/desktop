@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:clones_desktop/application/session/provider.dart';
+import 'package:clones_desktop/application/transaction/provider.dart';
 import 'package:clones_desktop/application/ui_state/provider.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/ui/components/card.dart';
@@ -103,6 +104,15 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
     }
   }
 
+  Future<void> _reloadCurrentData() async {
+    final demoDetailNotifier = ref.read(demoDetailNotifierProvider.notifier);
+    final currentState = ref.read(demoDetailNotifierProvider);
+    final currentRecording = currentState.recording;
+    if (currentRecording != null) {
+      await demoDetailNotifier.loadRecording(currentRecording.id);
+    }
+  }
+
   Widget _buildVideoPreview({bool showExpandButton = true}) {
     final demoDetail = ref.watch(demoDetailNotifierProvider);
     final videoSource = demoDetail.videoSource;
@@ -140,27 +150,36 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(
-      demoDetailNotifierProvider.select((s) => s.showUploadConfirmModal),
-      (previous, next) {
-        if (next) {
-          showDialog<void>(
-            context: context,
-            barrierDismissible: false,
-            useRootNavigator: false,
-            builder: (BuildContext context) {
-              return UploadConfirmModal(
-                onConfirm: () {
-                  ref
-                      .read(demoDetailNotifierProvider.notifier)
-                      .confirmUploadPermission();
-                },
-              );
-            },
-          );
+    // Listen for successful claim transactions to reload data
+    ref
+      ..listen(transactionManagerProvider, (previous, next) {
+        if (next.lastSuccessfulTx != null &&
+            next.currentTransactionType == 'claimRewards' &&
+            previous?.lastSuccessfulTx != next.lastSuccessfulTx) {
+          _reloadCurrentData();
         }
-      },
-    );
+      })
+      ..listen(
+        demoDetailNotifierProvider.select((s) => s.showUploadConfirmModal),
+        (previous, next) {
+          if (next) {
+            showDialog<void>(
+              context: context,
+              barrierDismissible: false,
+              useRootNavigator: false,
+              builder: (BuildContext context) {
+                return UploadConfirmModal(
+                  onConfirm: () {
+                    ref
+                        .read(demoDetailNotifierProvider.notifier)
+                        .confirmUploadPermission();
+                  },
+                );
+              },
+            );
+          }
+        },
+      );
 
     final isConnected =
         ref.watch(sessionNotifierProvider.select((s) => s.isConnected));
