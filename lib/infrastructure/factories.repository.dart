@@ -422,61 +422,55 @@ class FactoriesRepositoryImpl implements FactoriesRepository {
     required String walletAddress,
   }) async {
     try {
-      // Clean the apps data to match API schema
+      // Clean the apps data to match API schema - build from scratch to avoid any unwanted fields
       final cleanApps = apps.map((app) {
-        final appJson = app.toJson()
-          // Remove UI-only fields
-          ..remove('_id')
-          ..remove('pool_id');
+        // Build clean app object from scratch
+        final cleanApp = <String, dynamic>{
+          'name': app.name,
+          'domain': app.domain,
+          'categories': app.categories,
+        };
 
-        // Ensure required fields are present
-        appJson['name'] = app.name;
-        appJson['domain'] = app.domain;
-        appJson['categories'] = app.categories;
-
-        // Clean tasks
-        if (appJson['tasks'] is List) {
-          appJson['tasks'] = (appJson['tasks'] as List).map((task) {
-            if (task is Map<String, dynamic>) {
-              final cleanTask = <String, dynamic>{
-                'prompt': task['prompt'],
-              };
-
-              // Only include ID if it's not null and not empty
-              if (task['id'] != null && task['id'].toString().isNotEmpty) {
-                cleanTask['id'] = task['id'];
-              }
-
-              // Handle uploadLimit: include positive integers or explicit null
-              final uploadLimit = task['uploadLimit'];
-              if (uploadLimit != null &&
-                  uploadLimit is int &&
-                  uploadLimit >= 1) {
-                cleanTask['uploadLimit'] = uploadLimit;
-              } else {
-                cleanTask['uploadLimit'] = null;
-              }
-
-              // Handle rewardLimit: include positive doubles or explicit null
-              // Note: rewardLimit is a crypto amount that can be very small (10^-18)
-              final rewardLimit = task['rewardLimit'];
-              if (rewardLimit != null &&
-                  rewardLimit is num &&
-                  rewardLimit > 0) {
-                cleanTask['rewardLimit'] = rewardLimit.toDouble();
-              } else {
-                cleanTask['rewardLimit'] = null;
-              }
-
-              // Don't include limitReason - it's not used by the API
-
-              return cleanTask;
-            }
-            return task;
-          }).toList();
+        // Add description if it exists
+        if (app.description != null && app.description!.isNotEmpty) {
+          cleanApp['description'] = app.description;
         }
 
-        return appJson;
+        // Clean tasks - build from scratch to completely exclude limitReason
+        if (app.tasks.isNotEmpty) {
+          cleanApp['tasks'] = app.tasks.map((task) {
+            final cleanTask = <String, dynamic>{
+              'prompt': task.prompt,
+            };
+
+            // Only include ID if it's not null and not empty
+            if (task.id != null && task.id!.isNotEmpty) {
+              cleanTask['_id'] = task.id;
+            }
+
+            // Handle uploadLimit: include positive integers or explicit null
+            if (task.uploadLimit != null && task.uploadLimit! >= 1) {
+              cleanTask['uploadLimit'] = task.uploadLimit;
+            } else {
+              cleanTask['uploadLimit'] = null;
+            }
+
+            // Handle rewardLimit: include positive doubles or explicit null
+            if (task.rewardLimit != null && task.rewardLimit!.toDouble() > 0) {
+              cleanTask['rewardLimit'] = task.rewardLimit!.toDouble();
+            } else {
+              cleanTask['rewardLimit'] = null;
+            }
+
+            // limitReason is completely excluded - not included at all
+
+            return cleanTask;
+          }).toList();
+        } else {
+          cleanApp['tasks'] = <Map<String, dynamic>>[];
+        }
+
+        return cleanApp;
       }).toList();
 
       final responseData = await _apiClient.put<Map<String, dynamic>>(
