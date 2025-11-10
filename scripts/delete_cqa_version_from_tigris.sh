@@ -126,8 +126,6 @@ delete_cqa_version() {
     log_info "Checking CQA version '$version' files in /cqa folder..."
     
     for file_path in "${files_to_delete[@]}"; do
-        local s3_path="s3://$TIGRIS_BUCKET/$file_path"
-        
         # Check if file exists
         if aws s3api head-object --bucket "$TIGRIS_BUCKET" --key "$file_path" &> /dev/null; then
             log_info "Found: $file_path"
