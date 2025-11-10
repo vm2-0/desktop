@@ -82,8 +82,26 @@ function Get-FileHash256 {
         return $null
     }
 
-    $hash = Get-FileHash -Path $FilePath -Algorithm SHA256
-    return $hash.Hash.ToLower()
+    try {
+        # Try using Get-FileHash cmdlet (PowerShell 4.0+)
+        $hash = Microsoft.PowerShell.Utility\Get-FileHash -Path $FilePath -Algorithm SHA256
+        return $hash.Hash.ToLower()
+    } catch {
+        # Fallback to .NET implementation for older PowerShell versions
+        try {
+            $sha256 = [System.Security.Cryptography.SHA256]::Create()
+            $fileStream = [System.IO.File]::OpenRead($FilePath)
+            $hashBytes = $sha256.ComputeHash($fileStream)
+            $fileStream.Close()
+            $fileStream.Dispose()
+
+            $hashString = [System.BitConverter]::ToString($hashBytes) -replace '-',''
+            return $hashString.ToLower()
+        } catch {
+            Write-LogError "Failed to calculate SHA256 checksum: $_"
+            return $null
+        }
+    }
 }
 
 # Create release directory structure
