@@ -1,11 +1,10 @@
 import 'dart:async';
+
 import 'package:clones_desktop/application/claim_reward_modal/state.dart';
 import 'package:clones_desktop/application/factory.dart';
-import 'package:clones_desktop/application/recording.dart';
 import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/application/transaction/provider.dart';
 import 'package:clones_desktop/domain/models/submission/claim_authorization.dart';
-import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
 import 'package:decimal/decimal.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -32,12 +31,6 @@ class ClaimRewardModalNotifier extends _$ClaimRewardModalNotifier {
         if (next.lastSuccessfulTx != null &&
             next.currentTransactionType == 'claimRewards' &&
             previous?.lastSuccessfulTx != next.lastSuccessfulTx) {
-          // Invalidate recording providers to refresh submission data
-          ref
-            ..invalidate(listRecordingsProvider)
-            ..invalidate(mergedRecordingsProvider)
-            ..invalidate(demoDetailNotifierProvider);
-
           hide();
         }
       });

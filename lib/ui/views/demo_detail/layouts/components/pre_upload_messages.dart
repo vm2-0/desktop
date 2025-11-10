@@ -28,6 +28,7 @@ class _PreUploadMessagesState extends ConsumerState<PreUploadMessages> {
   }
 
   Widget _buildMessage(String content) {
+    final theme = Theme.of(context);
     return Stack(
       children: [
         Padding(
@@ -36,7 +37,7 @@ class _PreUploadMessagesState extends ConsumerState<PreUploadMessages> {
             messageBoxType: MessageBoxType.talkLeft,
             content: Text(
               content,
-              style: const TextStyle(fontSize: 14),
+              style: theme.textTheme.bodySmall,
               softWrap: true,
             ),
           ),
