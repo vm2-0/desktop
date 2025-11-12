@@ -67,17 +67,18 @@ class TaskItemWidget extends StatelessWidget {
               },
             ),
           ),
-          Positioned(
-            bottom: 3,
-            right: 10,
-            child: Opacity(
-              opacity: 0.2,
-              child: SelectableText(
-                '${task.id}',
-                style: theme.textTheme.bodySmall,
+          if (task.id != null)
+            Positioned(
+              bottom: 3,
+              right: 10,
+              child: Opacity(
+                opacity: 0.2,
+                child: SelectableText(
+                  '${task.id}',
+                  style: theme.textTheme.bodySmall,
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
