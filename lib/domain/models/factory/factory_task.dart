@@ -14,6 +14,8 @@ class FactoryTask with _$FactoryTask {
     @JsonKey(name: '_id') String? id,
     required String prompt,
     int? uploadLimit,
+    int? currentSubmissions,
+    bool? uploadLimitReached,
     @JsonKey(
       toJson: DecimalJson.toJson,
       fromJson: DecimalJson.fromJson,

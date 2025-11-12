@@ -74,7 +74,6 @@ class _AvailableTasksState extends ConsumerState<AvailableTasks> {
   }
 
   double _getReward(FactoryApp app, FactoryTask task) {
-    // TODO(reddwarf03): Use factory pricePerDemo ?
     return task.rewardLimit?.toDouble() ?? 0.0;
   }
 
@@ -199,8 +198,8 @@ class _AvailableTasksState extends ConsumerState<AvailableTasks> {
                 return GridView.builder(
                   padding: const EdgeInsets.all(16),
                   gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 310,
-                    childAspectRatio: 3 / 2.5,
+                    maxCrossAxisExtent: 400,
+                    childAspectRatio: 2 / 1.75,
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 10,
                   ),

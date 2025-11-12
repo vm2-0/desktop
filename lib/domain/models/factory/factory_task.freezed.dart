@@ -24,6 +24,8 @@ mixin _$FactoryTask {
   String? get id => throw _privateConstructorUsedError;
   String get prompt => throw _privateConstructorUsedError;
   int? get uploadLimit => throw _privateConstructorUsedError;
+  int? get currentSubmissions => throw _privateConstructorUsedError;
+  bool? get uploadLimitReached => throw _privateConstructorUsedError;
   @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
   Decimal? get rewardLimit => throw _privateConstructorUsedError;
   String? get limitReason => throw _privateConstructorUsedError;
@@ -48,6 +50,8 @@ abstract class $FactoryTaskCopyWith<$Res> {
       {@JsonKey(name: '_id') String? id,
       String prompt,
       int? uploadLimit,
+      int? currentSubmissions,
+      bool? uploadLimitReached,
       @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       Decimal? rewardLimit,
       String? limitReason});
@@ -71,6 +75,8 @@ class _$FactoryTaskCopyWithImpl<$Res, $Val extends FactoryTask>
     Object? id = freezed,
     Object? prompt = null,
     Object? uploadLimit = freezed,
+    Object? currentSubmissions = freezed,
+    Object? uploadLimitReached = freezed,
     Object? rewardLimit = freezed,
     Object? limitReason = freezed,
   }) {
@@ -87,6 +93,14 @@ class _$FactoryTaskCopyWithImpl<$Res, $Val extends FactoryTask>
           ? _value.uploadLimit
           : uploadLimit // ignore: cast_nullable_to_non_nullable
               as int?,
+      currentSubmissions: freezed == currentSubmissions
+          ? _value.currentSubmissions
+          : currentSubmissions // ignore: cast_nullable_to_non_nullable
+              as int?,
+      uploadLimitReached: freezed == uploadLimitReached
+          ? _value.uploadLimitReached
+          : uploadLimitReached // ignore: cast_nullable_to_non_nullable
+              as bool?,
       rewardLimit: freezed == rewardLimit
           ? _value.rewardLimit
           : rewardLimit // ignore: cast_nullable_to_non_nullable
@@ -111,6 +125,8 @@ abstract class _$$FactoryTaskImplCopyWith<$Res>
       {@JsonKey(name: '_id') String? id,
       String prompt,
       int? uploadLimit,
+      int? currentSubmissions,
+      bool? uploadLimitReached,
       @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       Decimal? rewardLimit,
       String? limitReason});
@@ -132,6 +148,8 @@ class __$$FactoryTaskImplCopyWithImpl<$Res>
     Object? id = freezed,
     Object? prompt = null,
     Object? uploadLimit = freezed,
+    Object? currentSubmissions = freezed,
+    Object? uploadLimitReached = freezed,
     Object? rewardLimit = freezed,
     Object? limitReason = freezed,
   }) {
@@ -148,6 +166,14 @@ class __$$FactoryTaskImplCopyWithImpl<$Res>
           ? _value.uploadLimit
           : uploadLimit // ignore: cast_nullable_to_non_nullable
               as int?,
+      currentSubmissions: freezed == currentSubmissions
+          ? _value.currentSubmissions
+          : currentSubmissions // ignore: cast_nullable_to_non_nullable
+              as int?,
+      uploadLimitReached: freezed == uploadLimitReached
+          ? _value.uploadLimitReached
+          : uploadLimitReached // ignore: cast_nullable_to_non_nullable
+              as bool?,
       rewardLimit: freezed == rewardLimit
           ? _value.rewardLimit
           : rewardLimit // ignore: cast_nullable_to_non_nullable
@@ -167,6 +193,8 @@ class _$FactoryTaskImpl implements _FactoryTask {
       {@JsonKey(name: '_id') this.id,
       required this.prompt,
       this.uploadLimit,
+      this.currentSubmissions,
+      this.uploadLimitReached,
       @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       this.rewardLimit,
       this.limitReason});
@@ -182,6 +210,10 @@ class _$FactoryTaskImpl implements _FactoryTask {
   @override
   final int? uploadLimit;
   @override
+  final int? currentSubmissions;
+  @override
+  final bool? uploadLimitReached;
+  @override
   @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
   final Decimal? rewardLimit;
   @override
@@ -189,7 +221,7 @@ class _$FactoryTaskImpl implements _FactoryTask {
 
   @override
   String toString() {
-    return 'FactoryTask(id: $id, prompt: $prompt, uploadLimit: $uploadLimit, rewardLimit: $rewardLimit, limitReason: $limitReason)';
+    return 'FactoryTask(id: $id, prompt: $prompt, uploadLimit: $uploadLimit, currentSubmissions: $currentSubmissions, uploadLimitReached: $uploadLimitReached, rewardLimit: $rewardLimit, limitReason: $limitReason)';
   }
 
   @override
@@ -201,6 +233,10 @@ class _$FactoryTaskImpl implements _FactoryTask {
             (identical(other.prompt, prompt) || other.prompt == prompt) &&
             (identical(other.uploadLimit, uploadLimit) ||
                 other.uploadLimit == uploadLimit) &&
+            (identical(other.currentSubmissions, currentSubmissions) ||
+                other.currentSubmissions == currentSubmissions) &&
+            (identical(other.uploadLimitReached, uploadLimitReached) ||
+                other.uploadLimitReached == uploadLimitReached) &&
             (identical(other.rewardLimit, rewardLimit) ||
                 other.rewardLimit == rewardLimit) &&
             (identical(other.limitReason, limitReason) ||
@@ -209,8 +245,8 @@ class _$FactoryTaskImpl implements _FactoryTask {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType, id, prompt, uploadLimit, rewardLimit, limitReason);
+  int get hashCode => Object.hash(runtimeType, id, prompt, uploadLimit,
+      currentSubmissions, uploadLimitReached, rewardLimit, limitReason);
 
   /// Create a copy of FactoryTask
   /// with the given fields replaced by the non-null parameter values.
@@ -233,6 +269,8 @@ abstract class _FactoryTask implements FactoryTask {
       {@JsonKey(name: '_id') final String? id,
       required final String prompt,
       final int? uploadLimit,
+      final int? currentSubmissions,
+      final bool? uploadLimitReached,
       @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       final Decimal? rewardLimit,
       final String? limitReason}) = _$FactoryTaskImpl;
@@ -247,6 +285,10 @@ abstract class _FactoryTask implements FactoryTask {
   String get prompt;
   @override
   int? get uploadLimit;
+  @override
+  int? get currentSubmissions;
+  @override
+  bool? get uploadLimitReached;
   @override
   @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
   Decimal? get rewardLimit;

@@ -20,7 +20,6 @@ OnChainReward _$OnChainRewardFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$OnChainReward {
-  String get tokenAddress => throw _privateConstructorUsedError;
   String get poolAddress => throw _privateConstructorUsedError;
   double get amount => throw _privateConstructorUsedError;
   @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
@@ -52,8 +51,7 @@ abstract class $OnChainRewardCopyWith<$Res> {
       _$OnChainRewardCopyWithImpl<$Res, OnChainReward>;
   @useResult
   $Res call(
-      {String tokenAddress,
-      String poolAddress,
+      {String poolAddress,
       double amount,
       @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       Decimal? grossAmount,
@@ -83,7 +81,6 @@ class _$OnChainRewardCopyWithImpl<$Res, $Val extends OnChainReward>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? tokenAddress = null,
     Object? poolAddress = null,
     Object? amount = null,
     Object? grossAmount = freezed,
@@ -95,10 +92,6 @@ class _$OnChainRewardCopyWithImpl<$Res, $Val extends OnChainReward>
     Object? cumulativeAmount = freezed,
   }) {
     return _then(_value.copyWith(
-      tokenAddress: null == tokenAddress
-          ? _value.tokenAddress
-          : tokenAddress // ignore: cast_nullable_to_non_nullable
-              as String,
       poolAddress: null == poolAddress
           ? _value.poolAddress
           : poolAddress // ignore: cast_nullable_to_non_nullable
@@ -148,8 +141,7 @@ abstract class _$$OnChainRewardImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String tokenAddress,
-      String poolAddress,
+      {String poolAddress,
       double amount,
       @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       Decimal? grossAmount,
@@ -177,7 +169,6 @@ class __$$OnChainRewardImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? tokenAddress = null,
     Object? poolAddress = null,
     Object? amount = null,
     Object? grossAmount = freezed,
@@ -189,10 +180,6 @@ class __$$OnChainRewardImplCopyWithImpl<$Res>
     Object? cumulativeAmount = freezed,
   }) {
     return _then(_$OnChainRewardImpl(
-      tokenAddress: null == tokenAddress
-          ? _value.tokenAddress
-          : tokenAddress // ignore: cast_nullable_to_non_nullable
-              as String,
       poolAddress: null == poolAddress
           ? _value.poolAddress
           : poolAddress // ignore: cast_nullable_to_non_nullable
@@ -237,8 +224,7 @@ class __$$OnChainRewardImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$OnChainRewardImpl implements _OnChainReward {
   const _$OnChainRewardImpl(
-      {required this.tokenAddress,
-      required this.poolAddress,
+      {required this.poolAddress,
       required this.amount,
       @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       this.grossAmount,
@@ -255,8 +241,6 @@ class _$OnChainRewardImpl implements _OnChainReward {
   factory _$OnChainRewardImpl.fromJson(Map<String, dynamic> json) =>
       _$$OnChainRewardImplFromJson(json);
 
-  @override
-  final String tokenAddress;
   @override
   final String poolAddress;
   @override
@@ -282,7 +266,7 @@ class _$OnChainRewardImpl implements _OnChainReward {
 
   @override
   String toString() {
-    return 'OnChainReward(tokenAddress: $tokenAddress, poolAddress: $poolAddress, amount: $amount, grossAmount: $grossAmount, feeAmount: $feeAmount, netAmount: $netAmount, submissionId: $submissionId, txHash: $txHash, timestamp: $timestamp, cumulativeAmount: $cumulativeAmount)';
+    return 'OnChainReward(poolAddress: $poolAddress, amount: $amount, grossAmount: $grossAmount, feeAmount: $feeAmount, netAmount: $netAmount, submissionId: $submissionId, txHash: $txHash, timestamp: $timestamp, cumulativeAmount: $cumulativeAmount)';
   }
 
   @override
@@ -290,8 +274,6 @@ class _$OnChainRewardImpl implements _OnChainReward {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$OnChainRewardImpl &&
-            (identical(other.tokenAddress, tokenAddress) ||
-                other.tokenAddress == tokenAddress) &&
             (identical(other.poolAddress, poolAddress) ||
                 other.poolAddress == poolAddress) &&
             (identical(other.amount, amount) || other.amount == amount) &&
@@ -312,18 +294,8 @@ class _$OnChainRewardImpl implements _OnChainReward {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      tokenAddress,
-      poolAddress,
-      amount,
-      grossAmount,
-      feeAmount,
-      netAmount,
-      submissionId,
-      txHash,
-      timestamp,
-      cumulativeAmount);
+  int get hashCode => Object.hash(runtimeType, poolAddress, amount, grossAmount,
+      feeAmount, netAmount, submissionId, txHash, timestamp, cumulativeAmount);
 
   /// Create a copy of OnChainReward
   /// with the given fields replaced by the non-null parameter values.
@@ -343,8 +315,7 @@ class _$OnChainRewardImpl implements _OnChainReward {
 
 abstract class _OnChainReward implements OnChainReward {
   const factory _OnChainReward(
-      {required final String tokenAddress,
-      required final String poolAddress,
+      {required final String poolAddress,
       required final double amount,
       @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       final Decimal? grossAmount,
@@ -361,8 +332,6 @@ abstract class _OnChainReward implements OnChainReward {
   factory _OnChainReward.fromJson(Map<String, dynamic> json) =
       _$OnChainRewardImpl.fromJson;
 
-  @override
-  String get tokenAddress;
   @override
   String get poolAddress;
   @override

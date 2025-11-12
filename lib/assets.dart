@@ -30,6 +30,13 @@ class Assets {
   static const String recordIcon = '${assetIconsFolder}record_icon.png';
   static const String uploadIcon = '${assetIconsFolder}upload_icon.png';
 
+  static const String factoryGeneralIcon =
+      '${assetIconsFolder}factory_general_icon.png';
+  static const String factoryTasksIcon =
+      '${assetIconsFolder}factory_tasks_icon.png';
+  static const String factoryDemosIcon =
+      '${assetIconsFolder}factory_demos_icon.png';
+
   // Menu
   static const String menuFarm = '${assetMenuFolder}farmer_menu.png';
   static const String menuForge = '${assetMenuFolder}forge_menu.png';

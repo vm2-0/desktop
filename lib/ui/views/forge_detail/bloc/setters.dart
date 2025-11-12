@@ -53,14 +53,8 @@ mixin ForgeDetailSetters on AutoDisposeNotifier<ForgeDetailState> {
   void setFactoryStatus(FactoryStatus factoryStatus) {
     if (state.factoryStatus == factoryStatus) return;
 
-    // Check if this is different from the original factory value
-    final factory = state.factory;
-    final hasChanges = factory != null && factoryStatus != factory.status;
-
     state = state.copyWith(
       factoryStatus: factoryStatus,
-      hasFactoryPropertyChanges:
-          hasChanges || _hasOtherFactoryPropertyChanges(),
     );
   }
 

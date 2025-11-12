@@ -8,7 +8,6 @@ part 'on_chain_reward.g.dart';
 @freezed
 class OnChainReward with _$OnChainReward {
   const factory OnChainReward({
-    required String tokenAddress,
     required String poolAddress,
     required double amount,
     @JsonKey(

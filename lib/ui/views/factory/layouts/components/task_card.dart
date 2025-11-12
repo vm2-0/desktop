@@ -1,6 +1,4 @@
 import 'dart:convert';
-
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:clones_desktop/application/coin_price.dart';
 import 'package:clones_desktop/application/factory.dart';
@@ -95,9 +93,13 @@ class TaskCard extends ConsumerWidget {
             padding: CardPadding.small,
             variant: CardVariant.secondary,
             child: InkWell(
-              onTap: factory.balance >= rewardAmount
-                  ? () async => onTap(context)
-                  : null,
+              onTap: task.uploadLimit != null &&
+                      task.currentSubmissions != null &&
+                      task.currentSubmissions! >= task.uploadLimit!
+                  ? null
+                  : factory.balance >= rewardAmount
+                      ? () async => onTap(context)
+                      : null,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -132,7 +134,7 @@ class TaskCard extends ConsumerWidget {
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.all(12),
-                      child: AutoSizeText(
+                      child: SelectableText(
                         task.prompt,
                         maxLines: 3,
                         style: theme.textTheme.bodyMedium,
@@ -140,7 +142,28 @@ class TaskCard extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  if (factory.balance >= rewardAmount)
+                  if (task.uploadLimit != null &&
+                      task.currentSubmissions != null &&
+                      task.currentSubmissions! < task.uploadLimit!)
+                    Text(
+                      'Only ${task.uploadLimit! - task.currentSubmissions!} more - keep going!',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: ClonesColors.important,
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                  const SizedBox(height: 4),
+                  if (task.uploadLimit != null &&
+                      task.currentSubmissions != null &&
+                      task.currentSubmissions! >= task.uploadLimit!)
+                    const BtnPrimary(
+                      widthExpanded: true,
+                      isLocked: true,
+                      btnPrimaryType: BtnPrimaryType.outlinePrimary,
+                      onTap: null,
+                      buttonText: 'All demos completed!',
+                    )
+                  else if (factory.balance >= rewardAmount)
                     BtnPrimary(
                       widthExpanded: true,
                       onTap: () async => onTap(context),
