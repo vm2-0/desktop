@@ -35,15 +35,14 @@ class ReferralStatTotalRewards extends ConsumerWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            referralState.referralInfo!.totalRewards!
-                .toStringAsFixedLowValue(2, 5),
+            '\$${referralState.referralInfo!.totalRewards!.toStringAsFixedLowValue(2, 5)}',
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 5),
           Text(
-            'Total Rewards',
+            'Total rewards earned thanks to your referrals',
             style: theme.textTheme.bodySmall,
           ),
         ],

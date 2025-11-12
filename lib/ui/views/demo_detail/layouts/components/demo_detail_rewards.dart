@@ -12,6 +12,7 @@ import 'package:clones_desktop/ui/components/wallet_not_connected.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
 import 'package:clones_desktop/utils/env.dart';
 import 'package:clones_desktop/utils/format_address.dart';
+import 'package:clones_desktop/utils/format_num.dart';
 import 'package:collection/collection.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
@@ -329,6 +330,10 @@ class DemoDetailRewards extends ConsumerWidget {
         ?.firstWhereOrNull((r) => r.type == 'factory_referrer')
         ?.address;
 
+    final platformFeeAmount = (feeAmount ?? Decimal.zero) -
+        (farmerReferrerAmount ?? Decimal.zero) -
+        (factoryReferrerAmount ?? Decimal.zero);
+
     return Column(
       children: [
         const SizedBox(height: 20),
@@ -351,32 +356,35 @@ class DemoDetailRewards extends ConsumerWidget {
                     const SizedBox(height: 8),
                     if (netAmount != null && feeAmount != null) ...[
                       Text(
-                        'Total Reward: ${grossAmount.toStringAsFixed(3)} $tokenSymbol',
+                        'Total Reward: ${grossAmount.toStringAsFixedLowValue(3, 5)} $tokenSymbol',
                         style: theme.textTheme.bodySmall,
                       ),
-                      Text(
-                        'Platform Fee: ${feeAmount.toStringAsFixed(3)} $tokenSymbol',
-                        style: theme.textTheme.bodySmall,
-                      ),
+                      if (platformFeeAmount > Decimal.zero)
+                        Text(
+                          'Platform Fee: ${platformFeeAmount.toStringAsFixedLowValue(3, 5)} $tokenSymbol',
+                          style: theme.textTheme.bodySmall,
+                        ),
                       if (farmerReferrerAmount != null &&
+                          farmerReferrerAmount > Decimal.zero &&
                           farmerReferrerAddress != null)
                         Text(
-                          'Farmer Referrer: ${farmerReferrerAmount.toStringAsFixed(3)} $tokenSymbol (${farmerReferrerAddress.shortAddress()})',
+                          'Farmer Referrer: ${farmerReferrerAmount.toStringAsFixedLowValue(3, 5)} $tokenSymbol (${farmerReferrerAddress.shortAddress().toLowerCase()})',
                           style: theme.textTheme.bodySmall,
                         ),
                       if (factoryReferrerAmount != null &&
+                          factoryReferrerAmount > Decimal.zero &&
                           factoryReferrerAddress != null)
                         Text(
-                          'Factory Referrer: ${factoryReferrerAmount.toStringAsFixed(3)} $tokenSymbol (${factoryReferrerAddress.shortAddress()})',
+                          'Factory Referrer: ${factoryReferrerAmount.toStringAsFixedLowValue(3, 5)} $tokenSymbol (${factoryReferrerAddress.shortAddress().toLowerCase()})',
                           style: theme.textTheme.bodySmall,
                         ),
                       Text(
-                        'You Received: ${netAmount.toStringAsFixed(3)} $tokenSymbol',
+                        'You Received: ${netAmount.toStringAsFixedLowValue(3, 5)} $tokenSymbol',
                         style: theme.textTheme.bodySmall,
                       ),
                     ] else ...[
                       Text(
-                        'You claimed ${grossAmount.toStringAsFixed(3)} $tokenSymbol',
+                        'You claimed ${grossAmount.toStringAsFixedLowValue(3, 5)} $tokenSymbol',
                         style: theme.textTheme.bodySmall,
                       ),
                       Text(
