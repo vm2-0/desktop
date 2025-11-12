@@ -34,19 +34,19 @@ class _ForgeFactoryDetailSidebarState
     final buttons = [
       SidebarButtonData(
         path: '/forge/${widget.poolId}/general',
-        icon: Icons.info,
+        imagePath: Assets.factoryGeneralIcon,
         label: 'General',
         key: 'general',
       ),
       SidebarButtonData(
         path: '/forge/${widget.poolId}/tasks',
-        icon: Icons.list,
+        imagePath: Assets.factoryTasksIcon,
         label: 'Tasks',
         key: 'tasks',
       ),
       SidebarButtonData(
         path: '/forge/${widget.poolId}/demonstrations',
-        icon: Icons.video_library_outlined,
+        imagePath: Assets.factoryDemosIcon,
         label: 'Demos',
         key: 'demos',
       ),
@@ -159,22 +159,49 @@ class AnimatedSidebarSection extends StatelessWidget {
                           },
                           blendMode: BlendMode.dstIn,
                           child: activeIndex == i
-                              ? ColorFiltered(
-                                  colorFilter: ColorFilter.mode(
-                                    ClonesColors.tertiary.withValues(alpha: 1),
-                                    BlendMode.srcATop,
-                                  ),
+                              ? ShaderMask(
+                                  shaderCallback: (Rect bounds) {
+                                    return LinearGradient(
+                                      colors: [
+                                        ClonesColors.primary
+                                            .withValues(alpha: 0.5),
+                                        ClonesColors.secondary
+                                            .withValues(alpha: 0.9),
+                                      ],
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                    ).createShader(bounds);
+                                  },
+                                  blendMode: BlendMode.dstIn,
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(
-                                        button.icon,
-                                        size: 30,
-                                        color: ClonesColors.secondaryText,
+                                      Stack(
+                                        children: [
+                                          Image.asset(
+                                            button.imagePath,
+                                            width: 40,
+                                            height: 40,
+                                            color: ClonesColors.primary,
+                                          ),
+                                          Opacity(
+                                            opacity: 0.7,
+                                            child: Image.asset(
+                                              button.imagePath,
+                                              width: 40,
+                                              height: 40,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                       Text(
                                         button.label,
-                                        style: theme.textTheme.bodySmall,
+                                        style:
+                                            theme.textTheme.bodySmall?.copyWith(
+                                          fontSize: 7,
+                                          color: ClonesColors.primary
+                                              .withValues(alpha: 1),
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -182,14 +209,19 @@ class AnimatedSidebarSection extends StatelessWidget {
                               : Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(
-                                      button.icon,
-                                      color: ClonesColors.secondaryText,
-                                      size: 30,
+                                    Image.asset(
+                                      button.imagePath,
+                                      width: 40,
+                                      height: 40,
                                     ),
                                     Text(
                                       button.label,
-                                      style: theme.textTheme.bodySmall,
+                                      style:
+                                          theme.textTheme.bodySmall?.copyWith(
+                                        fontSize: 7,
+                                        color: ClonesColors.primary
+                                            .withValues(alpha: 1),
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -210,12 +242,12 @@ class AnimatedSidebarSection extends StatelessWidget {
 class SidebarButtonData {
   SidebarButtonData({
     required this.path,
-    required this.icon,
+    required this.imagePath,
     required this.label,
     required this.key,
   });
   final String path;
-  final IconData icon;
+  final String imagePath;
   final String label;
   final String key;
 }

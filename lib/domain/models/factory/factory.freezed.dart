@@ -38,8 +38,7 @@ mixin _$Factory {
       throw _privateConstructorUsedError; // Keep for backward compatibility
   @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
   Decimal? get totalEarned => throw _privateConstructorUsedError; // Statistics
-  int get demonstrations => throw _privateConstructorUsedError; // Configuration
-  FactoryUploadLimit? get uploadLimit =>
+  int get demonstrations =>
       throw _privateConstructorUsedError; // Apps & tasks (integrated)
   List<FactoryApp> get apps =>
       throw _privateConstructorUsedError; // Search optimization
@@ -77,14 +76,12 @@ abstract class $FactoryCopyWith<$Res> {
       @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       Decimal? totalEarned,
       int demonstrations,
-      FactoryUploadLimit? uploadLimit,
       List<FactoryApp> apps,
       String searchText,
       bool expanded,
       bool isLoading});
 
   $FactoryTokenCopyWith<$Res> get token;
-  $FactoryUploadLimitCopyWith<$Res>? get uploadLimit;
 }
 
 /// @nodoc
@@ -115,7 +112,6 @@ class _$FactoryCopyWithImpl<$Res, $Val extends Factory>
     Object? balance = null,
     Object? totalEarned = freezed,
     Object? demonstrations = null,
-    Object? uploadLimit = freezed,
     Object? apps = null,
     Object? searchText = null,
     Object? expanded = null,
@@ -174,10 +170,6 @@ class _$FactoryCopyWithImpl<$Res, $Val extends Factory>
           ? _value.demonstrations
           : demonstrations // ignore: cast_nullable_to_non_nullable
               as int,
-      uploadLimit: freezed == uploadLimit
-          ? _value.uploadLimit
-          : uploadLimit // ignore: cast_nullable_to_non_nullable
-              as FactoryUploadLimit?,
       apps: null == apps
           ? _value.apps
           : apps // ignore: cast_nullable_to_non_nullable
@@ -206,20 +198,6 @@ class _$FactoryCopyWithImpl<$Res, $Val extends Factory>
       return _then(_value.copyWith(token: value) as $Val);
     });
   }
-
-  /// Create a copy of Factory
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $FactoryUploadLimitCopyWith<$Res>? get uploadLimit {
-    if (_value.uploadLimit == null) {
-      return null;
-    }
-
-    return $FactoryUploadLimitCopyWith<$Res>(_value.uploadLimit!, (value) {
-      return _then(_value.copyWith(uploadLimit: value) as $Val);
-    });
-  }
 }
 
 /// @nodoc
@@ -244,7 +222,6 @@ abstract class _$$FactoryImplCopyWith<$Res> implements $FactoryCopyWith<$Res> {
       @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       Decimal? totalEarned,
       int demonstrations,
-      FactoryUploadLimit? uploadLimit,
       List<FactoryApp> apps,
       String searchText,
       bool expanded,
@@ -252,8 +229,6 @@ abstract class _$$FactoryImplCopyWith<$Res> implements $FactoryCopyWith<$Res> {
 
   @override
   $FactoryTokenCopyWith<$Res> get token;
-  @override
-  $FactoryUploadLimitCopyWith<$Res>? get uploadLimit;
 }
 
 /// @nodoc
@@ -282,7 +257,6 @@ class __$$FactoryImplCopyWithImpl<$Res>
     Object? balance = null,
     Object? totalEarned = freezed,
     Object? demonstrations = null,
-    Object? uploadLimit = freezed,
     Object? apps = null,
     Object? searchText = null,
     Object? expanded = null,
@@ -341,10 +315,6 @@ class __$$FactoryImplCopyWithImpl<$Res>
           ? _value.demonstrations
           : demonstrations // ignore: cast_nullable_to_non_nullable
               as int,
-      uploadLimit: freezed == uploadLimit
-          ? _value.uploadLimit
-          : uploadLimit // ignore: cast_nullable_to_non_nullable
-              as FactoryUploadLimit?,
       apps: null == apps
           ? _value._apps
           : apps // ignore: cast_nullable_to_non_nullable
@@ -383,7 +353,6 @@ class _$FactoryImpl implements _Factory {
       @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       this.totalEarned,
       this.demonstrations = 0,
-      this.uploadLimit,
       final List<FactoryApp> apps = const [],
       this.searchText = '',
       this.expanded = false,
@@ -438,9 +407,6 @@ class _$FactoryImpl implements _Factory {
   @override
   @JsonKey()
   final int demonstrations;
-// Configuration
-  @override
-  final FactoryUploadLimit? uploadLimit;
 // Apps & tasks (integrated)
   final List<FactoryApp> _apps;
 // Apps & tasks (integrated)
@@ -466,7 +432,7 @@ class _$FactoryImpl implements _Factory {
 
   @override
   String toString() {
-    return 'Factory(id: $id, poolAddress: $poolAddress, name: $name, description: $description, ownerAddress: $ownerAddress, status: $status, createdAt: $createdAt, updatedAt: $updatedAt, skills: $skills, token: $token, balance: $balance, totalEarned: $totalEarned, demonstrations: $demonstrations, uploadLimit: $uploadLimit, apps: $apps, searchText: $searchText, expanded: $expanded, isLoading: $isLoading)';
+    return 'Factory(id: $id, poolAddress: $poolAddress, name: $name, description: $description, ownerAddress: $ownerAddress, status: $status, createdAt: $createdAt, updatedAt: $updatedAt, skills: $skills, token: $token, balance: $balance, totalEarned: $totalEarned, demonstrations: $demonstrations, apps: $apps, searchText: $searchText, expanded: $expanded, isLoading: $isLoading)';
   }
 
   @override
@@ -494,8 +460,6 @@ class _$FactoryImpl implements _Factory {
                 other.totalEarned == totalEarned) &&
             (identical(other.demonstrations, demonstrations) ||
                 other.demonstrations == demonstrations) &&
-            (identical(other.uploadLimit, uploadLimit) ||
-                other.uploadLimit == uploadLimit) &&
             const DeepCollectionEquality().equals(other._apps, _apps) &&
             (identical(other.searchText, searchText) ||
                 other.searchText == searchText) &&
@@ -522,7 +486,6 @@ class _$FactoryImpl implements _Factory {
       balance,
       totalEarned,
       demonstrations,
-      uploadLimit,
       const DeepCollectionEquality().hash(_apps),
       searchText,
       expanded,
@@ -560,7 +523,6 @@ abstract class _Factory implements Factory {
       @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       final Decimal? totalEarned,
       final int demonstrations,
-      final FactoryUploadLimit? uploadLimit,
       final List<FactoryApp> apps,
       final String searchText,
       final bool expanded,
@@ -595,9 +557,7 @@ abstract class _Factory implements Factory {
   @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
   Decimal? get totalEarned; // Statistics
   @override
-  int get demonstrations; // Configuration
-  @override
-  FactoryUploadLimit? get uploadLimit; // Apps & tasks (integrated)
+  int get demonstrations; // Apps & tasks (integrated)
   @override
   List<FactoryApp> get apps; // Search optimization
   @override

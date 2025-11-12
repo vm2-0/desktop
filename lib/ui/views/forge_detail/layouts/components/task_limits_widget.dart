@@ -57,16 +57,12 @@ class TaskLimitsWidget extends ConsumerWidget {
           padding: const EdgeInsets.only(left: 10),
           child: Text(
             task.uploadLimit != null
-                ? 'Upload limit: ${task.uploadLimit}'
-                : factory.uploadLimit != null
-                    ? 'Upload limit: ${factory.uploadLimit?.value}'
-                    : 'Upload limit: infinite',
+                ? 'Upload limit: ${task.uploadLimit}${task.currentSubmissions != null && task.currentSubmissions! > 0 ? ' (${task.currentSubmissions} ${task.currentSubmissions! == 1 ? 'submission' : 'submissions'} made)' : ''}'
+                : 'Upload limit: infinite',
             style: theme.textTheme.bodySmall?.copyWith(
               color: task.uploadLimit != null
                   ? ClonesColors.uploadLimit
-                  : factory.uploadLimit != null
-                      ? ClonesColors.uploadLimit
-                      : ClonesColors.rewardInfo,
+                  : ClonesColors.rewardInfo,
             ),
           ),
         ),

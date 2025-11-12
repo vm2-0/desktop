@@ -8,7 +8,6 @@ part of 'on_chain_reward.dart';
 
 _$OnChainRewardImpl _$$OnChainRewardImplFromJson(Map<String, dynamic> json) =>
     _$OnChainRewardImpl(
-      tokenAddress: json['tokenAddress'] as String,
       poolAddress: json['poolAddress'] as String,
       amount: (json['amount'] as num).toDouble(),
       grossAmount: DecimalJson.fromJson(json['grossAmount']),
@@ -22,7 +21,6 @@ _$OnChainRewardImpl _$$OnChainRewardImplFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$$OnChainRewardImplToJson(_$OnChainRewardImpl instance) =>
     <String, dynamic>{
-      'tokenAddress': instance.tokenAddress,
       'poolAddress': instance.poolAddress,
       'amount': instance.amount,
       'grossAmount': DecimalJson.toJson(instance.grossAmount),

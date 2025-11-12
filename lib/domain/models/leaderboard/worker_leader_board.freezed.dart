@@ -380,7 +380,7 @@ class _$WorkerLeaderboardImpl implements _WorkerLeaderboard {
       @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       this.rewards,
       required this.avgScore,
-      final List<WorkerTokenReward> tokens = const [],
+      final List<WorkerTokenReward> tokens = const <WorkerTokenReward>[],
       this.totalUSD = 0.0})
       : _tokens = tokens;
 

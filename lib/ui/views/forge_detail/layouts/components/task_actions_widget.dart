@@ -36,50 +36,55 @@ class TaskActionsWidget extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         // Record/Training session button
-        InkWell(
-          onTap: () async {
-            // Check if farming is locked without referral code
-            if (FeatureFlags.lockFarmingWithoutReferral) {
-              final session = ref.read(sessionNotifierProvider);
-              if (session.referrerCode == null ||
-                  session.referrerCode!.isEmpty) {
-                await ReferralRequiredDialog.show(context, ref);
-                return;
+        if (task.uploadLimit != null &&
+            task.currentSubmissions != null &&
+            task.currentSubmissions! >= task.uploadLimit!)
+          const SizedBox(width: 20)
+        else
+          InkWell(
+            onTap: () async {
+              // Check if farming is locked without referral code
+              if (FeatureFlags.lockFarmingWithoutReferral) {
+                final session = ref.read(sessionNotifierProvider);
+                if (session.referrerCode == null ||
+                    session.referrerCode!.isEmpty) {
+                  await ReferralRequiredDialog.show(context, ref);
+                  return;
+                }
               }
-            }
 
-            final appInfo = AppInfo(
-              type: 'website',
-              name: app.name,
-              url: 'https://${app.domain}',
-              taskId: task.id,
-            );
-            final appParam = Uri.encodeComponent(
-              jsonEncode(appInfo.toJson()),
-            );
+              final appInfo = AppInfo(
+                type: 'website',
+                name: app.name,
+                url: 'https://${app.domain}',
+                taskId: task.id,
+              );
+              final appParam = Uri.encodeComponent(
+                jsonEncode(appInfo.toJson()),
+              );
 
-            context.go(
-              DemoDetailView.routeName,
-              extra: {
-                'prompt': task.prompt,
-                'appParam': appParam,
-                'poolId': forgeId,
-                'taskId': task.id,
-              },
-            );
-          },
-          child: ColorFiltered(
-            colorFilter: ColorFilter.mode(
-              Colors.blue.withValues(alpha: 0.8),
-              BlendMode.srcATop,
-            ),
-            child: Image.asset(
-              Assets.recordIcon,
-              width: 24,
-              height: 24,
+              context.go(
+                DemoDetailView.routeName,
+                extra: {
+                  'prompt': task.prompt,
+                  'appParam': appParam,
+                  'poolId': forgeId,
+                  'taskId': task.id,
+                },
+              );
+            },
+            child: ColorFiltered(
+              colorFilter: ColorFilter.mode(
+                Colors.blue.withValues(alpha: 0.8),
+                BlendMode.srcATop,
+              ),
+              child: Image.asset(
+                Assets.recordIcon,
+                width: 24,
+                height: 24,
+              ),
             ),
           ),
-        ),
         const SizedBox(width: 20),
         // Edit button
         InkWell(

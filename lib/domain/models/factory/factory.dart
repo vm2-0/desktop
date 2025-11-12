@@ -2,7 +2,6 @@
 
 import 'package:clones_desktop/domain/models/factory/factory_app.dart';
 import 'package:clones_desktop/domain/models/factory/factory_token.dart';
-import 'package:clones_desktop/domain/models/factory/factory_upload_limit.dart';
 import 'package:clones_desktop/utils/decimal_json.dart';
 import 'package:decimal/decimal.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -82,9 +81,6 @@ class Factory with _$Factory {
 
     // Statistics
     @Default(0) int demonstrations,
-
-    // Configuration
-    FactoryUploadLimit? uploadLimit,
 
     // Apps & tasks (integrated)
     @Default([]) List<FactoryApp> apps,

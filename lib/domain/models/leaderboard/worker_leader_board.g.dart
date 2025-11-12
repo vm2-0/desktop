@@ -32,7 +32,7 @@ _$WorkerLeaderboardImpl _$$WorkerLeaderboardImplFromJson(
               ?.map(
                   (e) => WorkerTokenReward.fromJson(e as Map<String, dynamic>))
               .toList() ??
-          const [],
+          const <WorkerTokenReward>[],
       totalUSD: (json['totalUSD'] as num?)?.toDouble() ?? 0.0,
     );
 

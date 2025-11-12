@@ -1,4 +1,3 @@
-import 'package:clones_desktop/domain/models/upload/upload_limit.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'state.freezed.dart';
@@ -15,7 +14,6 @@ class ManageTaskState with _$ManageTaskState {
     @Default('') String prompt,
     double? pricePerDemo,
     int? uploadLimitValue,
-    @Default(UploadLimitType.perTask) UploadLimitType uploadLimitType,
   }) = _ManageTaskState;
   const ManageTaskState._();
 }

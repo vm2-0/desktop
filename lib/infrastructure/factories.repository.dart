@@ -431,6 +431,11 @@ class FactoriesRepositoryImpl implements FactoriesRepository {
           'categories': app.categories,
         };
 
+        // Only include ID if it's not null and not empty
+        if (app.id != null && app.id!.isNotEmpty) {
+          cleanApp['id'] = app.id;
+        }
+
         // Add description if it exists
         if (app.description != null && app.description!.isNotEmpty) {
           cleanApp['description'] = app.description;
@@ -445,7 +450,7 @@ class FactoriesRepositoryImpl implements FactoriesRepository {
 
             // Only include ID if it's not null and not empty
             if (task.id != null && task.id!.isNotEmpty) {
-              cleanTask['_id'] = task.id;
+              cleanTask['id'] = task.id;
             }
 
             // Handle uploadLimit: include positive integers or explicit null
