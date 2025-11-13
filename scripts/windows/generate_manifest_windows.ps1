@@ -429,6 +429,16 @@ function Main {
     Write-LogInfo "Generating manifests..."
     $versionManifest = New-VersionManifest -Version $version -Archives $archives -ReleaseDir $releaseDir
     $tauriManifest = New-TauriManifest -Version $version -Archives $archives -ReleaseDir $releaseDir
+    
+    # Generate Windows appcast for auto_updater
+    Write-LogInfo "Generating Windows appcast..."
+    try {
+        & "$PSScriptRoot\generate_appcast_windows.ps1" -Environment $Environment
+        Write-LogSuccess "Windows appcast generated successfully"
+    } catch {
+        Write-LogWarning "Failed to generate appcast: $_"
+        Write-LogWarning "Continuing without appcast.xml"
+    }
 
     Write-Host ""
     Write-LogSuccess "Manifest generation completed!"

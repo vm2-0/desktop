@@ -25,7 +25,7 @@ if errorlevel 1 (
 
 echo ✅ Build completed successfully!
 
-echo ℹ️ Step 2/3: Generating manifests...
+echo ℹ️ Step 2/3: Generating manifests and appcast...
 powershell -ExecutionPolicy Bypass -File "scripts\windows\generate_manifest_windows.ps1" -Environment "%ENVIRONMENT%"
 
 if errorlevel 1 (
@@ -33,7 +33,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo ✅ Manifests generated successfully!
+echo ✅ Manifests and appcast generated successfully!
 
 echo ℹ️ Step 3/3: Uploading to Tigris (%ENVIRONMENT%^)...
 call scripts\windows\upload_windows.bat "%ENVIRONMENT%"
@@ -50,9 +50,11 @@ echo ℹ️ Your app is now available:
 if "%ENVIRONMENT%"=="prod" (
     echo   📱 Downloads: https://releases.clones-ai.com/latest/windows/
     echo   🔗 Version manifest: https://releases.clones-ai.com/latest/windows/version.json
+    echo   🔄 Auto-updater feed: https://releases.clones-ai.com/latest/windows/appcast.xml
 ) else if "%ENVIRONMENT%"=="test" (
     echo   📱 Downloads: https://releases-test.clones-ai.com/latest/windows/
     echo   🔗 Version manifest: https://releases-test.clones-ai.com/latest/windows/version.json
+    echo   🔄 Auto-updater feed: https://releases-test.clones-ai.com/latest/windows/appcast.xml
 ) else (
     echo   🌐 Unknown environment: %ENVIRONMENT%
 )
