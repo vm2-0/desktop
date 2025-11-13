@@ -32,7 +32,7 @@ function Main {
     Write-Info "      Otherwise, only ZIP package will be available"
     Write-Host ""
 
-    Write-Info "Step 1/4: Building release..."
+    Write-Info "Step 1/5: Building release..."
 
     # Execute build script
     try {
@@ -54,7 +54,7 @@ function Main {
 
     Write-Success "Build completed successfully!"
 
-    Write-Info "Step 2/4: Building Windows Store package..."
+    Write-Info "Step 2/5: Building Windows Store package..."
 
     # Execute Store build script
     try {
@@ -73,7 +73,7 @@ function Main {
         Write-Warning "Store package build script execution failed: $_"
     }
 
-    Write-Info "Step 3/4: Generating manifests..."
+    Write-Info "Step 3/5: Generating manifests..."
 
     # Execute manifest generation script
     try {
@@ -94,7 +94,28 @@ function Main {
 
     Write-Success "Manifests generated successfully!"
 
-    Write-Info "Step 4/4: Uploading to Tigris ($Environment)..."
+    Write-Info "Step 4/5: Generating appcast..."
+
+    # Execute appcast generation script
+    try {
+        if ($Verbose) {
+            & "scripts\windows\generate_appcast_windows.ps1" -Environment $Environment -VerboseLogging
+        } else {
+            & "scripts\windows\generate_appcast_windows.ps1" -Environment $Environment
+        }
+
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "Appcast generation failed, aborting deployment"
+            exit 1
+        }
+    } catch {
+        Write-Error "Appcast generation script execution failed: $_"
+        exit 1
+    }
+
+    Write-Success "Appcast generated successfully!"
+
+    Write-Info "Step 5/5: Uploading to Tigris ($Environment)..."
 
     # Execute upload script
     try {
