@@ -7,6 +7,7 @@ import 'package:clones_desktop/application/deeplink_provider.dart';
 import 'package:clones_desktop/application/route_provider.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/infrastructure/sparkle_updater.dart';
+import 'package:clones_desktop/infrastructure/windows_updater.dart';
 import 'package:clones_desktop/ui/main_layout.dart';
 import 'package:clones_desktop/ui/views/demo_detail/layouts/demo_detail_view.dart';
 import 'package:clones_desktop/ui/views/factory/layouts/factory_view.dart';
@@ -232,16 +233,26 @@ class _ClonesAppState extends ConsumerState<ClonesApp> {
   Future<void> _checkForUpdates() async {
     // Delay to ensure app is fully initialized
     await Future.delayed(const Duration(seconds: 2));
-    if (mounted) {
-      if (Platform.isMacOS) {
-        // Use native Sparkle updater on macOS for better performance and UX
-        await _initializeSparkleUpdater();
-      } else {
-        developer.log(
-          'Native updaters for Windows/Linux not yet implemented',
-          name: 'AppLifecycleManager',
-        );
-      }
+    if (!mounted) return;
+
+    const environment = String.fromEnvironment('ENVIRONMENT', defaultValue: 'dev');
+
+    if (Platform.isMacOS) {
+      // Use native Sparkle updater on macOS for better performance and UX
+      await _initializeSparkleUpdater();
+    } else if (Platform.isWindows) {
+      // Use auto_updater for Windows
+      developer.log(
+        '[WindowsUpdater] Initializing Windows updater...',
+        name: 'AppLifecycleManager',
+      );
+      await WindowsUpdater.initialize(environment: environment);
+      await WindowsUpdater.checkForUpdates();
+    } else {
+      developer.log(
+        'Native updaters for Linux not yet implemented',
+        name: 'AppLifecycleManager',
+      );
     }
   }
 
