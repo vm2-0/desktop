@@ -176,6 +176,7 @@ function New-WixFile {
     <!-- UI -->
     <UIRef Id='WixUI_InstallDir' />
     <Property Id='WIXUI_INSTALLDIR' Value='INSTALLFOLDER' />
+    <WixVariable Id='WixUILicenseRtf' Value='LICENSE.rtf' />
 
   </Product>
 </Wix>
@@ -230,6 +231,16 @@ function Invoke-Candle {
 
     Write-LogInfo "Compiling WiX files..."
 
+    # Copy LICENSE.rtf to output directory for WiX to find it
+    $licenseSource = "LICENSE.rtf"
+    if (Test-Path $licenseSource) {
+        $licenseDest = Join-Path $OutputDir "LICENSE.rtf"
+        Copy-Item $licenseSource $licenseDest -Force
+        Write-LogInfo "Copied LICENSE.rtf to build directory"
+    } else {
+        Write-LogWarning "LICENSE.rtf not found, installer will use default license text"
+    }
+
     $candleExe = Join-Path $WIX_BIN "candle.exe"
 
     $candleArgs = @(
@@ -267,6 +278,7 @@ function Invoke-Light {
     $lightArgs = @(
         "-out", $MsiPath,
         "-ext", "WixUIExtension",
+        "-b", $OutputDir,  # Add base path for finding LICENSE.rtf
         "-sw1076"  # Suppress ICE warning about sequence
     ) + $wixobjFiles
 

@@ -112,8 +112,7 @@ function New-AppcastXML {
     )
 
     $pubDate = [DateTime]::UtcNow.ToString("ddd, dd MMM yyyy HH:mm:ss 'GMT'")
-    $releaseNotesUrl = "$BaseUrl/release-notes/$Version.html"
-    
+
     # Prefer MSI installer, fallback to EXE, then ZIP
     $downloadUrl = ""
     $fileSize = 0
@@ -152,9 +151,8 @@ function New-AppcastXML {
     <language>en</language>
     <item>
       <title>Version $Version</title>
-      <sparkle:releaseNotesLink>$releaseNotesUrl</sparkle:releaseNotesLink>
       <pubDate>$pubDate</pubDate>
-      <enclosure 
+      <enclosure
         url="$downloadUrl"
         sparkle:version="$Version"
         sparkle:shortVersionString="$Version"
