@@ -97,12 +97,26 @@ pub struct StopRecordingPayload {
 #[derive(Deserialize)]
 pub struct FilteredZipPayload {
     deleted_ranges: Vec<DeletedRange>,
+    blur_regions: Option<Vec<BlurRegionPayload>>,
 }
 
 #[derive(Deserialize)]
 pub struct DeletedRange {
     start: f64,
     end: f64,
+}
+
+#[derive(Deserialize)]
+pub struct BlurRegionPayload {
+    id: String,
+    x: f32,
+    y: f32,
+    width: f32,
+    height: f32,
+    start_time_ms: f64,
+    end_time_ms: f64,
+    intensity: u8,
+    blur_type: String,
 }
 
 // Structure for the `set_upload_data_allowed` payload
@@ -1012,7 +1026,106 @@ async fn create_filtered_recording_zip_handler(
         );
     }
 
-    match record::create_filtered_recording_zip(state.app_handle, id.clone(), deleted_ranges).await
+    // Process blur regions if present
+    let blur_regions = if let Some(blur_payload) = payload.blur_regions {
+        // Convert blur regions from payload to BlurRegion structs
+        let blur_regions: Vec<record::BlurRegion> = blur_payload
+            .into_iter()
+            .map(|br| record::BlurRegion {
+                id: br.id,
+                x: br.x,
+                y: br.y,
+                width: br.width,
+                height: br.height,
+                start_time_ms: br.start_time_ms,
+                end_time_ms: br.end_time_ms,
+                intensity: br.intensity,
+                blur_type: br.blur_type,
+            })
+            .collect();
+
+        // Validate blur regions
+        for blur_region in &blur_regions {
+            if blur_region.x < 0.0 || blur_region.x > 1.0 ||
+               blur_region.y < 0.0 || blur_region.y > 1.0 ||
+               blur_region.width <= 0.0 || blur_region.width > 1.0 ||
+               blur_region.height <= 0.0 || blur_region.height > 1.0 ||
+               blur_region.x + blur_region.width > 1.0 ||
+               blur_region.y + blur_region.height > 1.0 {
+                log::error!(
+                    "🚨 [create_filtered_recording_zip_handler] Invalid blur region coordinates: x={}, y={}, width={}, height={}",
+                    blur_region.x, blur_region.y, blur_region.width, blur_region.height
+                );
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    format!("Invalid blur region coordinates for region {}", blur_region.id)
+                ));
+            }
+            
+            if blur_region.start_time_ms < 0.0 || blur_region.end_time_ms <= blur_region.start_time_ms {
+                log::error!(
+                    "🚨 [create_filtered_recording_zip_handler] Invalid blur region timing: start={}, end={}",
+                    blur_region.start_time_ms, blur_region.end_time_ms
+                );
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    format!("Invalid timing for blur region {}", blur_region.id)
+                ));
+            }
+            
+            if blur_region.intensity == 0 || blur_region.intensity > 100 {
+                log::error!(
+                    "🚨 [create_filtered_recording_zip_handler] Invalid blur intensity: {}",
+                    blur_region.intensity
+                );
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    format!("Invalid blur intensity for region {}", blur_region.id)
+                ));
+            }
+        }
+        
+        blur_regions
+    } else {
+        Vec::new()
+    };
+
+    log::info!(
+        "🔍 [create_filtered_recording_zip_handler] Processing recording {} with {} deleted ranges and {} blur regions",
+        id,
+        deleted_ranges.len(),
+        blur_regions.len()
+    );
+    
+    // Log blur regions for debugging
+    for (i, region) in blur_regions.iter().enumerate() {
+        log::info!(
+            "🔍 [Blur Region {}] {} at ({:.2}, {:.2}) {}x{} from {:.3}s to {:.3}s intensity={}",
+            i,
+            region.blur_type,
+            region.x,
+            region.y,
+            region.width,
+            region.height,
+            region.start_time_ms / 1000.0,
+            region.end_time_ms / 1000.0,
+            region.intensity
+        );
+    }
+
+    // Choose the appropriate backend function based on whether blur regions are present
+    let result = if blur_regions.is_empty() {
+        record::create_filtered_recording_zip(state.app_handle, id.clone(), deleted_ranges).await
+    } else {
+        record::create_filtered_recording_zip_with_blur_regions(
+            state.app_handle,
+            id.clone(),
+            deleted_ranges,
+            blur_regions,
+        ).await
+    };
+
+    match result
     {
         Ok(zip_data) => {
             let filename = format!("attachment; filename=\"recording_{}_filtered.zip\"", id);
@@ -1034,6 +1147,7 @@ async fn create_filtered_recording_zip_handler(
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }
+
 
 // Handler to open logs folder
 async fn open_logs_folder_handler(

@@ -2,6 +2,7 @@ import 'package:clones_desktop/domain/models/message/sft_message.dart';
 import 'package:clones_desktop/domain/models/recording/api_recording.dart';
 import 'package:clones_desktop/domain/models/recording/recording_event.dart';
 import 'package:clones_desktop/domain/models/video_clip.dart';
+import 'package:clones_desktop/ui/components/video_player/timeline/timeline_blur_regions.dart';
 import 'package:clones_desktop/ui/components/video_player/video_source.dart';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -30,6 +31,9 @@ class DemoDetailState with _$DemoDetailState {
     @JsonKey(includeIfNull: false) VideoClip? clipboardClip,
     // Each deletion operation is stored as a separate list of clips
     @Default([]) List<List<VideoClip>> deletedClipsHistory,
+    // Blur regions for privacy/editing (stored locally, applied at export)
+    @Default([]) List<BlurRegion> blurRegions,
+    @Default({}) Set<String> selectedBlurRegionIds,
 
     // Legacy support for RangeValues (deprecated)
     @Default([]) List<RangeValues> clipSegments,

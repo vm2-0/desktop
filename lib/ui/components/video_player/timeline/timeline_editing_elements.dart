@@ -1,3 +1,4 @@
+import 'package:clones_desktop/ui/components/video_player/timeline/timeline_blur_regions.dart';
 import 'package:clones_desktop/ui/components/video_player/timeline/timeline_clips_overlay.dart';
 import 'package:clones_desktop/ui/components/video_player/timeline/timeline_deleted_zones.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
@@ -26,6 +27,21 @@ class TimelineEditingElements extends ConsumerWidget {
           deletedClipsHistory: state.deletedClipsHistory,
           durationMs: durationMs,
           timelineWidth: timelineWidth,
+        ),
+      );
+    }
+
+    // Show blur regions (between deleted zones and clips)
+    if (state.blurRegions.isNotEmpty) {
+      widgets.add(
+        TimelineBlurRegions(
+          blurRegions: state.blurRegions,
+          selectedIds: state.selectedBlurRegionIds,
+          durationMs: durationMs,
+          timelineWidth: timelineWidth,
+          onRegionTap: (region) {
+            ref.read(demoDetailNotifierProvider.notifier).selectBlurRegion(region.id);
+          },
         ),
       );
     }

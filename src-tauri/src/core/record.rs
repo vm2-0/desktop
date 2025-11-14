@@ -87,6 +87,9 @@ pub struct RecordingMeta {
     primary_monitor: MonitorInfo,
     // TODO: rename to demonstration when backend is updated
     quest: Option<Demonstration>,
+    /// Blur regions for video post-processing (privacy/editing)
+    #[serde(default)]
+    pub blur_regions: Vec<BlurRegion>,
 }
 
 /// Metadata for a demonstration associated with a recording.
@@ -110,6 +113,29 @@ pub struct Demonstration {
 pub struct DemonstrationReward {
     time: i64,
     max_reward: f64,
+}
+
+/// Blur region for video post-processing with temporal and spatial information.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BlurRegion {
+    /// Unique identifier for this blur region
+    pub id: String,
+    /// Horizontal position (0.0 = left edge, 1.0 = right edge) - relative to video dimensions
+    pub x: f32,
+    /// Vertical position (0.0 = top edge, 1.0 = bottom edge) - relative to video dimensions  
+    pub y: f32,
+    /// Width as fraction of video width (0.0 to 1.0)
+    pub width: f32,
+    /// Height as fraction of video height (0.0 to 1.0)
+    pub height: f32,
+    /// Start time in milliseconds relative to video start
+    pub start_time_ms: f64,
+    /// End time in milliseconds relative to video start
+    pub end_time_ms: f64,
+    /// Blur intensity (1-10, where 10 is maximum blur)
+    pub intensity: u8,
+    /// Type of blur effect ("gaussian", "box", "smart")
+    pub blur_type: String,
 }
 
 /// Information about the primary monitor used for recording.
@@ -621,6 +647,7 @@ pub async fn start_recording(
         },
         reason: None,
         quest: demonstration,
+        blur_regions: Vec::new(), // Initialize empty blur regions
     };
 
     fs::write(
@@ -1215,10 +1242,20 @@ pub async fn create_filtered_recording_zip(
     recording_id: String,
     deleted_ranges: Vec<(f64, f64)>,
 ) -> Result<Vec<u8>, String> {
+    create_filtered_recording_zip_with_blur_regions(app, recording_id, deleted_ranges, Vec::new()).await
+}
+
+pub async fn create_filtered_recording_zip_with_blur_regions(
+    app: tauri::AppHandle,
+    recording_id: String,
+    deleted_ranges: Vec<(f64, f64)>,
+    blur_regions: Vec<BlurRegion>,
+) -> Result<Vec<u8>, String> {
     log::info!(
-        "[create_filtered_recording_zip] Starting to create filtered zip for recording ID: {} with {} deleted ranges",
+        "[create_filtered_recording_zip_with_blur_regions] Starting to create filtered zip for recording ID: {} with {} deleted ranges and {} blur regions",
         recording_id,
-        deleted_ranges.len()
+        deleted_ranges.len(),
+        blur_regions.len()
     );
 
     let recordings_dir = get_custom_app_local_data_dir(&app)?
@@ -1255,11 +1292,72 @@ pub async fn create_filtered_recording_zip(
             "sft.json" => filter_sft_json(&file_path, &deleted_ranges)?,
             "meta.json" => update_meta_json(&file_path, &deleted_ranges)?,
             "recording.mp4" => {
-                // Apply video edits if deleted ranges exist
-                if deleted_ranges.is_empty() {
-                    read_file_contents(&file_path)?
+                // Apply video edits and blur regions if they exist
+                let temp_dir = std::env::temp_dir();
+                let temp_video_path = temp_dir.join(format!(
+                    "processed_video_{}.mp4",
+                    chrono::Local::now().format("%Y%m%d_%H%M%S_%3f")
+                ));
+
+                // Step 1: Apply trim edits if needed
+                let trim_processed_path = if deleted_ranges.is_empty() {
+                    file_path.clone()
                 } else {
-                    apply_video_edits(&file_path, &deleted_ranges)?
+                    let trim_temp_path = temp_dir.join(format!(
+                        "trim_video_{}.mp4",
+                        chrono::Local::now().format("%Y%m%d_%H%M%S_%3f")
+                    ));
+                    
+                    // Apply trim to temporary file
+                    let trimmed_content = apply_video_edits(&file_path, &deleted_ranges)?;
+                    std::fs::write(&trim_temp_path, trimmed_content)
+                        .map_err(|e| format!("Failed to write trimmed video: {}", e))?;
+                    trim_temp_path
+                };
+
+                // Step 2: Apply blur regions from local state (passed as parameter)
+
+                if !blur_regions.is_empty() {
+                    // Get video dimensions from meta.json
+                    let meta_path = recordings_dir.join("meta.json");
+                    let meta_str = std::fs::read_to_string(&meta_path)
+                        .map_err(|e| format!("Failed to read meta.json: {}", e))?;
+                    let meta: RecordingMeta = serde_json::from_str(&meta_str)
+                        .map_err(|e| format!("Failed to parse meta.json: {}", e))?;
+                    
+                    let video_width = meta.primary_monitor.width;
+                    let video_height = meta.primary_monitor.height;
+
+                    apply_blur_regions(
+                        &trim_processed_path,
+                        &temp_video_path,
+                        &blur_regions,
+                        video_width,
+                        video_height,
+                    )?;
+
+                    // Clean up trim temp file if it was created
+                    if trim_processed_path != file_path {
+                        let _ = std::fs::remove_file(&trim_processed_path);
+                    }
+
+                    // Read the final processed video
+                    let result = read_file_contents(&temp_video_path);
+                    
+                    // Clean up final temp file
+                    let _ = std::fs::remove_file(&temp_video_path);
+                    
+                    result?
+                } else {
+                    // No blur regions, just read the trim-processed file
+                    let result = read_file_contents(&trim_processed_path);
+                    
+                    // Clean up trim temp file if it was created
+                    if trim_processed_path != file_path {
+                        let _ = std::fs::remove_file(&trim_processed_path);
+                    }
+                    
+                    result?
                 }
             }
             _ => read_file_contents(&file_path)?,
@@ -1531,6 +1629,120 @@ fn update_meta_json(
         .map_err(|e| format!("Failed to serialize updated meta.json: {}", e))?;
 
     Ok(updated_json.into_bytes())
+}
+
+/// Apply blur regions to video using FFmpeg filter_complex
+fn apply_blur_regions(
+    input_path: &std::path::Path,
+    output_path: &std::path::Path,
+    blur_regions: &[BlurRegion],
+    video_width: u32,
+    video_height: u32,
+) -> Result<(), String> {
+    if blur_regions.is_empty() {
+        // If no blur regions, just copy the file
+        std::fs::copy(input_path, output_path)
+            .map_err(|e| format!("Failed to copy video file: {}", e))?;
+        return Ok(());
+    }
+
+    let ffmpeg_path = crate::tools::ffmpeg::get_embedded_ffmpeg_path()
+        .ok_or("FFmpeg binary not found")?;
+
+    log::info!(
+        "[apply_blur_regions] Applying {} blur regions to video {}x{}",
+        blur_regions.len(),
+        video_width,
+        video_height
+    );
+
+    // Build complex filter for multiple blur regions
+    let mut filter_complex = String::new();
+    let mut input_label = "[0:v]".to_string();
+
+    for (i, region) in blur_regions.iter().enumerate() {
+        // Convert relative coordinates to absolute pixels
+        let pixel_x = (region.x * video_width as f32).round() as u32;
+        let pixel_y = (region.y * video_height as f32).round() as u32;
+        let pixel_width = (region.width * video_width as f32).round() as u32;
+        let pixel_height = (region.height * video_height as f32).round() as u32;
+
+        // Clamp intensity to valid range and convert to blur strength
+        let intensity = region.intensity.clamp(1, 10);
+        let blur_strength = intensity as f32 * 2.0; // Scale 1-10 to 2-20 for better effect
+
+        // Convert timestamps from milliseconds to seconds
+        let start_sec = region.start_time_ms / 1000.0;
+        let end_sec = region.end_time_ms / 1000.0;
+
+        // Create filter for this blur region
+        let blur_filter = match region.blur_type.as_str() {
+            "gaussian" => format!("gblur=sigma={}", blur_strength),
+            "box" => format!("boxblur={}", blur_strength),
+            "smart" => format!("smartblur={}:{}:-1", blur_strength, blur_strength),
+            _ => format!("gblur=sigma={}", blur_strength), // Default to gaussian
+        };
+
+        let crop_label = format!("[crop{}]", i);
+        let blur_label = format!("[blur{}]", i);
+        let output_label = format!("[out{}]", i);
+
+        // Crop the region, apply blur, then overlay back with timeline enable
+        filter_complex.push_str(&format!(
+            "{}crop={}:{}:{}:{}{};{}{}{};{}{}overlay={}:{}:enable='between(t,{:.3},{:.3})'{}",
+            input_label,
+            pixel_width, pixel_height, pixel_x, pixel_y, crop_label,
+            crop_label, blur_filter, blur_label,
+            input_label, blur_label,
+            pixel_x, pixel_y, start_sec, end_sec, output_label
+        ));
+
+        if i < blur_regions.len() - 1 {
+            filter_complex.push(';');
+        }
+        input_label = output_label;
+    }
+
+    log::info!("[apply_blur_regions] Generated filter: {}", filter_complex);
+
+    let mut command = std::process::Command::new(&ffmpeg_path);
+
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        command.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
+
+    let output = command
+        .args([
+            "-i",
+            input_path.to_str().unwrap(),
+            "-filter_complex",
+            &filter_complex,
+            "-map",
+            &format!("[out{}]", blur_regions.len() - 1),
+            "-c:v",
+            "libx264",
+            "-c:a",
+            "copy", // Keep audio unchanged
+            "-preset",
+            "fast", // Balance speed vs quality
+            "-crf",
+            "18", // High quality
+            "-y", // Overwrite output
+            output_path.to_str().unwrap(),
+        ])
+        .output()
+        .map_err(|e| format!("Failed to execute FFmpeg blur: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        log::error!("[apply_blur_regions] FFmpeg failed: {}", stderr);
+        return Err(format!("FFmpeg blur processing failed: {}", stderr));
+    }
+
+    log::info!("[apply_blur_regions] Blur regions applied successfully");
+    Ok(())
 }
 
 /// Apply video edits by trimming out deleted ranges using FFmpeg

@@ -14,6 +14,7 @@ import 'package:clones_desktop/domain/models/recording/api_recording.dart';
 import 'package:clones_desktop/domain/models/recording/recording_event.dart';
 import 'package:clones_desktop/domain/models/submission/submission_status.dart';
 import 'package:clones_desktop/domain/models/video_clip.dart';
+import 'package:clones_desktop/ui/components/video_player/timeline/timeline_blur_regions.dart';
 import 'package:clones_desktop/ui/components/video_player/video_source.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/state.dart';
 import 'package:clones_desktop/utils/decimal_json.dart';
@@ -57,6 +58,8 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       selectedClipIds: {},
       clipboardClip: null,
       deletedClipsHistory: [],
+      blurRegions: [],
+      selectedBlurRegionIds: {},
       currentAxTreeEvent: null,
     );
 
@@ -109,6 +112,8 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       selectedClipIds: {},
       clipboardClip: null,
       deletedClipsHistory: [],
+      blurRegions: [],
+      selectedBlurRegionIds: {},
       currentAxTreeEvent: null,
     );
 
@@ -608,6 +613,58 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     }
 
     return positionMs; // Fallback
+  }
+
+  // --- Blur Region Management ---
+
+  void addBlurRegion(BlurRegion blurRegion) {
+    final newBlurRegions = List<BlurRegion>.from(state.blurRegions)..add(blurRegion);
+    state = state.copyWith(blurRegions: newBlurRegions);
+  }
+
+  void updateBlurRegion(BlurRegion updatedRegion) {
+    final newBlurRegions = state.blurRegions.map((region) {
+      return region.id == updatedRegion.id ? updatedRegion : region;
+    }).toList();
+    state = state.copyWith(blurRegions: newBlurRegions);
+  }
+
+  void removeBlurRegion(String regionId) {
+    final newBlurRegions = state.blurRegions.where((region) => region.id != regionId).toList();
+    state = state.copyWith(blurRegions: newBlurRegions);
+  }
+
+  void selectBlurRegion(String regionId, {bool toggle = false, bool additive = false}) {
+    final current = Set<String>.from(state.selectedBlurRegionIds);
+    
+    if (toggle && current.contains(regionId)) {
+      current.remove(regionId);
+    } else if (additive) {
+      current.add(regionId);
+    } else {
+      current
+        ..clear()
+        ..add(regionId);
+    }
+    
+    state = state.copyWith(selectedBlurRegionIds: current);
+  }
+
+  void clearBlurRegionSelection() {
+    state = state.copyWith(selectedBlurRegionIds: <String>{});
+  }
+
+  void deleteSelectedBlurRegions() {
+    if (state.selectedBlurRegionIds.isEmpty) return;
+    
+    final newBlurRegions = state.blurRegions
+        .where((region) => !state.selectedBlurRegionIds.contains(region.id))
+        .toList();
+    
+    state = state.copyWith(
+      blurRegions: newBlurRegions,
+      selectedBlurRegionIds: <String>{},
+    );
   }
 
   // --- Modal Management ---

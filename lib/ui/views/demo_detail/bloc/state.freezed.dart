@@ -34,6 +34,9 @@ mixin _$DemoDetailState {
   VideoClip? get clipboardClip =>
       throw _privateConstructorUsedError; // Each deletion operation is stored as a separate list of clips
   List<List<VideoClip>> get deletedClipsHistory =>
+      throw _privateConstructorUsedError; // Blur regions for privacy/editing (stored locally, applied at export)
+  List<BlurRegion> get blurRegions => throw _privateConstructorUsedError;
+  Set<String> get selectedBlurRegionIds =>
       throw _privateConstructorUsedError; // Legacy support for RangeValues (deprecated)
   List<RangeValues> get clipSegments => throw _privateConstructorUsedError;
   Set<int> get selectedClipIndexes =>
@@ -87,6 +90,8 @@ abstract class $DemoDetailStateCopyWith<$Res> {
       Set<String> selectedClipIds,
       @JsonKey(includeIfNull: false) VideoClip? clipboardClip,
       List<List<VideoClip>> deletedClipsHistory,
+      List<BlurRegion> blurRegions,
+      Set<String> selectedBlurRegionIds,
       List<RangeValues> clipSegments,
       Set<int> selectedClipIndexes,
       bool isProcessing,
@@ -142,6 +147,8 @@ class _$DemoDetailStateCopyWithImpl<$Res, $Val extends DemoDetailState>
     Object? selectedClipIds = null,
     Object? clipboardClip = freezed,
     Object? deletedClipsHistory = null,
+    Object? blurRegions = null,
+    Object? selectedBlurRegionIds = null,
     Object? clipSegments = null,
     Object? selectedClipIndexes = null,
     Object? isProcessing = null,
@@ -220,6 +227,14 @@ class _$DemoDetailStateCopyWithImpl<$Res, $Val extends DemoDetailState>
           ? _value.deletedClipsHistory
           : deletedClipsHistory // ignore: cast_nullable_to_non_nullable
               as List<List<VideoClip>>,
+      blurRegions: null == blurRegions
+          ? _value.blurRegions
+          : blurRegions // ignore: cast_nullable_to_non_nullable
+              as List<BlurRegion>,
+      selectedBlurRegionIds: null == selectedBlurRegionIds
+          ? _value.selectedBlurRegionIds
+          : selectedBlurRegionIds // ignore: cast_nullable_to_non_nullable
+              as Set<String>,
       clipSegments: null == clipSegments
           ? _value.clipSegments
           : clipSegments // ignore: cast_nullable_to_non_nullable
@@ -369,6 +384,8 @@ abstract class _$$DemoDetailStateImplCopyWith<$Res>
       Set<String> selectedClipIds,
       @JsonKey(includeIfNull: false) VideoClip? clipboardClip,
       List<List<VideoClip>> deletedClipsHistory,
+      List<BlurRegion> blurRegions,
+      Set<String> selectedBlurRegionIds,
       List<RangeValues> clipSegments,
       Set<int> selectedClipIndexes,
       bool isProcessing,
@@ -425,6 +442,8 @@ class __$$DemoDetailStateImplCopyWithImpl<$Res>
     Object? selectedClipIds = null,
     Object? clipboardClip = freezed,
     Object? deletedClipsHistory = null,
+    Object? blurRegions = null,
+    Object? selectedBlurRegionIds = null,
     Object? clipSegments = null,
     Object? selectedClipIndexes = null,
     Object? isProcessing = null,
@@ -503,6 +522,14 @@ class __$$DemoDetailStateImplCopyWithImpl<$Res>
           ? _value._deletedClipsHistory
           : deletedClipsHistory // ignore: cast_nullable_to_non_nullable
               as List<List<VideoClip>>,
+      blurRegions: null == blurRegions
+          ? _value._blurRegions
+          : blurRegions // ignore: cast_nullable_to_non_nullable
+              as List<BlurRegion>,
+      selectedBlurRegionIds: null == selectedBlurRegionIds
+          ? _value._selectedBlurRegionIds
+          : selectedBlurRegionIds // ignore: cast_nullable_to_non_nullable
+              as Set<String>,
       clipSegments: null == clipSegments
           ? _value._clipSegments
           : clipSegments // ignore: cast_nullable_to_non_nullable
@@ -605,6 +632,8 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
       final Set<String> selectedClipIds = const {},
       @JsonKey(includeIfNull: false) this.clipboardClip,
       final List<List<VideoClip>> deletedClipsHistory = const [],
+      final List<BlurRegion> blurRegions = const [],
+      final Set<String> selectedBlurRegionIds = const {},
       final List<RangeValues> clipSegments = const [],
       final Set<int> selectedClipIndexes = const {},
       this.isProcessing = false,
@@ -632,6 +661,8 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
         _clips = clips,
         _selectedClipIds = selectedClipIds,
         _deletedClipsHistory = deletedClipsHistory,
+        _blurRegions = blurRegions,
+        _selectedBlurRegionIds = selectedBlurRegionIds,
         _clipSegments = clipSegments,
         _selectedClipIndexes = selectedClipIndexes,
         super._();
@@ -724,6 +755,27 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
     return EqualUnmodifiableListView(_deletedClipsHistory);
   }
 
+// Blur regions for privacy/editing (stored locally, applied at export)
+  final List<BlurRegion> _blurRegions;
+// Blur regions for privacy/editing (stored locally, applied at export)
+  @override
+  @JsonKey()
+  List<BlurRegion> get blurRegions {
+    if (_blurRegions is EqualUnmodifiableListView) return _blurRegions;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_blurRegions);
+  }
+
+  final Set<String> _selectedBlurRegionIds;
+  @override
+  @JsonKey()
+  Set<String> get selectedBlurRegionIds {
+    if (_selectedBlurRegionIds is EqualUnmodifiableSetView)
+      return _selectedBlurRegionIds;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableSetView(_selectedBlurRegionIds);
+  }
+
 // Legacy support for RangeValues (deprecated)
   final List<RangeValues> _clipSegments;
 // Legacy support for RangeValues (deprecated)
@@ -800,7 +852,7 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
 
   @override
   String toString() {
-    return 'DemoDetailState(isLoading: $isLoading, recording: $recording, events: $events, sftMessages: $sftMessages, eventTypes: $eventTypes, enabledEventTypes: $enabledEventTypes, startTime: $startTime, videoSource: $videoSource, currentVideoId: $currentVideoId, showTrainingSessionModal: $showTrainingSessionModal, clips: $clips, selectedClipIds: $selectedClipIds, clipboardClip: $clipboardClip, deletedClipsHistory: $deletedClipsHistory, clipSegments: $clipSegments, selectedClipIndexes: $selectedClipIndexes, isProcessing: $isProcessing, isExporting: $isExporting, isUploading: $isUploading, showUploadConfirmModal: $showUploadConfirmModal, exportPath: $exportPath, exportError: $exportError, uploadError: $uploadError, showAxTreeOverlay: $showAxTreeOverlay, currentAxTreeEvent: $currentAxTreeEvent, firstMessage: $firstMessage, secondMessage: $secondMessage, thirdMessage: $thirdMessage, showFirstMessage: $showFirstMessage, showSecondMessage: $showSecondMessage, showThirdMessage: $showThirdMessage, currentTypingIndex: $currentTypingIndex, currentMessageIndex: $currentMessageIndex, userAccessType: $userAccessType)';
+    return 'DemoDetailState(isLoading: $isLoading, recording: $recording, events: $events, sftMessages: $sftMessages, eventTypes: $eventTypes, enabledEventTypes: $enabledEventTypes, startTime: $startTime, videoSource: $videoSource, currentVideoId: $currentVideoId, showTrainingSessionModal: $showTrainingSessionModal, clips: $clips, selectedClipIds: $selectedClipIds, clipboardClip: $clipboardClip, deletedClipsHistory: $deletedClipsHistory, blurRegions: $blurRegions, selectedBlurRegionIds: $selectedBlurRegionIds, clipSegments: $clipSegments, selectedClipIndexes: $selectedClipIndexes, isProcessing: $isProcessing, isExporting: $isExporting, isUploading: $isUploading, showUploadConfirmModal: $showUploadConfirmModal, exportPath: $exportPath, exportError: $exportError, uploadError: $uploadError, showAxTreeOverlay: $showAxTreeOverlay, currentAxTreeEvent: $currentAxTreeEvent, firstMessage: $firstMessage, secondMessage: $secondMessage, thirdMessage: $thirdMessage, showFirstMessage: $showFirstMessage, showSecondMessage: $showSecondMessage, showThirdMessage: $showThirdMessage, currentTypingIndex: $currentTypingIndex, currentMessageIndex: $currentMessageIndex, userAccessType: $userAccessType)';
   }
 
   @override
@@ -825,8 +877,7 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
                 other.videoSource == videoSource) &&
             (identical(other.currentVideoId, currentVideoId) ||
                 other.currentVideoId == currentVideoId) &&
-            (identical(
-                    other.showTrainingSessionModal, showTrainingSessionModal) ||
+            (identical(other.showTrainingSessionModal, showTrainingSessionModal) ||
                 other.showTrainingSessionModal == showTrainingSessionModal) &&
             const DeepCollectionEquality().equals(other._clips, _clips) &&
             const DeepCollectionEquality()
@@ -835,6 +886,10 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
                 other.clipboardClip == clipboardClip) &&
             const DeepCollectionEquality()
                 .equals(other._deletedClipsHistory, _deletedClipsHistory) &&
+            const DeepCollectionEquality()
+                .equals(other._blurRegions, _blurRegions) &&
+            const DeepCollectionEquality()
+                .equals(other._selectedBlurRegionIds, _selectedBlurRegionIds) &&
             const DeepCollectionEquality()
                 .equals(other._clipSegments, _clipSegments) &&
             const DeepCollectionEquality()
@@ -894,6 +949,8 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
         const DeepCollectionEquality().hash(_selectedClipIds),
         clipboardClip,
         const DeepCollectionEquality().hash(_deletedClipsHistory),
+        const DeepCollectionEquality().hash(_blurRegions),
+        const DeepCollectionEquality().hash(_selectedBlurRegionIds),
         const DeepCollectionEquality().hash(_clipSegments),
         const DeepCollectionEquality().hash(_selectedClipIndexes),
         isProcessing,
@@ -942,6 +999,8 @@ abstract class _DemoDetailState extends DemoDetailState {
       final Set<String> selectedClipIds,
       @JsonKey(includeIfNull: false) final VideoClip? clipboardClip,
       final List<List<VideoClip>> deletedClipsHistory,
+      final List<BlurRegion> blurRegions,
+      final Set<String> selectedBlurRegionIds,
       final List<RangeValues> clipSegments,
       final Set<int> selectedClipIndexes,
       final bool isProcessing,
@@ -995,7 +1054,12 @@ abstract class _DemoDetailState extends DemoDetailState {
       get clipboardClip; // Each deletion operation is stored as a separate list of clips
   @override
   List<List<VideoClip>>
-      get deletedClipsHistory; // Legacy support for RangeValues (deprecated)
+      get deletedClipsHistory; // Blur regions for privacy/editing (stored locally, applied at export)
+  @override
+  List<BlurRegion> get blurRegions;
+  @override
+  Set<String>
+      get selectedBlurRegionIds; // Legacy support for RangeValues (deprecated)
   @override
   List<RangeValues> get clipSegments;
   @override

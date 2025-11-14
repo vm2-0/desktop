@@ -1,5 +1,7 @@
 import 'package:clones_desktop/ui/components/card.dart';
+import 'package:clones_desktop/ui/components/video_player/blur_region_editor.dart';
 import 'package:clones_desktop/ui/components/video_player/timeline/timeline_base_track.dart';
+import 'package:clones_desktop/ui/components/video_player/timeline/timeline_blur_regions.dart';
 import 'package:clones_desktop/ui/components/video_player/timeline/timeline_context_menu_item.dart';
 import 'package:clones_desktop/ui/components/video_player/timeline/timeline_editing_elements.dart';
 import 'package:clones_desktop/ui/components/video_player/timeline/timeline_event_markers.dart';
@@ -283,10 +285,21 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
     final clips = state.clips;
     final selectedClips = state.selectedClipIds;
     final deletedClips = state.deletedClipsHistory;
+    final blurRegions = state.blurRegions;
+    final selectedBlurRegions = state.selectedBlurRegionIds;
 
     // Find which clip (if any) was clicked
     final clickedClipIndex = clips.indexWhere((c) => c.contains(clickTime));
     final clickedClip = clickedClipIndex != -1 ? clips[clickedClipIndex] : null;
+
+    // Find which blur region (if any) was clicked at this time
+    BlurRegion? clickedBlurRegion;
+    for (final region in blurRegions) {
+      if (clickTime >= region.startTimeMs && clickTime <= region.endTimeMs) {
+        clickedBlurRegion = region;
+        break;
+      }
+    }
 
     // Check if we clicked on a deleted clip zone (any operation's deleted clips)
     final clickedOnDeletedZone = deletedClips.isNotEmpty &&
@@ -297,6 +310,7 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
     final canSplit = clickedClip != null && clickedClip.canSplitAt(clickTime);
 
     final hasSelection = selectedClips.isNotEmpty;
+    final hasBlurSelection = selectedBlurRegions.isNotEmpty;
 
     final textStyle =
         Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white);
@@ -335,6 +349,16 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
             textStyle: textStyle,
           ),
         ),
+      // Add Blur Region
+      PopupMenuItem<int>(
+        value: 8,
+        height: 36,
+        child: TimelineContextMenuItem(
+          icon: Icons.blur_on,
+          text: 'Add blur region',
+          textStyle: textStyle,
+        ),
+      ),
       // Delete - only if clips are selected
       if (hasSelection)
         PopupMenuItem<int>(
@@ -342,7 +366,39 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
           height: 36,
           child: TimelineContextMenuItem(
             icon: Icons.delete_outline,
-            text: 'Delete (Del)',
+            text: 'Delete clips (Del)',
+            textStyle: textStyle,
+          ),
+        ),
+      // Blur region options
+      if (clickedBlurRegion != null) ...[
+        PopupMenuItem<int>(
+          value: 10,
+          height: 36,
+          child: TimelineContextMenuItem(
+            icon: Icons.edit,
+            text: 'Edit blur region',
+            textStyle: textStyle,
+          ),
+        ),
+        PopupMenuItem<int>(
+          value: 11,
+          height: 36,
+          child: TimelineContextMenuItem(
+            icon: Icons.delete_outline,
+            text: 'Delete blur region',
+            textStyle: textStyle,
+          ),
+        ),
+      ],
+      // Delete selected blur regions
+      if (hasBlurSelection)
+        PopupMenuItem<int>(
+          value: 12,
+          height: 36,
+          child: TimelineContextMenuItem(
+            icon: Icons.delete_outline,
+            text: 'Delete selected blur regions',
             textStyle: textStyle,
           ),
         ),
@@ -425,8 +481,63 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
         }
       } else if (value == 7) {
         notifier.clearSelection();
+      } else if (value == 8) {
+        // Add Blur Region - create a quick blur region modal
+        _showAddBlurRegionModal(context, ref, clickTime, durationMs);
+      } else if (value == 10) {
+        // Edit blur region
+        if (clickedBlurRegion != null) {
+          _showEditBlurRegionModal(context, ref, clickedBlurRegion!, durationMs);
+        }
+      } else if (value == 11) {
+        // Delete specific blur region
+        if (clickedBlurRegion != null) {
+          notifier.removeBlurRegion(clickedBlurRegion!.id);
+        }
+      } else if (value == 12) {
+        // Delete selected blur regions
+        for (final regionId in selectedBlurRegions) {
+          notifier.removeBlurRegion(regionId);
+        }
       }
     });
+  }
+
+  Future<void> _showAddBlurRegionModal(
+    BuildContext context,
+    WidgetRef ref,
+    double currentTimeMs,
+    double videoDurationMs,
+  ) async {
+    await showDialog(
+      context: context,
+      builder: (context) => QuickBlurRegionModal(
+        currentTimeMs: currentTimeMs,
+        videoDurationMs: videoDurationMs,
+        onRegionCreated: (blurRegion) {
+          ref.read(demoDetailNotifierProvider.notifier).addBlurRegion(blurRegion);
+        },
+      ),
+    );
+  }
+
+  Future<void> _showEditBlurRegionModal(
+    BuildContext context,
+    WidgetRef ref,
+    BlurRegion existingRegion,
+    double videoDurationMs,
+  ) async {
+    await showDialog(
+      context: context,
+      builder: (context) => QuickBlurRegionModal(
+        currentTimeMs: existingRegion.startTimeMs,
+        videoDurationMs: videoDurationMs,
+        editingRegion: existingRegion,
+        onRegionCreated: (blurRegion) {
+          ref.read(demoDetailNotifierProvider.notifier).updateBlurRegion(blurRegion);
+        },
+      ),
+    );
   }
 }
 
