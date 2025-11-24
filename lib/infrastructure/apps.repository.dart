@@ -1,3 +1,4 @@
+import 'package:clones_desktop/domain/models/api/request_options.dart';
 import 'package:clones_desktop/domain/models/factory/workflow_task.dart';
 import 'package:clones_desktop/utils/api_client.dart';
 
@@ -19,6 +20,7 @@ class AppsRepositoryImpl {
       final response = await _client.post<Map<String, dynamic>>(
         '/forge/factories/apps/workflows',
         data: data,
+        options: const RequestOptions(requiresAuth: true),
       );
       return response;
     } catch (e) {

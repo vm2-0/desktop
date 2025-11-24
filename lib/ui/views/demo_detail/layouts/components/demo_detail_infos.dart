@@ -183,40 +183,48 @@ class _DemoDetailInfosState extends ConsumerState<DemoDetailInfos> {
     List<String> objectives,
   ) {
     final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Objectives:',
-          style:
-              theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 6),
-        ...objectives.asMap().entries.map((entry) {
-          final index = entry.key + 1;
-          final objective = entry.value;
-          // Remove HTML tags if present (like <app> tags in the objectives)
-          final cleanObjective = objective.replaceAll(RegExp('<[^>]*>'), '');
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$index. ',
-                  style: theme.textTheme.bodySmall,
-                ),
-                Expanded(
-                  child: Text(
-                    cleanObjective,
-                    style: theme.textTheme.bodySmall,
+    return SizedBox(
+      height: 150,
+      child: Expanded(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Objectives:',
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 6),
+              ...objectives.asMap().entries.map((entry) {
+                final index = entry.key + 1;
+                final objective = entry.value;
+                // Remove HTML tags if present (like <app> tags in the objectives)
+                final cleanObjective =
+                    objective.replaceAll(RegExp('<[^>]*>'), '');
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$index. ',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      Expanded(
+                        child: Text(
+                          cleanObjective,
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-          );
-        }),
-      ],
+                );
+              }),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

@@ -72,7 +72,7 @@ class TaskCard extends ConsumerWidget {
     }
 
     return Container(
-      height: 210,
+      height: 230,
       padding: const EdgeInsets.all(10),
       child: Stack(
         alignment: Alignment.bottomRight,
@@ -144,12 +144,14 @@ class TaskCard extends ConsumerWidget {
                     if (task.uploadLimit != null &&
                         task.currentSubmissions != null &&
                         task.currentSubmissions! < task.uploadLimit!)
-                      Text(
-                        'Only ${task.uploadLimit! - task.currentSubmissions!} more - keep going!',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: ClonesColors.important,
+                      Padding(
+                        padding: const EdgeInsets.only(left: 12),
+                        child: Text(
+                          'Only ${task.uploadLimit! - task.currentSubmissions!} more - keep going!',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: ClonesColors.important,
+                          ),
                         ),
-                        textAlign: TextAlign.right,
                       ),
                   ],
                 ),

@@ -49,7 +49,7 @@ class AppText extends StatelessWidget {
       spacing: 4,
       children: parts.map((part) {
         if (part.type == PartType.text) {
-          return Text(
+          return SelectableText(
             part.content,
             style: style,
           );
