@@ -182,6 +182,7 @@ class _DemoDetailSubmissionResultState
                   itemBuilder: (context, index) {
                     final item = gradeResult.videoTimeline[index];
                     final timestamp = item['timestamp_seconds'] as num;
+                    final status = item['status'] as String;
                     final timeStr =
                         '${(timestamp ~/ 60).toString().padLeft(2, '0')}:${(timestamp % 60).toInt().toString().padLeft(2, '0')}';
 
@@ -199,24 +200,35 @@ class _DemoDetailSubmissionResultState
                             }
                           },
                           child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: ClonesColors.tertiary,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  timeStr,
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    fontFamily: 'monospace',
-                                    fontWeight: FontWeight.bold,
+                              Column(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _getStatusColor(status),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      timeStr,
+                                      style:
+                                          theme.textTheme.labelSmall?.copyWith(
+                                        fontFamily: 'monospace',
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                  Text(
+                                    status,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      fontSize: 8,
+                                      color: _getStatusColor(status),
+                                    ),
+                                  ),
+                                ],
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -240,6 +252,19 @@ class _DemoDetailSubmissionResultState
         ),
       ],
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'success':
+        return ClonesColors.highScore;
+      case 'failed':
+        return ClonesColors.lowScore;
+      case 'neutral':
+        return ClonesColors.mediumScore;
+      default:
+        return ClonesColors.tertiary;
+    }
   }
 
   List<Map<String, dynamic>> _getScores(GradeResult gradeResult) {
