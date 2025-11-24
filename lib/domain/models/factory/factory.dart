@@ -1,6 +1,6 @@
 // ignore_for_file: invalid_annotation_target
 
-import 'package:clones_desktop/domain/models/factory/factory_app.dart';
+import 'package:clones_desktop/domain/models/factory/workflow_task.dart';
 import 'package:clones_desktop/domain/models/factory/factory_token.dart';
 import 'package:clones_desktop/utils/decimal_json.dart';
 import 'package:decimal/decimal.dart';
@@ -19,6 +19,8 @@ enum FactoryStatus {
   error,
   @JsonValue('no-funds')
   noFunds,
+  @JsonValue('archived')
+  archived,
 }
 
 extension FactoryStatusExtension on FactoryStatus {
@@ -32,6 +34,8 @@ extension FactoryStatusExtension on FactoryStatus {
         return 'error';
       case FactoryStatus.noFunds:
         return 'no-funds';
+      case FactoryStatus.archived:
+        return 'archived';
     }
   }
 
@@ -45,6 +49,8 @@ extension FactoryStatusExtension on FactoryStatus {
         return 'Error';
       case FactoryStatus.noFunds:
         return 'No Funds';
+      case FactoryStatus.archived:
+        return 'Archived';
     }
   }
 }
@@ -55,7 +61,7 @@ class Factory with _$Factory {
   const factory Factory({
     // Core identity
     required String id,
-    required String poolAddress,
+    String? poolAddress,
     required String name,
     String? description,
 
@@ -71,7 +77,7 @@ class Factory with _$Factory {
     @Default([]) List<String> skills,
 
     // Economic model
-    required FactoryToken token,
+    FactoryToken? token,
     @Default(0.0) double balance, // Keep for backward compatibility
     @JsonKey(
       toJson: DecimalJson.toJson,
@@ -82,8 +88,8 @@ class Factory with _$Factory {
     // Statistics
     @Default(0) int demonstrations,
 
-    // Apps & tasks (integrated)
-    @Default([]) List<FactoryApp> apps,
+    // Tasks (tasks-first architecture)
+    @Default([]) List<WorkflowTask> tasks,
 
     // Search optimization
     @Default('') String searchText,

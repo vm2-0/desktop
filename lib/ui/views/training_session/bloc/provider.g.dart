@@ -7,7 +7,7 @@ part of 'provider.dart';
 // **************************************************************************
 
 String _$trainingSessionNotifierHash() =>
-    r'654ec7cc9bcac114032eabc60220e746e2ee8daf';
+    r'22bd2f45f270bbca9ccca84b4687afe8b049adfb';
 
 /// See also [TrainingSessionNotifier].
 @ProviderFor(TrainingSessionNotifier)

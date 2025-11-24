@@ -1,6 +1,6 @@
 import 'package:clones_desktop/domain/models/factory/factory.dart';
-import 'package:clones_desktop/domain/models/factory/factory_app.dart';
-import 'package:clones_desktop/domain/models/factory/factory_task.dart';
+import 'package:clones_desktop/domain/models/factory/workflow_task.dart';
+import 'package:clones_desktop/ui/components/app_chip_widget.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/components/task_actions_widget.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/components/task_limits_widget.dart';
@@ -10,14 +10,10 @@ class TaskItemWidget extends StatelessWidget {
   const TaskItemWidget({
     super.key,
     required this.task,
-    required this.app,
-    required this.appIdx,
     required this.taskIdx,
     required this.factory,
   });
-  final FactoryTask task;
-  final FactoryApp app;
-  final int appIdx;
+  final WorkflowTask task;
   final int taskIdx;
   final Factory factory;
 
@@ -43,24 +39,58 @@ class TaskItemWidget extends StatelessWidget {
                       children: [
                         SizedBox(
                           width: promptWidth,
-                          child: Text(
-                            task.prompt,
-                            style: theme.textTheme.bodyMedium,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                task.prompt,
+                                style: theme.textTheme.bodyMedium,
+                              ),
+                              if (task.appsUsed.isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Apps to be used:',
+                                      style: theme.textTheme.bodySmall,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 4,
+                                      children: task.appsUsed
+                                          .asMap()
+                                          .entries
+                                          .map(
+                                            (entry) => AppChipWidget(
+                                              appName: entry.value.name,
+                                              domain: entry.value.domain,
+                                              index: entry.key,
+                                            ),
+                                          )
+                                          .toList(),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ],
                           ),
                         ),
-                        TaskLimitsWidget(
-                          factory: factory,
-                          task: task,
-                          factoryToken: factory.token,
-                        ),
+                        const SizedBox(height: 8),
+                        if (factory.token != null) ...[
+                          TaskLimitsWidget(
+                            factory: factory,
+                            task: task,
+                            factoryToken: factory.token!,
+                          ),
+                        ],
                       ],
                     ),
                     TaskActionsWidget(
                       task: task,
-                      app: app,
-                      appIdx: appIdx,
                       taskIdx: taskIdx,
                       forgeId: factory.id,
+                      factoryStatus: factory.status,
                     ),
                   ],
                 );

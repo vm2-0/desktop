@@ -1,5 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:clones_desktop/assets.dart';
 import 'package:flutter/material.dart';
 
 class AppText extends StatelessWidget {
@@ -7,11 +5,9 @@ class AppText extends StatelessWidget {
     super.key,
     required this.text,
     required this.style,
-    required this.iconUrl,
   });
   final String text;
   final TextStyle? style;
-  final String iconUrl;
 
   List<Part> parseText(String text) {
     final parts = <Part>[];
@@ -67,19 +63,6 @@ class AppText extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CachedNetworkImage(
-                  imageUrl: iconUrl,
-                  width: 16,
-                  height: 16,
-                  placeholder: (context, url) =>
-                      const CircularProgressIndicator(),
-                  errorWidget: (_, __, ___) => Icon(
-                    Icons.web,
-                    size: 16,
-                    color: ClonesColors.secondaryText,
-                  ),
-                ),
-                const SizedBox(width: 4),
                 Text(
                   part.content,
                   style: style,

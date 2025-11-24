@@ -9,7 +9,6 @@ class Demonstration with _$Demonstration {
   const factory Demonstration({
     required String title,
     required String app,
-    @Default('') @JsonKey(name: 'icon_url') String iconUrl,
     required List<String> objectives,
     required String content,
     @JsonKey(name: 'pool_id') String? poolId,

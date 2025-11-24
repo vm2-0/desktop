@@ -10,9 +10,7 @@ _$ApiResponseImpl _$$ApiResponseImplFromJson(Map<String, dynamic> json) =>
     _$ApiResponseImpl(
       success: json['success'] as bool,
       data: json['data'],
-      error: json['error'] == null
-          ? null
-          : ApiErrorDetail.fromJson(json['error'] as Map<String, dynamic>),
+      error: _errorFromJson(json['error']),
     );
 
 Map<String, dynamic> _$$ApiResponseImplToJson(_$ApiResponseImpl instance) =>

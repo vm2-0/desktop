@@ -22,8 +22,6 @@ Demonstration _$DemonstrationFromJson(Map<String, dynamic> json) {
 mixin _$Demonstration {
   String get title => throw _privateConstructorUsedError;
   String get app => throw _privateConstructorUsedError;
-  @JsonKey(name: 'icon_url')
-  String get iconUrl => throw _privateConstructorUsedError;
   List<String> get objectives => throw _privateConstructorUsedError;
   String get content => throw _privateConstructorUsedError;
   @JsonKey(name: 'pool_id')
@@ -51,7 +49,6 @@ abstract class $DemonstrationCopyWith<$Res> {
   $Res call(
       {String title,
       String app,
-      @JsonKey(name: 'icon_url') String iconUrl,
       List<String> objectives,
       String content,
       @JsonKey(name: 'pool_id') String? poolId,
@@ -78,7 +75,6 @@ class _$DemonstrationCopyWithImpl<$Res, $Val extends Demonstration>
   $Res call({
     Object? title = null,
     Object? app = null,
-    Object? iconUrl = null,
     Object? objectives = null,
     Object? content = null,
     Object? poolId = freezed,
@@ -93,10 +89,6 @@ class _$DemonstrationCopyWithImpl<$Res, $Val extends Demonstration>
       app: null == app
           ? _value.app
           : app // ignore: cast_nullable_to_non_nullable
-              as String,
-      iconUrl: null == iconUrl
-          ? _value.iconUrl
-          : iconUrl // ignore: cast_nullable_to_non_nullable
               as String,
       objectives: null == objectives
           ? _value.objectives
@@ -147,7 +139,6 @@ abstract class _$$DemonstrationImplCopyWith<$Res>
   $Res call(
       {String title,
       String app,
-      @JsonKey(name: 'icon_url') String iconUrl,
       List<String> objectives,
       String content,
       @JsonKey(name: 'pool_id') String? poolId,
@@ -173,7 +164,6 @@ class __$$DemonstrationImplCopyWithImpl<$Res>
   $Res call({
     Object? title = null,
     Object? app = null,
-    Object? iconUrl = null,
     Object? objectives = null,
     Object? content = null,
     Object? poolId = freezed,
@@ -188,10 +178,6 @@ class __$$DemonstrationImplCopyWithImpl<$Res>
       app: null == app
           ? _value.app
           : app // ignore: cast_nullable_to_non_nullable
-              as String,
-      iconUrl: null == iconUrl
-          ? _value.iconUrl
-          : iconUrl // ignore: cast_nullable_to_non_nullable
               as String,
       objectives: null == objectives
           ? _value._objectives
@@ -223,7 +209,6 @@ class _$DemonstrationImpl implements _Demonstration {
   const _$DemonstrationImpl(
       {required this.title,
       required this.app,
-      @JsonKey(name: 'icon_url') this.iconUrl = '',
       required final List<String> objectives,
       required this.content,
       @JsonKey(name: 'pool_id') this.poolId,
@@ -238,9 +223,6 @@ class _$DemonstrationImpl implements _Demonstration {
   final String title;
   @override
   final String app;
-  @override
-  @JsonKey(name: 'icon_url')
-  final String iconUrl;
   final List<String> _objectives;
   @override
   List<String> get objectives {
@@ -262,7 +244,7 @@ class _$DemonstrationImpl implements _Demonstration {
 
   @override
   String toString() {
-    return 'Demonstration(title: $title, app: $app, iconUrl: $iconUrl, objectives: $objectives, content: $content, poolId: $poolId, reward: $reward, taskId: $taskId)';
+    return 'Demonstration(title: $title, app: $app, objectives: $objectives, content: $content, poolId: $poolId, reward: $reward, taskId: $taskId)';
   }
 
   @override
@@ -272,7 +254,6 @@ class _$DemonstrationImpl implements _Demonstration {
             other is _$DemonstrationImpl &&
             (identical(other.title, title) || other.title == title) &&
             (identical(other.app, app) || other.app == app) &&
-            (identical(other.iconUrl, iconUrl) || other.iconUrl == iconUrl) &&
             const DeepCollectionEquality()
                 .equals(other._objectives, _objectives) &&
             (identical(other.content, content) || other.content == content) &&
@@ -287,7 +268,6 @@ class _$DemonstrationImpl implements _Demonstration {
       runtimeType,
       title,
       app,
-      iconUrl,
       const DeepCollectionEquality().hash(_objectives),
       content,
       poolId,
@@ -314,7 +294,6 @@ abstract class _Demonstration implements Demonstration {
   const factory _Demonstration(
       {required final String title,
       required final String app,
-      @JsonKey(name: 'icon_url') final String iconUrl,
       required final List<String> objectives,
       required final String content,
       @JsonKey(name: 'pool_id') final String? poolId,
@@ -328,9 +307,6 @@ abstract class _Demonstration implements Demonstration {
   String get title;
   @override
   String get app;
-  @override
-  @JsonKey(name: 'icon_url')
-  String get iconUrl;
   @override
   List<String> get objectives;
   @override

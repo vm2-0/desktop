@@ -23,7 +23,7 @@ final appsRepositoryProvider = AutoDisposeProvider<AppsRepositoryImpl>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef AppsRepositoryRef = AutoDisposeProviderRef<AppsRepositoryImpl>;
-String _$generateAppsHash() => r'4f27724cb95ada91bb4a22b01d7d05dd712343aa';
+String _$generateWorkflowsHash() => r'8cef92bf3d0fb60c3d90153990148d1b609d7e16';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -46,27 +46,27 @@ class _SystemHash {
   }
 }
 
-/// See also [generateApps].
-@ProviderFor(generateApps)
-const generateAppsProvider = GenerateAppsFamily();
+/// See also [generateWorkflows].
+@ProviderFor(generateWorkflows)
+const generateWorkflowsProvider = GenerateWorkflowsFamily();
 
-/// See also [generateApps].
-class GenerateAppsFamily extends Family<AsyncValue<Map<String, dynamic>>> {
-  /// See also [generateApps].
-  const GenerateAppsFamily();
+/// See also [generateWorkflows].
+class GenerateWorkflowsFamily extends Family<AsyncValue<Map<String, dynamic>>> {
+  /// See also [generateWorkflows].
+  const GenerateWorkflowsFamily();
 
-  /// See also [generateApps].
-  GenerateAppsProvider call({
+  /// See also [generateWorkflows].
+  GenerateWorkflowsProvider call({
     required String prompt,
   }) {
-    return GenerateAppsProvider(
+    return GenerateWorkflowsProvider(
       prompt: prompt,
     );
   }
 
   @override
-  GenerateAppsProvider getProviderOverride(
-    covariant GenerateAppsProvider provider,
+  GenerateWorkflowsProvider getProviderOverride(
+    covariant GenerateWorkflowsProvider provider,
   ) {
     return call(
       prompt: provider.prompt,
@@ -85,33 +85,33 @@ class GenerateAppsFamily extends Family<AsyncValue<Map<String, dynamic>>> {
       _allTransitiveDependencies;
 
   @override
-  String? get name => r'generateAppsProvider';
+  String? get name => r'generateWorkflowsProvider';
 }
 
-/// See also [generateApps].
-class GenerateAppsProvider
+/// See also [generateWorkflows].
+class GenerateWorkflowsProvider
     extends AutoDisposeFutureProvider<Map<String, dynamic>> {
-  /// See also [generateApps].
-  GenerateAppsProvider({
+  /// See also [generateWorkflows].
+  GenerateWorkflowsProvider({
     required String prompt,
   }) : this._internal(
-          (ref) => generateApps(
-            ref as GenerateAppsRef,
+          (ref) => generateWorkflows(
+            ref as GenerateWorkflowsRef,
             prompt: prompt,
           ),
-          from: generateAppsProvider,
-          name: r'generateAppsProvider',
+          from: generateWorkflowsProvider,
+          name: r'generateWorkflowsProvider',
           debugGetCreateSourceHash:
               const bool.fromEnvironment('dart.vm.product')
                   ? null
-                  : _$generateAppsHash,
-          dependencies: GenerateAppsFamily._dependencies,
+                  : _$generateWorkflowsHash,
+          dependencies: GenerateWorkflowsFamily._dependencies,
           allTransitiveDependencies:
-              GenerateAppsFamily._allTransitiveDependencies,
+              GenerateWorkflowsFamily._allTransitiveDependencies,
           prompt: prompt,
         );
 
-  GenerateAppsProvider._internal(
+  GenerateWorkflowsProvider._internal(
     super._createNotifier, {
     required super.name,
     required super.dependencies,
@@ -125,12 +125,13 @@ class GenerateAppsProvider
 
   @override
   Override overrideWith(
-    FutureOr<Map<String, dynamic>> Function(GenerateAppsRef provider) create,
+    FutureOr<Map<String, dynamic>> Function(GenerateWorkflowsRef provider)
+        create,
   ) {
     return ProviderOverride(
       origin: this,
-      override: GenerateAppsProvider._internal(
-        (ref) => create(ref as GenerateAppsRef),
+      override: GenerateWorkflowsProvider._internal(
+        (ref) => create(ref as GenerateWorkflowsRef),
         from: from,
         name: null,
         dependencies: null,
@@ -143,12 +144,12 @@ class GenerateAppsProvider
 
   @override
   AutoDisposeFutureProviderElement<Map<String, dynamic>> createElement() {
-    return _GenerateAppsProviderElement(this);
+    return _GenerateWorkflowsProviderElement(this);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is GenerateAppsProvider && other.prompt == prompt;
+    return other is GenerateWorkflowsProvider && other.prompt == prompt;
   }
 
   @override
@@ -162,43 +163,45 @@ class GenerateAppsProvider
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-mixin GenerateAppsRef on AutoDisposeFutureProviderRef<Map<String, dynamic>> {
+mixin GenerateWorkflowsRef
+    on AutoDisposeFutureProviderRef<Map<String, dynamic>> {
   /// The parameter `prompt` of this provider.
   String get prompt;
 }
 
-class _GenerateAppsProviderElement
+class _GenerateWorkflowsProviderElement
     extends AutoDisposeFutureProviderElement<Map<String, dynamic>>
-    with GenerateAppsRef {
-  _GenerateAppsProviderElement(super.provider);
+    with GenerateWorkflowsRef {
+  _GenerateWorkflowsProviderElement(super.provider);
 
   @override
-  String get prompt => (origin as GenerateAppsProvider).prompt;
+  String get prompt => (origin as GenerateWorkflowsProvider).prompt;
 }
 
-String _$getAppsForFactoryHash() => r'b6e231cc4fb12217d3ad2da2e17a7b29d8b60137';
+String _$getTasksForFactoryHash() =>
+    r'5b9e13c597a6fbe16d3a2453a9fef84cf889cb70';
 
-/// See also [getAppsForFactory].
-@ProviderFor(getAppsForFactory)
-const getAppsForFactoryProvider = GetAppsForFactoryFamily();
+/// See also [getTasksForFactory].
+@ProviderFor(getTasksForFactory)
+const getTasksForFactoryProvider = GetTasksForFactoryFamily();
 
-/// See also [getAppsForFactory].
-class GetAppsForFactoryFamily extends Family<AsyncValue<List<FactoryApp>>> {
-  /// See also [getAppsForFactory].
-  const GetAppsForFactoryFamily();
+/// See also [getTasksForFactory].
+class GetTasksForFactoryFamily extends Family<AsyncValue<List<WorkflowTask>>> {
+  /// See also [getTasksForFactory].
+  const GetTasksForFactoryFamily();
 
-  /// See also [getAppsForFactory].
-  GetAppsForFactoryProvider call({
+  /// See also [getTasksForFactory].
+  GetTasksForFactoryProvider call({
     required FactoryFilter filter,
   }) {
-    return GetAppsForFactoryProvider(
+    return GetTasksForFactoryProvider(
       filter: filter,
     );
   }
 
   @override
-  GetAppsForFactoryProvider getProviderOverride(
-    covariant GetAppsForFactoryProvider provider,
+  GetTasksForFactoryProvider getProviderOverride(
+    covariant GetTasksForFactoryProvider provider,
   ) {
     return call(
       filter: provider.filter,
@@ -217,33 +220,33 @@ class GetAppsForFactoryFamily extends Family<AsyncValue<List<FactoryApp>>> {
       _allTransitiveDependencies;
 
   @override
-  String? get name => r'getAppsForFactoryProvider';
+  String? get name => r'getTasksForFactoryProvider';
 }
 
-/// See also [getAppsForFactory].
-class GetAppsForFactoryProvider
-    extends AutoDisposeFutureProvider<List<FactoryApp>> {
-  /// See also [getAppsForFactory].
-  GetAppsForFactoryProvider({
+/// See also [getTasksForFactory].
+class GetTasksForFactoryProvider
+    extends AutoDisposeFutureProvider<List<WorkflowTask>> {
+  /// See also [getTasksForFactory].
+  GetTasksForFactoryProvider({
     required FactoryFilter filter,
   }) : this._internal(
-          (ref) => getAppsForFactory(
-            ref as GetAppsForFactoryRef,
+          (ref) => getTasksForFactory(
+            ref as GetTasksForFactoryRef,
             filter: filter,
           ),
-          from: getAppsForFactoryProvider,
-          name: r'getAppsForFactoryProvider',
+          from: getTasksForFactoryProvider,
+          name: r'getTasksForFactoryProvider',
           debugGetCreateSourceHash:
               const bool.fromEnvironment('dart.vm.product')
                   ? null
-                  : _$getAppsForFactoryHash,
-          dependencies: GetAppsForFactoryFamily._dependencies,
+                  : _$getTasksForFactoryHash,
+          dependencies: GetTasksForFactoryFamily._dependencies,
           allTransitiveDependencies:
-              GetAppsForFactoryFamily._allTransitiveDependencies,
+              GetTasksForFactoryFamily._allTransitiveDependencies,
           filter: filter,
         );
 
-  GetAppsForFactoryProvider._internal(
+  GetTasksForFactoryProvider._internal(
     super._createNotifier, {
     required super.name,
     required super.dependencies,
@@ -257,12 +260,13 @@ class GetAppsForFactoryProvider
 
   @override
   Override overrideWith(
-    FutureOr<List<FactoryApp>> Function(GetAppsForFactoryRef provider) create,
+    FutureOr<List<WorkflowTask>> Function(GetTasksForFactoryRef provider)
+        create,
   ) {
     return ProviderOverride(
       origin: this,
-      override: GetAppsForFactoryProvider._internal(
-        (ref) => create(ref as GetAppsForFactoryRef),
+      override: GetTasksForFactoryProvider._internal(
+        (ref) => create(ref as GetTasksForFactoryRef),
         from: from,
         name: null,
         dependencies: null,
@@ -274,13 +278,13 @@ class GetAppsForFactoryProvider
   }
 
   @override
-  AutoDisposeFutureProviderElement<List<FactoryApp>> createElement() {
-    return _GetAppsForFactoryProviderElement(this);
+  AutoDisposeFutureProviderElement<List<WorkflowTask>> createElement() {
+    return _GetTasksForFactoryProviderElement(this);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is GetAppsForFactoryProvider && other.filter == filter;
+    return other is GetTasksForFactoryProvider && other.filter == filter;
   }
 
   @override
@@ -294,18 +298,19 @@ class GetAppsForFactoryProvider
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-mixin GetAppsForFactoryRef on AutoDisposeFutureProviderRef<List<FactoryApp>> {
+mixin GetTasksForFactoryRef
+    on AutoDisposeFutureProviderRef<List<WorkflowTask>> {
   /// The parameter `filter` of this provider.
   FactoryFilter get filter;
 }
 
-class _GetAppsForFactoryProviderElement
-    extends AutoDisposeFutureProviderElement<List<FactoryApp>>
-    with GetAppsForFactoryRef {
-  _GetAppsForFactoryProviderElement(super.provider);
+class _GetTasksForFactoryProviderElement
+    extends AutoDisposeFutureProviderElement<List<WorkflowTask>>
+    with GetTasksForFactoryRef {
+  _GetTasksForFactoryProviderElement(super.provider);
 
   @override
-  FactoryFilter get filter => (origin as GetAppsForFactoryProvider).filter;
+  FactoryFilter get filter => (origin as GetTasksForFactoryProvider).filter;
 }
 
 String _$getFactoryCategoriesHash() =>

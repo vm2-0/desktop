@@ -174,6 +174,11 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
                         .read(demoDetailNotifierProvider.notifier)
                         .confirmUploadPermission();
                   },
+                  onCancel: () {
+                    ref
+                        .read(demoDetailNotifierProvider.notifier)
+                        .setIsUploading(false);
+                  },
                 );
               },
             );
@@ -507,7 +512,6 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
                   Expanded(
                     child: TrainingSessionView(
                       prompt: widget.trainingParams?['prompt'],
-                      appParam: widget.trainingParams?['appParam'],
                       poolId: widget.trainingParams?['poolId'],
                       taskId: widget.trainingParams?['taskId'],
                       onRecordingCompleted: (recordingId) async {

@@ -1,8 +1,8 @@
 import 'package:clones_desktop/domain/models/factory/factory.dart';
-import 'package:clones_desktop/domain/models/factory/factory_app.dart';
 import 'package:clones_desktop/domain/models/factory/factory_grading_result.dart';
 import 'package:clones_desktop/domain/models/factory/factory_search_criteria.dart';
 import 'package:clones_desktop/domain/models/factory/factory_search_result.dart';
+import 'package:clones_desktop/domain/models/factory/workflow_task.dart';
 import 'package:clones_desktop/domain/models/supported_token.dart';
 import 'package:clones_desktop/domain/models/withdrawal/withdrawal_validation.dart';
 import 'package:clones_desktop/infrastructure/factories.repository.dart';
@@ -182,9 +182,15 @@ Future<Factory> updateFactory(
 Future<FactorySearchResult> getFactoriesByCreator(
   Ref ref, {
   required String creatorAddress,
+  int limit = 20,
+  int offset = 0,
 }) {
   final repository = ref.read(factoryRepositoryProvider);
-  return repository.getFactoriesByCreator(creatorAddress: creatorAddress);
+  return repository.getFactoriesByCreator(
+    creatorAddress: creatorAddress,
+    limit: limit,
+    offset: offset,
+  );
 }
 
 @riverpod
@@ -206,16 +212,16 @@ Future<FactorySearchResult> searchFactoriesByToken(
 }
 
 @riverpod
-Future<Factory> updateFactoryApps(
+Future<Factory> updateFactoryTasks(
   Ref ref, {
   required String factoryId,
-  required List<FactoryApp> apps,
+  required List<WorkflowTask> tasks,
   required String walletAddress,
 }) {
   final repository = ref.read(factoryRepositoryProvider);
-  return repository.updateFactoryApps(
+  return repository.updateFactoryTasks(
     factoryId: factoryId,
-    apps: apps,
+    tasks: tasks,
     walletAddress: walletAddress,
   );
 }

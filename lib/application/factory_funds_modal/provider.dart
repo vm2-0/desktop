@@ -122,7 +122,7 @@ class FactoryFundsModalNotifier extends _$FactoryFundsModalNotifier {
         estimateFactoryGasProvider(
           type: 'fundPool',
           amount: state.fundingAmount,
-          token: state.factory!.token.symbol,
+          token: state.factory!.token?.symbol,
         ).future,
       );
 
@@ -193,9 +193,9 @@ class FactoryFundsModalNotifier extends _$FactoryFundsModalNotifier {
     try {
       final transactionManager = ref.read(transactionManagerProvider.notifier);
       await transactionManager.fundPool(
-        token: state.factory!.token.symbol,
+        token: state.factory!.token?.symbol ?? '',
         amount: state.fundingAmount,
-        poolAddress: state.factory!.poolAddress,
+        poolAddress: state.factory!.poolAddress ?? '',
         creator: userAddress,
       );
 

@@ -44,4 +44,15 @@ extension GradeResultExtension on GradeResult {
 
   String get reasoningForUser =>
       regexGradeResult.firstMatch(reasoning)?.group(2)?.trim() ?? reasoning;
+
+  List<Map<String, dynamic>> get videoTimeline {
+    if (programmaticResults == null) return [];
+    if (!programmaticResults!.containsKey('videoAnalysis')) return [];
+
+    final analysis = programmaticResults!['videoAnalysis'];
+    if (analysis is List) {
+      return analysis.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    }
+    return [];
+  }
 }

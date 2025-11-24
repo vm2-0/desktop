@@ -1,7 +1,6 @@
-import 'package:clones_desktop/domain/app_info.dart';
 import 'package:clones_desktop/domain/models/demonstration/demonstration.dart';
 import 'package:clones_desktop/domain/models/factory/factory.dart';
-import 'package:clones_desktop/domain/models/factory/factory_task.dart';
+import 'package:clones_desktop/domain/models/factory/workflow_task.dart';
 import 'package:clones_desktop/domain/models/message/message.dart';
 import 'package:clones_desktop/domain/models/message/typing_message.dart';
 import 'package:clones_desktop/ui/views/training_session/bloc/state.dart';
@@ -56,15 +55,11 @@ mixin TrainingSessionSetters on AutoDisposeNotifier<TrainingSessionState> {
     state = state.copyWith(isWaitingForResponse: isWaitingForResponse);
   }
 
-  void setApp(AppInfo? app) {
-    state = state.copyWith(app: app);
-  }
-
   void triggerScrollToBottom() {
     state = state.copyWith(scrollToBottomNonce: state.scrollToBottomNonce + 1);
   }
 
-  void setFactoryTask(FactoryTask? factoryTask) {
+  void setFactoryTask(WorkflowTask? factoryTask) {
     state = state.copyWith(factoryTask: factoryTask);
   }
 }

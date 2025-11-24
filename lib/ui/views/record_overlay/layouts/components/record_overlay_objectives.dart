@@ -60,7 +60,7 @@ class RecordOverlayObjectives extends ConsumerWidget {
           const SizedBox(height: 8),
           if (demonstration.objectives.isNotEmpty)
             SizedBox(
-              height: 120,
+              height: 320,
               child: ListView.builder(
                 shrinkWrap: true,
                 itemCount: demonstration.objectives.length,
@@ -78,7 +78,6 @@ class RecordOverlayObjectives extends ConsumerWidget {
                           child: AppText(
                             text: demonstration.objectives[index],
                             style: Theme.of(context).textTheme.bodySmall,
-                            iconUrl: demonstration.iconUrl,
                           ),
                         ),
                       ],

@@ -1,11 +1,11 @@
-import 'package:clones_desktop/domain/models/factory/factory_task.dart';
+import 'package:clones_desktop/domain/models/factory/workflow_task.dart';
 import 'package:clones_desktop/utils/api_client.dart';
 
 class TasksRepositoryImpl {
   TasksRepositoryImpl(this._client);
   final ApiClient _client;
 
-  Future<List<FactoryTask>> getTasksForFactory({
+  Future<List<WorkflowTask>> getTasksForFactory({
     Map<String, dynamic>? filter,
   }) async {
     try {
@@ -26,10 +26,10 @@ class TasksRepositoryImpl {
         '/forge/factories/apps/tasks',
         params: params,
         fromJson: (json) => (json as List)
-            .map((e) => FactoryTask.fromJson(e as Map<String, dynamic>))
+            .map((e) => WorkflowTask.fromJson(e as Map<String, dynamic>))
             .toList(),
       );
-      return tasks.cast<FactoryTask>();
+      return tasks.cast<WorkflowTask>();
     } catch (e) {
       throw Exception('Failed to get tasks: $e');
     }

@@ -10,7 +10,6 @@ _$DemonstrationImpl _$$DemonstrationImplFromJson(Map<String, dynamic> json) =>
     _$DemonstrationImpl(
       title: json['title'] as String,
       app: json['app'] as String,
-      iconUrl: json['icon_url'] as String? ?? '',
       objectives: (json['objectives'] as List<dynamic>)
           .map((e) => e as String)
           .toList(),
@@ -27,7 +26,6 @@ Map<String, dynamic> _$$DemonstrationImplToJson(_$DemonstrationImpl instance) =>
     <String, dynamic>{
       'title': instance.title,
       'app': instance.app,
-      'icon_url': instance.iconUrl,
       'objectives': instance.objectives,
       'content': instance.content,
       'pool_id': instance.poolId,

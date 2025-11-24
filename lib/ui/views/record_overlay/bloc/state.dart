@@ -5,7 +5,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'state.freezed.dart';
 
-const kRecordOverlaySize = Size(300, 300);
+const kRecordOverlaySize = Size(300, 500);
 const kRecordOverlayCollapsedSize = Size(300, 80);
 
 @freezed

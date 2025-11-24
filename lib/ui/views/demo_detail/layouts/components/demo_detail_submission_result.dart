@@ -4,7 +4,8 @@ import 'package:clones_desktop/domain/models/submission/grade_result.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/score_indicator.dart';
 import 'package:clones_desktop/ui/components/wallet_not_connected.dart';
-import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
+import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart'
+    show demoDetailNotifierProvider, videoSeekCallbackProvider;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -162,6 +163,78 @@ class _DemoDetailSubmissionResultState
                   ),
                 ),
               ),
+              if (gradeResult.videoTimeline.isNotEmpty) ...[
+                const SizedBox(height: 24),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'AI Analysis Timeline',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: gradeResult.videoTimeline.length,
+                  itemBuilder: (context, index) {
+                    final item = gradeResult.videoTimeline[index];
+                    final timestamp = item['timestamp_seconds'] as num;
+                    final timeStr =
+                        '${(timestamp ~/ 60).toString().padLeft(2, '0')}:${(timestamp % 60).toInt().toString().padLeft(2, '0')}';
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          onTap: () {
+                            final seekCallback =
+                                ref.read(videoSeekCallbackProvider);
+                            if (seekCallback != null) {
+                              final seconds = timestamp.toInt();
+                              seekCallback(Duration(seconds: seconds));
+                            }
+                          },
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: ClonesColors.tertiary,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  timeStr,
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    fontFamily: 'monospace',
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  item['description'] ?? '',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ],
           ),
         ),

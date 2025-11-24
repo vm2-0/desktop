@@ -254,6 +254,10 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     );
   }
 
+  void setIsUploading(bool isUploading) {
+    state = state.copyWith(isUploading: isUploading);
+  }
+
   /// Store the current video ID for access from other widgets
   void setCurrentVideoId(String videoId) {
     state = state.copyWith(currentVideoId: videoId);
@@ -345,7 +349,8 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       ..sort((a, b) => a.time.compareTo(b.time));
 
     final eventTypes = events.map((e) => e.event).toSet();
-    final startTime = 0; // Use 0 since timestamps in input_logs.jsonl are already relative to recording start
+    final startTime =
+        0; // Use 0 since timestamps in input_logs.jsonl are already relative to recording start
 
     // Disable axtree and ffmpeg_stderr by default
     final filteredEventTypes = eventTypes
@@ -707,7 +712,7 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
   static const String fullFirstMessage =
       'Now that your demo has been recorded, feel free to edit out anything you find sensitive. You can also trim parts that feel too long, unnecessary, or where mistakes happened. The more polished your demo is, the better your score will be!';
   static const String fullSecondMessage =
-      "Once you're happy with your demo, just click Analyse demo and then Upload to send it to the Clones Quality Agent for scoring.";
+      "Once you're happy with your demo, just click Analyse demo and then Upload to send it to the Clones Quality Agent for scoring. Warning: The analysis could take a few minutes to complete.";
   static const String fullThirdMessage =
       'Your demo is now being uploaded and reviewed by the Clones Quality Agent. This may take a little while...';
 

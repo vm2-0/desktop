@@ -1,4 +1,4 @@
-import 'package:clones_desktop/domain/models/factory/factory_app.dart';
+import 'package:clones_desktop/domain/models/factory/workflow_task.dart';
 import 'package:clones_desktop/domain/models/ui/factory_filter.dart';
 import 'package:clones_desktop/infrastructure/apps.repository.dart';
 import 'package:clones_desktop/utils/api_client.dart';
@@ -16,22 +16,23 @@ AppsRepositoryImpl appsRepository(
 }
 
 @riverpod
-Future<Map<String, dynamic>> generateApps(
+Future<Map<String, dynamic>> generateWorkflows(
   Ref ref, {
   required String prompt,
 }) async {
   final appsRepository = ref.read(appsRepositoryProvider);
-  return appsRepository.generateApps(prompt: prompt);
+  return appsRepository.generateWorkflows(prompt: prompt);
 }
 
 @riverpod
-Future<List<FactoryApp>> getAppsForFactory(
+Future<List<WorkflowTask>> getTasksForFactory(
   Ref ref, {
   required FactoryFilter filter,
 }) async {
   final appsRepository = ref.read(appsRepositoryProvider);
-  final apps = await appsRepository.getAppsForFactory(filter: filter.toJson());
-  return apps;
+  final tasks =
+      await appsRepository.getTasksForFactory(filter: filter.toJson());
+  return tasks;
 }
 
 @riverpod

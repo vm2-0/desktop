@@ -1,18 +1,15 @@
-import 'dart:convert';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:clones_desktop/application/coin_price.dart';
 import 'package:clones_desktop/application/factory.dart';
 import 'package:clones_desktop/application/feature_flags.dart';
 import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/assets.dart';
-import 'package:clones_desktop/domain/app_info.dart';
-import 'package:clones_desktop/domain/models/factory/factory_app.dart';
-import 'package:clones_desktop/domain/models/factory/factory_task.dart';
+import 'package:clones_desktop/domain/models/factory/factory.dart';
+import 'package:clones_desktop/domain/models/factory/workflow_task.dart';
+import 'package:clones_desktop/ui/components/app_chip_widget.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:clones_desktop/ui/views/demo_detail/layouts/components/referral_required_dialog.dart';
 import 'package:clones_desktop/ui/views/demo_detail/layouts/demo_detail_view.dart';
-import 'package:clones_desktop/utils/fav_tools.dart';
 import 'package:clones_desktop/utils/format_num.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,12 +19,10 @@ class TaskCard extends ConsumerWidget {
   const TaskCard({
     super.key,
     required this.task,
-    required this.app,
     this.currencyMode = 'crypto',
   });
 
-  final FactoryTask task;
-  final FactoryApp app;
+  final WorkflowTask task;
   final String currencyMode;
 
   @override
@@ -35,7 +30,7 @@ class TaskCard extends ConsumerWidget {
     final theme = Theme.of(context);
     final factory = ref
         .watch(
-          getFactoryProvider(factoryId: app.poolId!),
+          getFactoryProvider(factoryId: task.poolId!),
         )
         .valueOrNull;
 
@@ -43,7 +38,7 @@ class TaskCard extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
-    final tokenSymbol = factory.token.symbol;
+    final tokenSymbol = factory.token?.symbol ?? '';
 
     final rewardAmount = task.rewardLimit?.toDouble() ?? 0.0;
 
@@ -66,154 +61,167 @@ class TaskCard extends ConsumerWidget {
         }
       }
 
-      final appInfo = AppInfo(
-        type: 'website',
-        name: app.name,
-        url: 'https://${app.domain}',
-        taskId: task.id,
-      );
-      final appParam = Uri.encodeComponent(jsonEncode(appInfo.toJson()));
-
       context.go(
         DemoDetailView.routeName,
         extra: {
           'prompt': task.prompt,
-          'appParam': appParam,
           'poolId': factory.id,
           'taskId': task.id,
         },
       );
     }
 
-    return Stack(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(10),
-          child: CardWidget(
-            padding: CardPadding.small,
-            variant: CardVariant.secondary,
-            child: InkWell(
-              onTap: task.uploadLimit != null &&
-                      task.currentSubmissions != null &&
-                      task.currentSubmissions! >= task.uploadLimit!
-                  ? null
-                  : factory.balance >= rewardAmount
-                      ? () async => onTap(context)
-                      : null,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    child: Row(
-                      children: [
-                        CachedNetworkImage(
-                          imageUrl: getFaviconUrl(app.domain),
-                          width: 20,
-                          height: 20,
-                          placeholder: (context, url) =>
-                              const CircularProgressIndicator(),
-                          errorWidget: (_, __, ___) => const Icon(
-                            Icons.web,
-                            size: 20,
-                            color: ClonesColors.primaryText,
+    return Container(
+      height: 210,
+      padding: const EdgeInsets.all(10),
+      child: Stack(
+        alignment: Alignment.bottomRight,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(15),
+            child: CardWidget(
+              padding: CardPadding.small,
+              variant: CardVariant.secondary,
+              child: InkWell(
+                onTap: task.uploadLimit != null &&
+                        task.currentSubmissions != null &&
+                        task.currentSubmissions! >= task.uploadLimit!
+                    ? null
+                    : factory.balance >= rewardAmount
+                        ? () async => onTap(context)
+                        : null,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              task.taskName,
+                              style: theme.textTheme.titleSmall,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            app.name,
-                            style: theme.textTheme.titleMedium,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: SelectableText(
-                        task.prompt,
-                        maxLines: 3,
-                        style: theme.textTheme.bodyMedium,
+                        ],
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  if (task.uploadLimit != null &&
-                      task.currentSubmissions != null &&
-                      task.currentSubmissions! < task.uploadLimit!)
-                    Text(
-                      'Only ${task.uploadLimit! - task.currentSubmissions!} more - keep going!',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: ClonesColors.important,
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SelectableText(
+                              task.prompt,
+                              maxLines: 3,
+                              style: theme.textTheme.bodySmall,
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 4,
+                              children: task.appsUsed
+                                  .asMap()
+                                  .entries
+                                  .map(
+                                    (entry) => AppChipWidget(
+                                      appName: entry.value.name,
+                                      domain: entry.value.domain,
+                                      index: entry.key,
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+                          ],
+                        ),
                       ),
-                      textAlign: TextAlign.right,
                     ),
-                  const SizedBox(height: 4),
-                  if (task.uploadLimit != null &&
-                      task.currentSubmissions != null &&
-                      task.currentSubmissions! >= task.uploadLimit!)
-                    const BtnPrimary(
-                      widthExpanded: true,
-                      isLocked: true,
-                      btnPrimaryType: BtnPrimaryType.outlinePrimary,
-                      onTap: null,
-                      buttonText: 'All demos completed!',
-                    )
-                  else if (factory.balance >= rewardAmount)
-                    BtnPrimary(
-                      widthExpanded: true,
-                      onTap: () async => onTap(context),
-                      buttonText: 'Start Training',
-                    )
-                  else
-                    const BtnPrimary(
-                      widthExpanded: true,
-                      isLocked: true,
-                      btnPrimaryType: BtnPrimaryType.outlinePrimary,
-                      onTap: null,
-                      buttonText: 'Insufficient funds',
-                    ),
-                ],
+                    if (task.uploadLimit != null &&
+                        task.currentSubmissions != null &&
+                        task.currentSubmissions! < task.uploadLimit!)
+                      Text(
+                        'Only ${task.uploadLimit! - task.currentSubmissions!} more - keep going!',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: ClonesColors.important,
+                        ),
+                        textAlign: TextAlign.right,
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-        Positioned(
-          top: 0,
-          right: 0,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: factory.balance >= rewardAmount
-                  ? ClonesColors.rewardInfo.withValues(alpha: 0.3)
-                  : ClonesColors.rewardInfo.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF000000).withAlpha(60),
-                  blurRadius: 6,
-                  offset: const Offset(
-                    0,
-                    3,
+          if (factory.status == FactoryStatus.archived)
+            const BtnPrimary(
+              isLocked: true,
+              btnPrimaryType: BtnPrimaryType.outlinePrimary,
+              onTap: null,
+              buttonText: 'Archived',
+            )
+          else if (task.uploadLimit != null &&
+              task.currentSubmissions != null &&
+              task.currentSubmissions! >= task.uploadLimit!)
+            const BtnPrimary(
+              isLocked: true,
+              btnPrimaryType: BtnPrimaryType.outlinePrimary,
+              onTap: null,
+              buttonText: 'All demos completed!',
+            )
+          else if (factory.balance >= rewardAmount)
+            BtnPrimary(
+              onTap: () async => onTap(context),
+              buttonText: 'Start Training',
+              icon: Icons.play_arrow,
+              iconPosition: IconPosition.trailing,
+            )
+          else
+            const BtnPrimary(
+              isLocked: true,
+              btnPrimaryType: BtnPrimaryType.outlinePrimary,
+              onTap: null,
+              buttonText: 'Insufficient funds',
+            ),
+          if (rewardAmount > 0) ...[
+            Positioned(
+              top: 25,
+              right: 25,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: factory.balance >= rewardAmount
+                      ? ClonesColors.rewardInfo.withValues(alpha: 0.3)
+                      : ClonesColors.rewardInfo.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF000000).withAlpha(60),
+                      blurRadius: 6,
+                      offset: const Offset(
+                        0,
+                        3,
+                      ),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  rewardText,
+                  style: theme.textTheme.bodySmall!.copyWith(
+                    color: factory.balance >= rewardAmount
+                        ? ClonesColors.rewardInfo
+                        : Colors.white.withValues(alpha: 0.4),
                   ),
                 ),
-              ],
-            ),
-            child: Text(
-              rewardText,
-              style: theme.textTheme.bodySmall!.copyWith(
-                color: factory.balance >= rewardAmount
-                    ? ClonesColors.rewardInfo
-                    : Colors.white.withValues(alpha: 0.4),
               ),
             ),
-          ),
-        ),
-      ],
+          ],
+        ],
+      ),
     );
   }
 }

@@ -63,7 +63,8 @@ class WindowsUpdater {
       );
 
       // Fetch and parse the appcast.xml to get the available version
-      const environment = String.fromEnvironment('ENVIRONMENT', defaultValue: 'dev');
+      const environment =
+          String.fromEnvironment('ENVIRONMENT', defaultValue: 'dev');
       final appcastUrl = _getAppcastUrl(environment);
 
       final availableVersion = await _fetchAvailableVersion(appcastUrl);
@@ -130,7 +131,8 @@ class WindowsUpdater {
       }
 
       // Fall back to sparkle:shortVersionString
-      final shortVersionMatch = RegExp(r'sparkle:shortVersionString="([^"]+)"').firstMatch(xml);
+      final shortVersionMatch =
+          RegExp(r'sparkle:shortVersionString="([^"]+)"').firstMatch(xml);
       if (shortVersionMatch != null) {
         return shortVersionMatch.group(1);
       }

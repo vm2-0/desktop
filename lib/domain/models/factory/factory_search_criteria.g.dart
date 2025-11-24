@@ -44,4 +44,5 @@ const _$FactoryStatusEnumMap = {
   FactoryStatus.paused: 'paused',
   FactoryStatus.error: 'error',
   FactoryStatus.noFunds: 'no-funds',
+  FactoryStatus.archived: 'archived',
 };

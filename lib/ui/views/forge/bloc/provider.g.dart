@@ -6,7 +6,7 @@ part of 'provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$forgeNotifierHash() => r'1183408a8f5dea3e5fe17baeb73f24210d1ec20e';
+String _$forgeNotifierHash() => r'a58fbf6f8389b3152712759b466bdd0dc94c5995';
 
 /// See also [ForgeNotifier].
 @ProviderFor(ForgeNotifier)

@@ -22,7 +22,7 @@ Factory _$FactoryFromJson(Map<String, dynamic> json) {
 mixin _$Factory {
 // Core identity
   String get id => throw _privateConstructorUsedError;
-  String get poolAddress => throw _privateConstructorUsedError;
+  String? get poolAddress => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError; // Ownership
   String get ownerAddress =>
@@ -33,14 +33,14 @@ mixin _$Factory {
       throw _privateConstructorUsedError; // Skills & categorization
   List<String> get skills =>
       throw _privateConstructorUsedError; // Economic model
-  FactoryToken get token => throw _privateConstructorUsedError;
+  FactoryToken? get token => throw _privateConstructorUsedError;
   double get balance =>
       throw _privateConstructorUsedError; // Keep for backward compatibility
   @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
   Decimal? get totalEarned => throw _privateConstructorUsedError; // Statistics
   int get demonstrations =>
-      throw _privateConstructorUsedError; // Apps & tasks (integrated)
-  List<FactoryApp> get apps =>
+      throw _privateConstructorUsedError; // Tasks (tasks-first architecture)
+  List<WorkflowTask> get tasks =>
       throw _privateConstructorUsedError; // Search optimization
   String get searchText =>
       throw _privateConstructorUsedError; // UI state (not stored on backend)
@@ -63,7 +63,7 @@ abstract class $FactoryCopyWith<$Res> {
   @useResult
   $Res call(
       {String id,
-      String poolAddress,
+      String? poolAddress,
       String name,
       String? description,
       String ownerAddress,
@@ -71,17 +71,17 @@ abstract class $FactoryCopyWith<$Res> {
       DateTime createdAt,
       DateTime updatedAt,
       List<String> skills,
-      FactoryToken token,
+      FactoryToken? token,
       double balance,
       @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       Decimal? totalEarned,
       int demonstrations,
-      List<FactoryApp> apps,
+      List<WorkflowTask> tasks,
       String searchText,
       bool expanded,
       bool isLoading});
 
-  $FactoryTokenCopyWith<$Res> get token;
+  $FactoryTokenCopyWith<$Res>? get token;
 }
 
 /// @nodoc
@@ -100,7 +100,7 @@ class _$FactoryCopyWithImpl<$Res, $Val extends Factory>
   @override
   $Res call({
     Object? id = null,
-    Object? poolAddress = null,
+    Object? poolAddress = freezed,
     Object? name = null,
     Object? description = freezed,
     Object? ownerAddress = null,
@@ -108,11 +108,11 @@ class _$FactoryCopyWithImpl<$Res, $Val extends Factory>
     Object? createdAt = null,
     Object? updatedAt = null,
     Object? skills = null,
-    Object? token = null,
+    Object? token = freezed,
     Object? balance = null,
     Object? totalEarned = freezed,
     Object? demonstrations = null,
-    Object? apps = null,
+    Object? tasks = null,
     Object? searchText = null,
     Object? expanded = null,
     Object? isLoading = null,
@@ -122,10 +122,10 @@ class _$FactoryCopyWithImpl<$Res, $Val extends Factory>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      poolAddress: null == poolAddress
+      poolAddress: freezed == poolAddress
           ? _value.poolAddress
           : poolAddress // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
@@ -154,10 +154,10 @@ class _$FactoryCopyWithImpl<$Res, $Val extends Factory>
           ? _value.skills
           : skills // ignore: cast_nullable_to_non_nullable
               as List<String>,
-      token: null == token
+      token: freezed == token
           ? _value.token
           : token // ignore: cast_nullable_to_non_nullable
-              as FactoryToken,
+              as FactoryToken?,
       balance: null == balance
           ? _value.balance
           : balance // ignore: cast_nullable_to_non_nullable
@@ -170,10 +170,10 @@ class _$FactoryCopyWithImpl<$Res, $Val extends Factory>
           ? _value.demonstrations
           : demonstrations // ignore: cast_nullable_to_non_nullable
               as int,
-      apps: null == apps
-          ? _value.apps
-          : apps // ignore: cast_nullable_to_non_nullable
-              as List<FactoryApp>,
+      tasks: null == tasks
+          ? _value.tasks
+          : tasks // ignore: cast_nullable_to_non_nullable
+              as List<WorkflowTask>,
       searchText: null == searchText
           ? _value.searchText
           : searchText // ignore: cast_nullable_to_non_nullable
@@ -193,8 +193,12 @@ class _$FactoryCopyWithImpl<$Res, $Val extends Factory>
   /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
-  $FactoryTokenCopyWith<$Res> get token {
-    return $FactoryTokenCopyWith<$Res>(_value.token, (value) {
+  $FactoryTokenCopyWith<$Res>? get token {
+    if (_value.token == null) {
+      return null;
+    }
+
+    return $FactoryTokenCopyWith<$Res>(_value.token!, (value) {
       return _then(_value.copyWith(token: value) as $Val);
     });
   }
@@ -209,7 +213,7 @@ abstract class _$$FactoryImplCopyWith<$Res> implements $FactoryCopyWith<$Res> {
   @useResult
   $Res call(
       {String id,
-      String poolAddress,
+      String? poolAddress,
       String name,
       String? description,
       String ownerAddress,
@@ -217,18 +221,18 @@ abstract class _$$FactoryImplCopyWith<$Res> implements $FactoryCopyWith<$Res> {
       DateTime createdAt,
       DateTime updatedAt,
       List<String> skills,
-      FactoryToken token,
+      FactoryToken? token,
       double balance,
       @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       Decimal? totalEarned,
       int demonstrations,
-      List<FactoryApp> apps,
+      List<WorkflowTask> tasks,
       String searchText,
       bool expanded,
       bool isLoading});
 
   @override
-  $FactoryTokenCopyWith<$Res> get token;
+  $FactoryTokenCopyWith<$Res>? get token;
 }
 
 /// @nodoc
@@ -245,7 +249,7 @@ class __$$FactoryImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
-    Object? poolAddress = null,
+    Object? poolAddress = freezed,
     Object? name = null,
     Object? description = freezed,
     Object? ownerAddress = null,
@@ -253,11 +257,11 @@ class __$$FactoryImplCopyWithImpl<$Res>
     Object? createdAt = null,
     Object? updatedAt = null,
     Object? skills = null,
-    Object? token = null,
+    Object? token = freezed,
     Object? balance = null,
     Object? totalEarned = freezed,
     Object? demonstrations = null,
-    Object? apps = null,
+    Object? tasks = null,
     Object? searchText = null,
     Object? expanded = null,
     Object? isLoading = null,
@@ -267,10 +271,10 @@ class __$$FactoryImplCopyWithImpl<$Res>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      poolAddress: null == poolAddress
+      poolAddress: freezed == poolAddress
           ? _value.poolAddress
           : poolAddress // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
@@ -299,10 +303,10 @@ class __$$FactoryImplCopyWithImpl<$Res>
           ? _value._skills
           : skills // ignore: cast_nullable_to_non_nullable
               as List<String>,
-      token: null == token
+      token: freezed == token
           ? _value.token
           : token // ignore: cast_nullable_to_non_nullable
-              as FactoryToken,
+              as FactoryToken?,
       balance: null == balance
           ? _value.balance
           : balance // ignore: cast_nullable_to_non_nullable
@@ -315,10 +319,10 @@ class __$$FactoryImplCopyWithImpl<$Res>
           ? _value.demonstrations
           : demonstrations // ignore: cast_nullable_to_non_nullable
               as int,
-      apps: null == apps
-          ? _value._apps
-          : apps // ignore: cast_nullable_to_non_nullable
-              as List<FactoryApp>,
+      tasks: null == tasks
+          ? _value._tasks
+          : tasks // ignore: cast_nullable_to_non_nullable
+              as List<WorkflowTask>,
       searchText: null == searchText
           ? _value.searchText
           : searchText // ignore: cast_nullable_to_non_nullable
@@ -340,7 +344,7 @@ class __$$FactoryImplCopyWithImpl<$Res>
 class _$FactoryImpl implements _Factory {
   const _$FactoryImpl(
       {required this.id,
-      required this.poolAddress,
+      this.poolAddress,
       required this.name,
       this.description,
       required this.ownerAddress,
@@ -348,17 +352,17 @@ class _$FactoryImpl implements _Factory {
       required this.createdAt,
       required this.updatedAt,
       final List<String> skills = const [],
-      required this.token,
+      this.token,
       this.balance = 0.0,
       @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       this.totalEarned,
       this.demonstrations = 0,
-      final List<FactoryApp> apps = const [],
+      final List<WorkflowTask> tasks = const [],
       this.searchText = '',
       this.expanded = false,
       this.isLoading = false})
       : _skills = skills,
-        _apps = apps;
+        _tasks = tasks;
 
   factory _$FactoryImpl.fromJson(Map<String, dynamic> json) =>
       _$$FactoryImplFromJson(json);
@@ -367,7 +371,7 @@ class _$FactoryImpl implements _Factory {
   @override
   final String id;
   @override
-  final String poolAddress;
+  final String? poolAddress;
   @override
   final String name;
   @override
@@ -395,7 +399,7 @@ class _$FactoryImpl implements _Factory {
 
 // Economic model
   @override
-  final FactoryToken token;
+  final FactoryToken? token;
   @override
   @JsonKey()
   final double balance;
@@ -407,15 +411,15 @@ class _$FactoryImpl implements _Factory {
   @override
   @JsonKey()
   final int demonstrations;
-// Apps & tasks (integrated)
-  final List<FactoryApp> _apps;
-// Apps & tasks (integrated)
+// Tasks (tasks-first architecture)
+  final List<WorkflowTask> _tasks;
+// Tasks (tasks-first architecture)
   @override
   @JsonKey()
-  List<FactoryApp> get apps {
-    if (_apps is EqualUnmodifiableListView) return _apps;
+  List<WorkflowTask> get tasks {
+    if (_tasks is EqualUnmodifiableListView) return _tasks;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_apps);
+    return EqualUnmodifiableListView(_tasks);
   }
 
 // Search optimization
@@ -432,7 +436,7 @@ class _$FactoryImpl implements _Factory {
 
   @override
   String toString() {
-    return 'Factory(id: $id, poolAddress: $poolAddress, name: $name, description: $description, ownerAddress: $ownerAddress, status: $status, createdAt: $createdAt, updatedAt: $updatedAt, skills: $skills, token: $token, balance: $balance, totalEarned: $totalEarned, demonstrations: $demonstrations, apps: $apps, searchText: $searchText, expanded: $expanded, isLoading: $isLoading)';
+    return 'Factory(id: $id, poolAddress: $poolAddress, name: $name, description: $description, ownerAddress: $ownerAddress, status: $status, createdAt: $createdAt, updatedAt: $updatedAt, skills: $skills, token: $token, balance: $balance, totalEarned: $totalEarned, demonstrations: $demonstrations, tasks: $tasks, searchText: $searchText, expanded: $expanded, isLoading: $isLoading)';
   }
 
   @override
@@ -460,7 +464,7 @@ class _$FactoryImpl implements _Factory {
                 other.totalEarned == totalEarned) &&
             (identical(other.demonstrations, demonstrations) ||
                 other.demonstrations == demonstrations) &&
-            const DeepCollectionEquality().equals(other._apps, _apps) &&
+            const DeepCollectionEquality().equals(other._tasks, _tasks) &&
             (identical(other.searchText, searchText) ||
                 other.searchText == searchText) &&
             (identical(other.expanded, expanded) ||
@@ -486,7 +490,7 @@ class _$FactoryImpl implements _Factory {
       balance,
       totalEarned,
       demonstrations,
-      const DeepCollectionEquality().hash(_apps),
+      const DeepCollectionEquality().hash(_tasks),
       searchText,
       expanded,
       isLoading);
@@ -510,7 +514,7 @@ class _$FactoryImpl implements _Factory {
 abstract class _Factory implements Factory {
   const factory _Factory(
       {required final String id,
-      required final String poolAddress,
+      final String? poolAddress,
       required final String name,
       final String? description,
       required final String ownerAddress,
@@ -518,12 +522,12 @@ abstract class _Factory implements Factory {
       required final DateTime createdAt,
       required final DateTime updatedAt,
       final List<String> skills,
-      required final FactoryToken token,
+      final FactoryToken? token,
       final double balance,
       @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       final Decimal? totalEarned,
       final int demonstrations,
-      final List<FactoryApp> apps,
+      final List<WorkflowTask> tasks,
       final String searchText,
       final bool expanded,
       final bool isLoading}) = _$FactoryImpl;
@@ -534,7 +538,7 @@ abstract class _Factory implements Factory {
   @override
   String get id;
   @override
-  String get poolAddress;
+  String? get poolAddress;
   @override
   String get name;
   @override
@@ -550,16 +554,16 @@ abstract class _Factory implements Factory {
   @override
   List<String> get skills; // Economic model
   @override
-  FactoryToken get token;
+  FactoryToken? get token;
   @override
   double get balance; // Keep for backward compatibility
   @override
   @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
   Decimal? get totalEarned; // Statistics
   @override
-  int get demonstrations; // Apps & tasks (integrated)
+  int get demonstrations; // Tasks (tasks-first architecture)
   @override
-  List<FactoryApp> get apps; // Search optimization
+  List<WorkflowTask> get tasks; // Search optimization
   @override
   String get searchText; // UI state (not stored on backend)
   @override

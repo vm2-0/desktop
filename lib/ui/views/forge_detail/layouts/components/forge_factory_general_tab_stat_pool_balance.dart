@@ -16,7 +16,7 @@ class ForgeFactoryGeneralTabStatPoolBalance extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final factory = ref.watch(forgeDetailNotifierProvider).factory;
-    if (factory == null) {
+    if (factory == null || factory.token == null) {
       return const SizedBox.shrink();
     }
 
@@ -96,14 +96,14 @@ class ForgeFactoryGeneralTabStatPoolBalance extends ConsumerWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                '${formatNumberWithSeparator(factory.balance)} ${factory.token.symbol}',
+                '${formatNumberWithSeparator(factory.balance)} ${factory.token?.symbol ?? ''}',
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
               UsdPrice(
                 amount: Decimal.parse(factory.balance.toString()),
-                symbol: factory.token.symbol,
+                symbol: factory.token?.symbol ?? '',
               ),
               const SizedBox(height: 5),
               Text(

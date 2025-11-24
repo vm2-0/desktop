@@ -1,10 +1,8 @@
-import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/ui/views/factory/layouts/available_tasks.dart';
 import 'package:clones_desktop/ui/views/forge_detail/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/forge_detail/bloc/state.dart';
-import 'package:clones_desktop/ui/views/forge_detail/layouts/components/app_card_widget.dart';
+import 'package:clones_desktop/ui/views/forge_detail/layouts/components/task_card_widget.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/components/forge_factory_header.dart';
-import 'package:clones_desktop/ui/views/forge_detail/layouts/components/new_app_form_widget.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/components/tasks_view_mode_buttons_widget.dart';
 import 'package:clones_desktop/ui/views/manage_task/bloc/state.dart';
 import 'package:clones_desktop/ui/views/manage_task/layouts/manage_task_modal.dart';
@@ -54,7 +52,7 @@ class _ForgeFactoryTasksTabState extends ConsumerState<ForgeFactoryTasksTab> {
                   ],
                 ),
               ),
-              if (forgeDetail.showNewAppForm) const NewAppFormWidget(),
+              // NewAppForm removed - no longer needed in tasks-first architecture
               if (forgeDetail.viewModeTasks == ViewModeTasks.preview)
                 Expanded(
                   child: AvailableTasks(
@@ -66,22 +64,22 @@ class _ForgeFactoryTasksTabState extends ConsumerState<ForgeFactoryTasksTab> {
                   child: Column(
                     children: [
                       const SizedBox(height: 8),
-                      if (forgeDetail.apps.isEmpty)
+                      if (forgeDetail.factory!.tasks.isEmpty)
                         Center(
                           child: Text(
-                            'No apps available.',
-                            style: TextStyle(color: ClonesColors.secondaryText),
+                            'No tasks available.',
+                            style: theme.textTheme.bodyMedium,
                           ),
                         )
                       else
                         Expanded(
                           child: ListView.builder(
-                            itemCount: forgeDetail.apps.length,
-                            itemBuilder: (context, appIdx) {
-                              final app = forgeDetail.apps[appIdx];
-                              return AppCardWidget(
-                                app: app,
-                                appIdx: appIdx,
+                            itemCount: forgeDetail.factory!.tasks.length,
+                            itemBuilder: (context, taskIdx) {
+                              final task = forgeDetail.factory!.tasks[taskIdx];
+                              return TaskCardWidget(
+                                task: task,
+                                taskIdx: taskIdx,
                                 factory: forgeDetail.factory!,
                               );
                             },
@@ -95,12 +93,11 @@ class _ForgeFactoryTasksTabState extends ConsumerState<ForgeFactoryTasksTab> {
         ),
         if (forgeDetail.showManageTaskModal)
           ManageTaskModal(
-            tokenSymbol: forgeDetail.factory!.token.symbol,
+            tokenSymbol: forgeDetail.factory!.token?.symbol ?? '',
             modalType: forgeDetail.manageTaskModalType,
             task: forgeDetail.manageTaskModalType == ManageTaskModalType.create
                 ? null
-                : forgeDetail.apps[forgeDetail.editingTaskAppIdx!]
-                    .tasks[forgeDetail.editingTaskIdx!],
+                : forgeDetail.factory!.tasks[forgeDetail.editingTaskIdx!],
             factory: forgeDetail.factory,
             onClose: () {
               ref
@@ -113,10 +110,9 @@ class _ForgeFactoryTasksTabState extends ConsumerState<ForgeFactoryTasksTab> {
                     ManageTaskModalType.create) {
                   ref
                       .read(forgeDetailNotifierProvider.notifier)
-                      .createTask(forgeDetail.editingTaskAppIdx!, task);
+                      .createTask(task);
                 } else {
                   ref.read(forgeDetailNotifierProvider.notifier).updateTask(
-                        forgeDetail.editingTaskAppIdx!,
                         forgeDetail.editingTaskIdx!,
                         task,
                       );

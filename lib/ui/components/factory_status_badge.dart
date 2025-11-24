@@ -33,6 +33,11 @@ class FactoryStatusBadge extends StatelessWidget {
         textColor = Colors.orange;
         statusText = 'NO FUNDS';
         break;
+      case FactoryStatus.archived:
+        badgeColor = Colors.grey.withValues(alpha: 0.1);
+        textColor = Colors.grey;
+        statusText = 'ARCHIVED';
+        break;
     }
 
     return Container(

@@ -1,4 +1,4 @@
-import 'package:clones_desktop/domain/models/factory/factory_app.dart';
+import 'package:clones_desktop/domain/models/factory/workflow_task.dart';
 import 'package:clones_desktop/domain/models/supported_token.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -16,7 +16,7 @@ class GenerateFactoryState with _$GenerateFactoryState {
     String? skills,
     String? error,
     String? factoryName,
-    List<FactoryApp>? apps,
+    List<WorkflowTask>? tasks,
     @Default(false) bool showJsonEditor,
     @Default(GenerateFactoryStep.input) GenerateFactoryStep currentStep,
     @Default(false) bool isCreating,
@@ -28,59 +28,47 @@ class GenerateFactoryState with _$GenerateFactoryState {
     String? estimatedGasCost,
     bool? gasExceedsReward,
     String? transactionStatus,
+    @Default(false) bool openSourceAppsOnly,
+    @Default(false) bool webappAppsOnly,
+    @Default(false) bool desktopAppsOnly,
   }) = _GenerateFactoryState;
   const GenerateFactoryState._();
 
   List<Map<String, String>> get examplePrompts => [
         {
-          'label': 'AI Chat Interfaces',
+          'label': 'AI-Powered Workflows',
           'text':
-              'Navigating and using ChatGPT, Claude, Perplexity web interfaces for document uploads and conversations',
+              'Combining ChatGPT web interface, Claude desktop app, Perplexity research, and traditional document tools for content creation and analysis',
         },
         {
-          'label': 'Social Commerce',
+          'label': 'Social Commerce & Creator Economy',
           'text':
-              'Using TikTok Shop Creator Center, Instagram Business Suite, and YouTube Studio interfaces',
+              'Managing multi-platform content across TikTok Creator Center, YouTube Studio, Instagram Business Suite, and emerging platforms like Threads and Bluesky',
         },
         {
-          'label': 'Design Tools',
+          'label': 'Content Creation Pipeline',
           'text':
-              'Creating designs in Figma web app, Canva browser interface, and Midjourney Discord commands',
+              'Research workflows combining browser research, AI writing assistants, design tools, and multi-platform publishing systems',
         },
         {
-          'label': 'Web3 Interfaces',
+          'label': 'No-Code Development',
           'text':
-              'Using MetaMask extension, Uniswap interface, OpenSea marketplace for wallet and trading operations',
+              'Building applications using Webflow, Airtable databases, Zapier automations, and integration testing across browser environments',
         },
         {
-          'label': 'Productivity Apps',
+          'label': 'Data Analysis & Reporting',
           'text':
-              'Managing projects in Notion web app, Linear interface, and Obsidian desktop application',
+              'Processing business data through Excel/Google Sheets, creating visualizations in web-based tools, and presenting findings via multiple platforms',
         },
         {
-          'label': 'Modern Social Platforms',
+          'label': 'Customer Support Operations',
           'text':
-              'Posting and managing content on X.com, Meta Threads, Discord desktop app, and LinkedIn',
+              'Managing support workflows across ticketing systems, knowledge bases, CRM platforms, and real-time communication tools',
         },
         {
-          'label': 'Video Editing',
+          'label': 'Financial Management',
           'text':
-              'Editing videos in browser-based editors like CapCut, DaVinci Resolve, and Premiere Pro web interfaces',
-        },
-        {
-          'label': 'E-commerce Management',
-          'text':
-              'Managing online stores through Shopify, Amazon Seller Central, and Etsy shop interfaces',
-        },
-        {
-          'label': 'Code Development',
-          'text':
-              'Using GitHub web interface, VS Code browser version, and online IDEs like CodePen and Replit',
-        },
-        {
-          'label': 'Content Creation',
-          'text':
-              'Creating and managing content using YouTube Studio, Twitch Creator Dashboard, and podcast platforms',
+              'Tracking expenses across banking apps, reconciling data in spreadsheets, generating reports, and coordinating with accounting software',
         },
       ];
 }

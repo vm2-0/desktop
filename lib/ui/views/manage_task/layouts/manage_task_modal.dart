@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/domain/models/factory/factory.dart';
-import 'package:clones_desktop/domain/models/factory/factory_task.dart';
+import 'package:clones_desktop/domain/models/factory/workflow_task.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:clones_desktop/ui/views/manage_task/bloc/provider.dart';
@@ -26,10 +26,10 @@ class ManageTaskModal extends ConsumerStatefulWidget {
     required this.factory,
   });
   final String tokenSymbol;
-  final void Function(FactoryTask? task) onDone;
+  final void Function(WorkflowTask? task) onDone;
   final VoidCallback onClose;
   final ManageTaskModalType modalType;
-  final FactoryTask? task;
+  final WorkflowTask? task;
   final Factory? factory;
 
   @override
@@ -75,17 +75,24 @@ class _ManageTaskModalState extends ConsumerState<ManageTaskModal> {
     if (state.prompt.isEmpty) {
       return;
     }
-    final FactoryTask result;
+    final WorkflowTask result;
     if (widget.modalType == ManageTaskModalType.create) {
-      result = FactoryTask(
+      result = WorkflowTask(
         prompt: state.prompt,
-        rewardLimit: state.pricePerDemo != null ? Decimal.parse(state.pricePerDemo.toString()) : null,
+        taskName: '',
+        categories: [],
+        appsUsed: [],
+        rewardLimit: state.pricePerDemo != null
+            ? Decimal.parse(state.pricePerDemo.toString())
+            : null,
         uploadLimit: state.uploadLimitValue,
       );
     } else {
       result = widget.task!.copyWith(
         prompt: state.prompt,
-        rewardLimit: state.pricePerDemo != null ? Decimal.parse(state.pricePerDemo.toString()) : null,
+        rewardLimit: state.pricePerDemo != null
+            ? Decimal.parse(state.pricePerDemo.toString())
+            : null,
         uploadLimit: state.uploadLimitValue,
       );
     }

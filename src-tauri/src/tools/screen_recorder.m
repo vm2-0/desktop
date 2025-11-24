@@ -319,18 +319,10 @@ ScreenRecorder *globalRecorder = nil;
 BOOL shouldStop = NO;
 
 void signalHandler(int signal) {
-    NSLog(@"[ScreenRecorder] Received signal %d, stopping recording gracefully...", signal);
+    // IMPORTANT: Signal handlers can only call async-signal-safe functions.
+    // Do NOT call Objective-C methods or GCD operations here - it will deadlock.
+    // Just set the flag and let the main runloop handle cleanup.
     shouldStop = YES;
-    
-    if (globalRecorder && globalRecorder.isRecording) {
-        NSError *error;
-        BOOL success = [globalRecorder stopRecording:&error];
-        if (!success || error) {
-            NSLog(@"[ScreenRecorder] Error during signal cleanup: %@", error ? error.localizedDescription : @"Unknown error");
-        } else {
-            NSLog(@"[ScreenRecorder] Recording stopped successfully via signal handler");
-        }
-    }
 }
 
 int main(int argc, const char * argv[]) {
@@ -373,14 +365,16 @@ int main(int argc, const char * argv[]) {
             [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
         }
         
-        if (!shouldStop) {
-            NSLog(@"[ScreenRecorder] Duration completed, stopping recording...");
-            if (![recorder stopRecording:&error]) {
-                NSLog(@"[ScreenRecorder] Failed to stop recording: %@", error.localizedDescription);
-                return 1;
-            }
+        // Always call stopRecording to finalize the file properly
+        if (shouldStop) {
+            NSLog(@"[ScreenRecorder] Received signal, stopping recording...");
         } else {
-            NSLog(@"[ScreenRecorder] Recording stopped by signal");
+            NSLog(@"[ScreenRecorder] Duration completed, stopping recording...");
+        }
+
+        if (![recorder stopRecording:&error]) {
+            NSLog(@"[ScreenRecorder] Failed to stop recording: %@", error.localizedDescription);
+            return 1;
         }
         
         // Brief wait for any final cleanup

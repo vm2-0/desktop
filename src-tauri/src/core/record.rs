@@ -3,7 +3,7 @@
 //! This module provides the main types and functions for managing recording sessions, metadata, demonstrations, and file operations.
 
 use crate::core::input;
-use crate::core::synchronization::{start_sync, stop_sync, set_video_start_callback};
+use crate::core::synchronization::{set_video_start_callback, start_sync, stop_sync};
 use crate::tools::axtree;
 #[cfg(not(target_os = "macos"))]
 use crate::tools::ffmpeg::{init_ffmpeg, FFmpegRecorder, FFMPEG_PATH};
@@ -94,7 +94,6 @@ pub struct RecordingMeta {
 pub struct Demonstration {
     title: String,
     app: String,
-    icon_url: String,
     objectives: Vec<String>,
     content: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -136,7 +135,6 @@ enum Recorder {
 }
 
 impl Recorder {
-
     fn start(&mut self) -> Result<(), String> {
         match self {
             #[cfg(target_os = "macos")]
@@ -642,19 +640,22 @@ pub async fn start_recording(
     // Set up callback to be notified when video ACTUALLY starts
     let sync_established = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
     let sync_flag = sync_established.clone();
-    
+
     set_video_start_callback(move |video_start_instant| {
         let reference_timestamp = start_sync(video_start_instant);
-        log::info!("[sync] ⏱️ TRUE video start detected - sync established: {}", reference_timestamp.to_rfc3339());
+        log::info!(
+            "[sync] ⏱️ TRUE video start detected - sync established: {}",
+            reference_timestamp.to_rfc3339()
+        );
         sync_flag.store(true, std::sync::atomic::Ordering::SeqCst);
     });
-    
+
     // Start recording - it will callback when video actually begins
     let mut recorder = Recorder::new(&video_path, &primary, fps)?;
     recorder.start()?;
-    
+
     log::info!("[record] Recorder started, waiting for TRUE video start signal...");
-    
+
     // Wait for the true video start callback
     let timeout = std::time::Duration::from_secs(10);
     let start_wait = std::time::Instant::now();
@@ -664,17 +665,17 @@ pub async fn start_recording(
         }
         std::thread::sleep(std::time::Duration::from_millis(10));
     }
-    
+
     log::info!("[record] True video start confirmed - proceeding with input sync");
-    
+
     set_rec_state(&app, "recording".to_string(), None)?;
-    
+
     // Reference time will be stored by the callback when video actually starts
     // For compatibility with existing code, use current time as fallback
     let fallback_time = chrono::Local::now().timestamp_millis();
     RECORDING_START_TIME_MILLIS.store(fallback_time, Ordering::Relaxed);
     // The NativeRecorder will call start_sync() when first frame is captured
-    
+
     // Store in DEMONSTRATION_STATE with poison recovery
     {
         let mut global_state = match DEMONSTRATION_STATE.lock() {
@@ -739,7 +740,6 @@ pub async fn start_recording(
         axtree::set_recording_mode(true)?;
     }
 
-
     Ok(())
 }
 
@@ -759,7 +759,7 @@ pub async fn stop_recording(
 ) -> Result<String, String> {
     // Emit recording stopping event
     set_rec_state(&app, "stopping".to_string(), None)?;
-    
+
     // Stop synchronization
     stop_sync();
 
@@ -806,14 +806,16 @@ pub async fn stop_recording(
             );
             recorder_dur.round() as u64
         } else if video_path.exists() {
-            log::info!("[stop_recording] Video file exists, checking if readable before FFprobe...");
-            
+            log::info!(
+                "[stop_recording] Video file exists, checking if readable before FFprobe..."
+            );
+
             // Check if file is readable and has size
             match std::fs::metadata(&video_path) {
                 Ok(metadata) => {
                     let file_size = metadata.len();
                     log::info!("[stop_recording] Video file size: {} bytes", file_size);
-                    
+
                     if file_size == 0 {
                         log::warn!("[stop_recording] Video file is empty, using wallclock time");
                         if let Ok(global_state) = DEMONSTRATION_STATE.lock() {
@@ -828,8 +830,10 @@ pub async fn stop_recording(
                     } else {
                         // Add a small delay to ensure file is fully written
                         std::thread::sleep(std::time::Duration::from_millis(500));
-                        
-                        log::info!("[stop_recording] Attempting to get video duration via FFprobe...");
+
+                        log::info!(
+                            "[stop_recording] Attempting to get video duration via FFprobe..."
+                        );
                         match get_video_duration(&video_path) {
                             Ok(duration_f64) => {
                                 log::info!(
@@ -846,7 +850,8 @@ pub async fn stop_recording(
                                 // Fallback to wallclock time if FFprobe fails
                                 if let Ok(global_state) = DEMONSTRATION_STATE.lock() {
                                     if let Some(start_time) = global_state.recording_start_time {
-                                        Local::now().signed_duration_since(start_time).num_seconds() as u64
+                                        Local::now().signed_duration_since(start_time).num_seconds()
+                                            as u64
                                     } else {
                                         0
                                     }
@@ -909,7 +914,7 @@ pub async fn stop_recording(
                 let file = File::open(&input_log_path)
                     .map_err(|e| format!("Failed to open input_log.jsonl: {}", e))?;
                 let reader = BufReader::new(file);
-                
+
                 let mut event_count = 0u32;
                 for line_result in reader.lines() {
                     match line_result {
@@ -965,7 +970,6 @@ pub async fn stop_recording(
 
     // Reset atomic recording start time
     RECORDING_START_TIME_MILLIS.store(0, Ordering::Relaxed);
-    
 
     if let Some(recording_id) = recording_id_opt {
         set_rec_state(&app, "saved".to_string(), Some(recording_id.clone()))?;
@@ -1299,7 +1303,10 @@ fn read_file_contents(file_path: &std::path::Path) -> Result<Vec<u8>, String> {
 }
 
 /// Calculate which segments to keep (same logic for video AND input logs)
-fn calculate_keep_segments(deleted_ranges_seconds: &[(f64, f64)], duration_seconds: f64) -> Vec<(f64, f64)> {
+fn calculate_keep_segments(
+    deleted_ranges_seconds: &[(f64, f64)],
+    duration_seconds: f64,
+) -> Vec<(f64, f64)> {
     let mut keep_segments = Vec::new();
     let mut current_start = 0.0;
 
@@ -1326,9 +1333,12 @@ fn calculate_keep_segments(deleted_ranges_seconds: &[(f64, f64)], duration_secon
 }
 
 /// Map original timestamp to new timestamp based on kept segments
-fn map_timestamp_to_new_timeline(original_seconds: f64, keep_segments: &[(f64, f64)]) -> Option<f64> {
+fn map_timestamp_to_new_timeline(
+    original_seconds: f64,
+    keep_segments: &[(f64, f64)],
+) -> Option<f64> {
     let mut accumulated_time = 0.0;
-    
+
     for (seg_start, seg_end) in keep_segments {
         if original_seconds >= *seg_start && original_seconds <= *seg_end {
             // Timestamp is within this kept segment
@@ -1338,7 +1348,7 @@ fn map_timestamp_to_new_timeline(original_seconds: f64, keep_segments: &[(f64, f
         // Add this segment's duration to accumulated time
         accumulated_time += seg_end - seg_start;
     }
-    
+
     None // Timestamp was in a deleted segment
 }
 
@@ -1363,11 +1373,12 @@ fn filter_input_log(
     let estimated_duration = deleted_ranges_seconds
         .iter()
         .map(|(_, end)| *end)
-        .fold(0.0, f64::max) + 5.0; // Add small buffer
+        .fold(0.0, f64::max)
+        + 5.0; // Add small buffer
 
     // Use SAME logic as video processing
     let keep_segments = calculate_keep_segments(&deleted_ranges_seconds, estimated_duration);
-    
+
     log::info!(
         "[filter_input_log] Keep segments: {:?} (total duration: {:.2}s)",
         keep_segments,
@@ -1395,7 +1406,9 @@ fn filter_input_log(
                     let time_seconds = time_ms / 1000.0;
 
                     // Use the SAME mapping logic as video processing
-                    if let Some(new_time_seconds) = map_timestamp_to_new_timeline(time_seconds, &keep_segments) {
+                    if let Some(new_time_seconds) =
+                        map_timestamp_to_new_timeline(time_seconds, &keep_segments)
+                    {
                         let new_time_ms = new_time_seconds * 1000.0;
 
                         // Update the timestamp in the JSON entry
@@ -1417,7 +1430,10 @@ fn filter_input_log(
                 }
             }
             Err(_) => {
-                log::warn!("[filter_input_log] Failed to parse JSON line, skipping: {}", line);
+                log::warn!(
+                    "[filter_input_log] Failed to parse JSON line, skipping: {}",
+                    line
+                );
                 // Skip malformed lines instead of keeping them
             }
         }
@@ -1548,8 +1564,9 @@ fn apply_video_edits(
     );
 
     // Ensure FFmpeg is initialized (needed for video editing on all platforms)
-    crate::tools::ffmpeg::init_ffmpeg().map_err(|e| format!("Failed to initialize FFmpeg for video editing: {}", e))?;
-    
+    crate::tools::ffmpeg::init_ffmpeg()
+        .map_err(|e| format!("Failed to initialize FFmpeg for video editing: {}", e))?;
+
     #[cfg(not(target_os = "macos"))]
     {
         use crate::tools::ffmpeg::FFMPEG_PATH;
@@ -1588,10 +1605,7 @@ fn apply_video_edits(
         return Err("No video segments left after applying edits".to_string());
     }
 
-    let total_kept_duration: f64 = keep_segments
-        .iter()
-        .map(|(start, end)| end - start)
-        .sum();
+    let total_kept_duration: f64 = keep_segments.iter().map(|(start, end)| end - start).sum();
 
     log::info!(
         "[apply_video_edits] Using unified logic - keeping {} segments with total duration {:.2}s: {:?}",
@@ -1628,8 +1642,8 @@ fn trim_video_segment(
     start_seconds: f64,
     duration_seconds: f64,
 ) -> Result<(), String> {
-    let ffmpeg_path = crate::tools::ffmpeg::get_embedded_ffmpeg_path()
-        .ok_or("FFmpeg binary not found")?;
+    let ffmpeg_path =
+        crate::tools::ffmpeg::get_embedded_ffmpeg_path().ok_or("FFmpeg binary not found")?;
 
     log::info!(
         "[trim_video_segment] Trimming from {:.3}s for {:.3}s (end: {:.3}s)",
@@ -1678,7 +1692,7 @@ fn trim_video_segment(
             "make_zero",
             "-fflags",
             "+genpts", // Generate presentation timestamps
-            "-y", // Overwrite output file
+            "-y",      // Overwrite output file
             output_path.to_str().unwrap(),
         ])
         .output()
@@ -1699,10 +1713,10 @@ fn trim_video_segment(
     if !output_path.exists() {
         return Err("Output file was not created".to_string());
     }
-    
+
     let metadata = std::fs::metadata(output_path)
         .map_err(|e| format!("Failed to check output file: {}", e))?;
-    
+
     if metadata.len() == 0 {
         return Err("Output file is empty".to_string());
     }
@@ -1715,15 +1729,14 @@ fn trim_video_segment(
     Ok(())
 }
 
-
 /// Concatenate multiple video segments using FFmpeg (all platforms)
 fn concatenate_video_segments(
     input_path: &std::path::Path,
     output_path: &std::path::Path,
     segments: &[(f64, f64)],
 ) -> Result<(), String> {
-    let ffmpeg_path = crate::tools::ffmpeg::get_embedded_ffmpeg_path()
-        .ok_or("FFmpeg binary not found")?;
+    let ffmpeg_path =
+        crate::tools::ffmpeg::get_embedded_ffmpeg_path().ok_or("FFmpeg binary not found")?;
 
     log::info!(
         "[concatenate_video_segments] Concatenating {} segments",
@@ -1804,12 +1817,11 @@ fn concatenate_video_segments(
     Ok(())
 }
 
-
 /// Get video duration using FFprobe (non-macOS platforms)
 #[cfg(not(target_os = "macos"))]
 fn get_video_duration(video_path: &std::path::Path) -> Result<f64, String> {
-    let ffprobe_path = crate::tools::ffmpeg::get_embedded_ffprobe_path()
-        .ok_or("FFprobe binary not found")?;
+    let ffprobe_path =
+        crate::tools::ffmpeg::get_embedded_ffprobe_path().ok_or("FFprobe binary not found")?;
 
     let mut command = std::process::Command::new(ffprobe_path);
 
@@ -1852,14 +1864,20 @@ fn get_video_duration(video_path: &std::path::Path) -> Result<f64, String> {
 /// Get video duration on macOS - use embedded ffprobe first, then external fallbacks
 #[cfg(target_os = "macos")]
 fn get_video_duration(video_path: &std::path::Path) -> Result<f64, String> {
-    log::info!("[get_video_duration] Starting video duration detection for: {:?}", video_path);
-    
+    log::info!(
+        "[get_video_duration] Starting video duration detection for: {:?}",
+        video_path
+    );
+
     // First try embedded ffprobe (should always be available)
     if let Some(embedded_ffprobe) = crate::tools::ffmpeg::get_embedded_ffprobe_path() {
-        log::info!("[get_video_duration] Found embedded ffprobe path: {:?}", embedded_ffprobe);
+        log::info!(
+            "[get_video_duration] Found embedded ffprobe path: {:?}",
+            embedded_ffprobe
+        );
         if embedded_ffprobe.exists() {
             log::info!("[get_video_duration] Embedded ffprobe exists, attempting to use it...");
-            
+
             // Use spawn with timeout to prevent hanging
             let mut child = match std::process::Command::new(&embedded_ffprobe)
                 .args([
@@ -1870,14 +1888,18 @@ fn get_video_duration(video_path: &std::path::Path) -> Result<f64, String> {
                     "-show_format",
                     video_path.to_str().unwrap(),
                 ])
-                .spawn() {
+                .spawn()
+            {
                 Ok(child) => child,
                 Err(e) => {
-                    log::warn!("[get_video_duration] Failed to spawn embedded ffprobe: {}", e);
+                    log::warn!(
+                        "[get_video_duration] Failed to spawn embedded ffprobe: {}",
+                        e
+                    );
                     return Err(format!("Failed to spawn embedded ffprobe: {}", e));
                 }
             };
-            
+
             // Wait with timeout (5 seconds should be enough for FFprobe)
             let timeout = std::time::Duration::from_secs(5);
             let start = std::time::Instant::now();
@@ -1891,7 +1913,9 @@ fn get_video_duration(video_path: &std::path::Path) -> Result<f64, String> {
                     Ok(None) => {
                         // Process still running
                         if start.elapsed() > timeout {
-                            log::warn!("[get_video_duration] FFprobe timeout after 5s, killing process");
+                            log::warn!(
+                                "[get_video_duration] FFprobe timeout after 5s, killing process"
+                            );
                             let _ = child.kill();
                             let _ = child.wait(); // Clean up zombie
                             return Err("FFprobe timeout after 5 seconds".to_string());
@@ -1923,7 +1947,7 @@ fn get_video_duration(video_path: &std::path::Path) -> Result<f64, String> {
             }
         }
     }
-    
+
     // Fallback to external ffprobe installations
     let ffprobe_commands = [
         "ffprobe",

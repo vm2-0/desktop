@@ -6,6 +6,7 @@ import 'package:clones_desktop/application/tauri_api.dart';
 import 'package:clones_desktop/application/upload.dart';
 import 'package:clones_desktop/application/upload/state.dart';
 import 'package:clones_desktop/domain/models/upload/upload_metadata.dart';
+import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -54,7 +55,10 @@ class UploadQueueNotifier extends StateNotifier<Map<String, UploadTaskState>> {
 
     final isConfirmed = await ref.read(isUploadDataAllowedProvider.future);
     if (!isConfirmed) {
-      throw Exception('Upload data is not allowed');
+      ref
+          .read(demoDetailNotifierProvider.notifier)
+          .setShowUploadConfirmModal(true);
+      return;
     }
 
     _updateTaskState(

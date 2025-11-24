@@ -8,9 +8,7 @@ class AddTaskButtonWidget extends ConsumerWidget {
 
   const AddTaskButtonWidget({
     super.key,
-    required this.appIdx,
   });
-  final int appIdx;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -20,7 +18,6 @@ class AddTaskButtonWidget extends ConsumerWidget {
       onTap: () {
         ref.read(forgeDetailNotifierProvider.notifier)
           ..setManageTaskModalType(ManageTaskModalType.create)
-          ..setEditingTaskAppIdx(appIdx)
           ..setShowManageTaskModal(true);
       },
       child: SizedBox(
