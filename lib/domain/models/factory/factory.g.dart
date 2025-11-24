@@ -9,7 +9,7 @@ part of 'factory.dart';
 _$FactoryImpl _$$FactoryImplFromJson(Map<String, dynamic> json) =>
     _$FactoryImpl(
       id: json['id'] as String,
-      poolAddress: json['poolAddress'] as String,
+      poolAddress: json['poolAddress'] as String?,
       name: json['name'] as String,
       description: json['description'] as String?,
       ownerAddress: json['ownerAddress'] as String,
@@ -20,12 +20,14 @@ _$FactoryImpl _$$FactoryImplFromJson(Map<String, dynamic> json) =>
               ?.map((e) => e as String)
               .toList() ??
           const [],
-      token: FactoryToken.fromJson(json['token'] as Map<String, dynamic>),
+      token: json['token'] == null
+          ? null
+          : FactoryToken.fromJson(json['token'] as Map<String, dynamic>),
       balance: (json['balance'] as num?)?.toDouble() ?? 0.0,
       totalEarned: DecimalJson.fromJson(json['totalEarned']),
       demonstrations: (json['demonstrations'] as num?)?.toInt() ?? 0,
-      apps: (json['apps'] as List<dynamic>?)
-              ?.map((e) => FactoryApp.fromJson(e as Map<String, dynamic>))
+      tasks: (json['tasks'] as List<dynamic>?)
+              ?.map((e) => WorkflowTask.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
       searchText: json['searchText'] as String? ?? '',
@@ -48,7 +50,7 @@ Map<String, dynamic> _$$FactoryImplToJson(_$FactoryImpl instance) =>
       'balance': instance.balance,
       'totalEarned': DecimalJson.toJson(instance.totalEarned),
       'demonstrations': instance.demonstrations,
-      'apps': instance.apps,
+      'tasks': instance.tasks,
       'searchText': instance.searchText,
       'expanded': instance.expanded,
       'isLoading': instance.isLoading,
@@ -59,4 +61,5 @@ const _$FactoryStatusEnumMap = {
   FactoryStatus.paused: 'paused',
   FactoryStatus.error: 'error',
   FactoryStatus.noFunds: 'no-funds',
+  FactoryStatus.archived: 'archived',
 };

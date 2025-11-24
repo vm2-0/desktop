@@ -64,7 +64,7 @@ class FactoryWithdrawModal extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  if (factory != null) ...[
+                  if (factory != null && factory.token != null) ...[
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -89,7 +89,7 @@ class FactoryWithdrawModal extends ConsumerWidget {
                                 ),
                               ),
                               Text(
-                                '${formatNumberWithSeparator(factory.balance)} ${factory.token.symbol}',
+                                '${formatNumberWithSeparator(factory.balance)} ${factory.token?.symbol ?? ''}',
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   color: theme.textTheme.bodyMedium?.color!
                                       .withValues(alpha: 0.3),
@@ -125,7 +125,7 @@ class FactoryWithdrawModal extends ConsumerWidget {
                                   ],
                                 ),
                                 Text(
-                                  '${formatNumberWithSeparator(double.tryParse(modalState.maxSafeWithdrawal!) ?? 0)} ${factory.token.symbol}',
+                                  '${formatNumberWithSeparator(double.tryParse(modalState.maxSafeWithdrawal!) ?? 0)} ${factory.token?.symbol ?? ''}',
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: Colors.green.withValues(alpha: 0.7),
                                     fontWeight: FontWeight.bold,
@@ -217,7 +217,7 @@ class FactoryWithdrawModal extends ConsumerWidget {
                                     color: theme.textTheme.bodyMedium?.color!
                                         .withValues(alpha: 0.5),
                                   ),
-                                  suffixText: factory?.token.symbol,
+                                  suffixText: factory?.token?.symbol ?? '',
                                   suffixStyle: theme.textTheme.bodyMedium,
                                   errorText: modalState.error?.isNotEmpty ==
                                           true

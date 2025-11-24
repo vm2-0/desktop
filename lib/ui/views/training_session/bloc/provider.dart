@@ -135,17 +135,14 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
       await addMessage(generateAssistantMessage(demonstration.content));
     }
 
-    if (demonstration.title.isNotEmpty &&
-        demonstration.app.isNotEmpty &&
-        demonstration.objectives.isNotEmpty) {
+    if (demonstration.title.isNotEmpty && demonstration.objectives.isNotEmpty) {
       final currentDemonstration = Demonstration(
         title: demonstration.title,
         app: demonstration.app,
-        iconUrl: demonstration.iconUrl,
         objectives: demonstration.objectives,
         content: demonstration.content,
         poolId: state.factory?.id,
-        taskId: state.app?.taskId,
+        taskId: state.factoryTask?.id,
       );
 
       if (state.factory?.id != null) {
@@ -309,13 +306,27 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
     setIsWaitingForResponse(true);
 
     try {
+      final appsUsed = <Map<String, dynamic>>[];
+
+      if (state.factoryTask?.appsUsed != null) {
+        appsUsed.addAll(
+          state.factoryTask!.appsUsed.map(
+            (app) => {
+              'name': app.name,
+              'domain': app.domain,
+              'description': app.description,
+            },
+          ),
+        );
+      }
+
       final response = await http.post(
         Uri.parse('${Env.apiBackendUrl}/api/v1/forge/chat'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'messages': [],
           'task_prompt': state.prompt ?? 'anything keep it simple',
-          'app': state.app?.toJson(),
+          'apps_used': appsUsed,
         }),
       );
 

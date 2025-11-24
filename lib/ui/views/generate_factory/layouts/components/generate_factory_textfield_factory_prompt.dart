@@ -6,11 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class GenerateFactoryTextFieldFactoryPrompt extends ConsumerStatefulWidget {
   const GenerateFactoryTextFieldFactoryPrompt({
     super.key,
-    required this.appIdx,
     required this.taskIdx,
   });
 
-  final int appIdx;
   final int taskIdx;
 
   @override
@@ -28,7 +26,7 @@ class GenerateFactoryTextFieldFactoryPromptState
     super.initState();
     final generateFactory = ref.read(generateFactoryNotifierProvider);
     controller = TextEditingController(
-      text: generateFactory.apps?[widget.appIdx].tasks[widget.taskIdx].prompt,
+      text: generateFactory.tasks?[widget.taskIdx].prompt,
     );
     focusNode = FocusNode();
   }
@@ -86,7 +84,6 @@ class GenerateFactoryTextFieldFactoryPromptState
                             controller: controller,
                             onChanged: (text) async {
                               generateFactoryNotifier.updateTaskPrompt(
-                                widget.appIdx,
                                 widget.taskIdx,
                                 text,
                               );

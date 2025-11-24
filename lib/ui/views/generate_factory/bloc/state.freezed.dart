@@ -19,7 +19,7 @@ mixin _$GenerateFactoryState {
   String? get skills => throw _privateConstructorUsedError;
   String? get error => throw _privateConstructorUsedError;
   String? get factoryName => throw _privateConstructorUsedError;
-  List<FactoryApp>? get apps => throw _privateConstructorUsedError;
+  List<WorkflowTask>? get tasks => throw _privateConstructorUsedError;
   bool get showJsonEditor => throw _privateConstructorUsedError;
   GenerateFactoryStep get currentStep => throw _privateConstructorUsedError;
   bool get isCreating => throw _privateConstructorUsedError;
@@ -32,6 +32,9 @@ mixin _$GenerateFactoryState {
   String? get estimatedGasCost => throw _privateConstructorUsedError;
   bool? get gasExceedsReward => throw _privateConstructorUsedError;
   String? get transactionStatus => throw _privateConstructorUsedError;
+  bool get openSourceAppsOnly => throw _privateConstructorUsedError;
+  bool get webappAppsOnly => throw _privateConstructorUsedError;
+  bool get desktopAppsOnly => throw _privateConstructorUsedError;
 
   /// Create a copy of GenerateFactoryState
   /// with the given fields replaced by the non-null parameter values.
@@ -50,7 +53,7 @@ abstract class $GenerateFactoryStateCopyWith<$Res> {
       {String? skills,
       String? error,
       String? factoryName,
-      List<FactoryApp>? apps,
+      List<WorkflowTask>? tasks,
       bool showJsonEditor,
       GenerateFactoryStep currentStep,
       bool isCreating,
@@ -61,7 +64,10 @@ abstract class $GenerateFactoryStateCopyWith<$Res> {
       String? fundingAmount,
       String? estimatedGasCost,
       bool? gasExceedsReward,
-      String? transactionStatus});
+      String? transactionStatus,
+      bool openSourceAppsOnly,
+      bool webappAppsOnly,
+      bool desktopAppsOnly});
 }
 
 /// @nodoc
@@ -83,7 +89,7 @@ class _$GenerateFactoryStateCopyWithImpl<$Res,
     Object? skills = freezed,
     Object? error = freezed,
     Object? factoryName = freezed,
-    Object? apps = freezed,
+    Object? tasks = freezed,
     Object? showJsonEditor = null,
     Object? currentStep = null,
     Object? isCreating = null,
@@ -95,6 +101,9 @@ class _$GenerateFactoryStateCopyWithImpl<$Res,
     Object? estimatedGasCost = freezed,
     Object? gasExceedsReward = freezed,
     Object? transactionStatus = freezed,
+    Object? openSourceAppsOnly = null,
+    Object? webappAppsOnly = null,
+    Object? desktopAppsOnly = null,
   }) {
     return _then(_value.copyWith(
       skills: freezed == skills
@@ -109,10 +118,10 @@ class _$GenerateFactoryStateCopyWithImpl<$Res,
           ? _value.factoryName
           : factoryName // ignore: cast_nullable_to_non_nullable
               as String?,
-      apps: freezed == apps
-          ? _value.apps
-          : apps // ignore: cast_nullable_to_non_nullable
-              as List<FactoryApp>?,
+      tasks: freezed == tasks
+          ? _value.tasks
+          : tasks // ignore: cast_nullable_to_non_nullable
+              as List<WorkflowTask>?,
       showJsonEditor: null == showJsonEditor
           ? _value.showJsonEditor
           : showJsonEditor // ignore: cast_nullable_to_non_nullable
@@ -157,6 +166,18 @@ class _$GenerateFactoryStateCopyWithImpl<$Res,
           ? _value.transactionStatus
           : transactionStatus // ignore: cast_nullable_to_non_nullable
               as String?,
+      openSourceAppsOnly: null == openSourceAppsOnly
+          ? _value.openSourceAppsOnly
+          : openSourceAppsOnly // ignore: cast_nullable_to_non_nullable
+              as bool,
+      webappAppsOnly: null == webappAppsOnly
+          ? _value.webappAppsOnly
+          : webappAppsOnly // ignore: cast_nullable_to_non_nullable
+              as bool,
+      desktopAppsOnly: null == desktopAppsOnly
+          ? _value.desktopAppsOnly
+          : desktopAppsOnly // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -173,7 +194,7 @@ abstract class _$$GenerateFactoryStateImplCopyWith<$Res>
       {String? skills,
       String? error,
       String? factoryName,
-      List<FactoryApp>? apps,
+      List<WorkflowTask>? tasks,
       bool showJsonEditor,
       GenerateFactoryStep currentStep,
       bool isCreating,
@@ -184,7 +205,10 @@ abstract class _$$GenerateFactoryStateImplCopyWith<$Res>
       String? fundingAmount,
       String? estimatedGasCost,
       bool? gasExceedsReward,
-      String? transactionStatus});
+      String? transactionStatus,
+      bool openSourceAppsOnly,
+      bool webappAppsOnly,
+      bool desktopAppsOnly});
 }
 
 /// @nodoc
@@ -203,7 +227,7 @@ class __$$GenerateFactoryStateImplCopyWithImpl<$Res>
     Object? skills = freezed,
     Object? error = freezed,
     Object? factoryName = freezed,
-    Object? apps = freezed,
+    Object? tasks = freezed,
     Object? showJsonEditor = null,
     Object? currentStep = null,
     Object? isCreating = null,
@@ -215,6 +239,9 @@ class __$$GenerateFactoryStateImplCopyWithImpl<$Res>
     Object? estimatedGasCost = freezed,
     Object? gasExceedsReward = freezed,
     Object? transactionStatus = freezed,
+    Object? openSourceAppsOnly = null,
+    Object? webappAppsOnly = null,
+    Object? desktopAppsOnly = null,
   }) {
     return _then(_$GenerateFactoryStateImpl(
       skills: freezed == skills
@@ -229,10 +256,10 @@ class __$$GenerateFactoryStateImplCopyWithImpl<$Res>
           ? _value.factoryName
           : factoryName // ignore: cast_nullable_to_non_nullable
               as String?,
-      apps: freezed == apps
-          ? _value._apps
-          : apps // ignore: cast_nullable_to_non_nullable
-              as List<FactoryApp>?,
+      tasks: freezed == tasks
+          ? _value._tasks
+          : tasks // ignore: cast_nullable_to_non_nullable
+              as List<WorkflowTask>?,
       showJsonEditor: null == showJsonEditor
           ? _value.showJsonEditor
           : showJsonEditor // ignore: cast_nullable_to_non_nullable
@@ -277,6 +304,18 @@ class __$$GenerateFactoryStateImplCopyWithImpl<$Res>
           ? _value.transactionStatus
           : transactionStatus // ignore: cast_nullable_to_non_nullable
               as String?,
+      openSourceAppsOnly: null == openSourceAppsOnly
+          ? _value.openSourceAppsOnly
+          : openSourceAppsOnly // ignore: cast_nullable_to_non_nullable
+              as bool,
+      webappAppsOnly: null == webappAppsOnly
+          ? _value.webappAppsOnly
+          : webappAppsOnly // ignore: cast_nullable_to_non_nullable
+              as bool,
+      desktopAppsOnly: null == desktopAppsOnly
+          ? _value.desktopAppsOnly
+          : desktopAppsOnly // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -288,7 +327,7 @@ class _$GenerateFactoryStateImpl extends _GenerateFactoryState {
       {this.skills,
       this.error,
       this.factoryName,
-      final List<FactoryApp>? apps,
+      final List<WorkflowTask>? tasks,
       this.showJsonEditor = false,
       this.currentStep = GenerateFactoryStep.input,
       this.isCreating = false,
@@ -299,8 +338,11 @@ class _$GenerateFactoryStateImpl extends _GenerateFactoryState {
       this.fundingAmount,
       this.estimatedGasCost,
       this.gasExceedsReward,
-      this.transactionStatus})
-      : _apps = apps,
+      this.transactionStatus,
+      this.openSourceAppsOnly = false,
+      this.webappAppsOnly = false,
+      this.desktopAppsOnly = false})
+      : _tasks = tasks,
         _supportedTokens = supportedTokens,
         super._();
 
@@ -310,12 +352,12 @@ class _$GenerateFactoryStateImpl extends _GenerateFactoryState {
   final String? error;
   @override
   final String? factoryName;
-  final List<FactoryApp>? _apps;
+  final List<WorkflowTask>? _tasks;
   @override
-  List<FactoryApp>? get apps {
-    final value = _apps;
+  List<WorkflowTask>? get tasks {
+    final value = _tasks;
     if (value == null) return null;
-    if (_apps is EqualUnmodifiableListView) return _apps;
+    if (_tasks is EqualUnmodifiableListView) return _tasks;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(value);
   }
@@ -354,10 +396,19 @@ class _$GenerateFactoryStateImpl extends _GenerateFactoryState {
   final bool? gasExceedsReward;
   @override
   final String? transactionStatus;
+  @override
+  @JsonKey()
+  final bool openSourceAppsOnly;
+  @override
+  @JsonKey()
+  final bool webappAppsOnly;
+  @override
+  @JsonKey()
+  final bool desktopAppsOnly;
 
   @override
   String toString() {
-    return 'GenerateFactoryState(skills: $skills, error: $error, factoryName: $factoryName, apps: $apps, showJsonEditor: $showJsonEditor, currentStep: $currentStep, isCreating: $isCreating, isCreated: $isCreated, supportedTokens: $supportedTokens, selectedTokenSymbol: $selectedTokenSymbol, predictedPoolAddress: $predictedPoolAddress, fundingAmount: $fundingAmount, estimatedGasCost: $estimatedGasCost, gasExceedsReward: $gasExceedsReward, transactionStatus: $transactionStatus)';
+    return 'GenerateFactoryState(skills: $skills, error: $error, factoryName: $factoryName, tasks: $tasks, showJsonEditor: $showJsonEditor, currentStep: $currentStep, isCreating: $isCreating, isCreated: $isCreated, supportedTokens: $supportedTokens, selectedTokenSymbol: $selectedTokenSymbol, predictedPoolAddress: $predictedPoolAddress, fundingAmount: $fundingAmount, estimatedGasCost: $estimatedGasCost, gasExceedsReward: $gasExceedsReward, transactionStatus: $transactionStatus, openSourceAppsOnly: $openSourceAppsOnly, webappAppsOnly: $webappAppsOnly, desktopAppsOnly: $desktopAppsOnly)';
   }
 
   @override
@@ -369,7 +420,7 @@ class _$GenerateFactoryStateImpl extends _GenerateFactoryState {
             (identical(other.error, error) || other.error == error) &&
             (identical(other.factoryName, factoryName) ||
                 other.factoryName == factoryName) &&
-            const DeepCollectionEquality().equals(other._apps, _apps) &&
+            const DeepCollectionEquality().equals(other._tasks, _tasks) &&
             (identical(other.showJsonEditor, showJsonEditor) ||
                 other.showJsonEditor == showJsonEditor) &&
             (identical(other.currentStep, currentStep) ||
@@ -391,7 +442,13 @@ class _$GenerateFactoryStateImpl extends _GenerateFactoryState {
             (identical(other.gasExceedsReward, gasExceedsReward) ||
                 other.gasExceedsReward == gasExceedsReward) &&
             (identical(other.transactionStatus, transactionStatus) ||
-                other.transactionStatus == transactionStatus));
+                other.transactionStatus == transactionStatus) &&
+            (identical(other.openSourceAppsOnly, openSourceAppsOnly) ||
+                other.openSourceAppsOnly == openSourceAppsOnly) &&
+            (identical(other.webappAppsOnly, webappAppsOnly) ||
+                other.webappAppsOnly == webappAppsOnly) &&
+            (identical(other.desktopAppsOnly, desktopAppsOnly) ||
+                other.desktopAppsOnly == desktopAppsOnly));
   }
 
   @override
@@ -400,7 +457,7 @@ class _$GenerateFactoryStateImpl extends _GenerateFactoryState {
       skills,
       error,
       factoryName,
-      const DeepCollectionEquality().hash(_apps),
+      const DeepCollectionEquality().hash(_tasks),
       showJsonEditor,
       currentStep,
       isCreating,
@@ -411,7 +468,10 @@ class _$GenerateFactoryStateImpl extends _GenerateFactoryState {
       fundingAmount,
       estimatedGasCost,
       gasExceedsReward,
-      transactionStatus);
+      transactionStatus,
+      openSourceAppsOnly,
+      webappAppsOnly,
+      desktopAppsOnly);
 
   /// Create a copy of GenerateFactoryState
   /// with the given fields replaced by the non-null parameter values.
@@ -429,7 +489,7 @@ abstract class _GenerateFactoryState extends GenerateFactoryState {
       {final String? skills,
       final String? error,
       final String? factoryName,
-      final List<FactoryApp>? apps,
+      final List<WorkflowTask>? tasks,
       final bool showJsonEditor,
       final GenerateFactoryStep currentStep,
       final bool isCreating,
@@ -440,7 +500,10 @@ abstract class _GenerateFactoryState extends GenerateFactoryState {
       final String? fundingAmount,
       final String? estimatedGasCost,
       final bool? gasExceedsReward,
-      final String? transactionStatus}) = _$GenerateFactoryStateImpl;
+      final String? transactionStatus,
+      final bool openSourceAppsOnly,
+      final bool webappAppsOnly,
+      final bool desktopAppsOnly}) = _$GenerateFactoryStateImpl;
   const _GenerateFactoryState._() : super._();
 
   @override
@@ -450,7 +513,7 @@ abstract class _GenerateFactoryState extends GenerateFactoryState {
   @override
   String? get factoryName;
   @override
-  List<FactoryApp>? get apps;
+  List<WorkflowTask>? get tasks;
   @override
   bool get showJsonEditor;
   @override
@@ -473,6 +536,12 @@ abstract class _GenerateFactoryState extends GenerateFactoryState {
   bool? get gasExceedsReward;
   @override
   String? get transactionStatus;
+  @override
+  bool get openSourceAppsOnly;
+  @override
+  bool get webappAppsOnly;
+  @override
+  bool get desktopAppsOnly;
 
   /// Create a copy of GenerateFactoryState
   /// with the given fields replaced by the non-null parameter values.

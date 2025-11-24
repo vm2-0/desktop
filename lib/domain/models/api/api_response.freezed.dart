@@ -22,6 +22,7 @@ ApiResponse _$ApiResponseFromJson(Map<String, dynamic> json) {
 mixin _$ApiResponse {
   bool get success => throw _privateConstructorUsedError;
   dynamic get data => throw _privateConstructorUsedError;
+  @JsonKey(fromJson: _errorFromJson)
   ApiErrorDetail? get error => throw _privateConstructorUsedError;
 
   /// Serializes this ApiResponse to a JSON map.
@@ -40,7 +41,10 @@ abstract class $ApiResponseCopyWith<$Res> {
           ApiResponse value, $Res Function(ApiResponse) then) =
       _$ApiResponseCopyWithImpl<$Res, ApiResponse>;
   @useResult
-  $Res call({bool success, dynamic data, ApiErrorDetail? error});
+  $Res call(
+      {bool success,
+      dynamic data,
+      @JsonKey(fromJson: _errorFromJson) ApiErrorDetail? error});
 
   $ApiErrorDetailCopyWith<$Res>? get error;
 }
@@ -103,7 +107,10 @@ abstract class _$$ApiResponseImplCopyWith<$Res>
       __$$ApiResponseImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({bool success, dynamic data, ApiErrorDetail? error});
+  $Res call(
+      {bool success,
+      dynamic data,
+      @JsonKey(fromJson: _errorFromJson) ApiErrorDetail? error});
 
   @override
   $ApiErrorDetailCopyWith<$Res>? get error;
@@ -146,7 +153,10 @@ class __$$ApiResponseImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$ApiResponseImpl implements _ApiResponse {
-  const _$ApiResponseImpl({required this.success, this.data, this.error});
+  const _$ApiResponseImpl(
+      {required this.success,
+      this.data,
+      @JsonKey(fromJson: _errorFromJson) this.error});
 
   factory _$ApiResponseImpl.fromJson(Map<String, dynamic> json) =>
       _$$ApiResponseImplFromJson(json);
@@ -156,6 +166,7 @@ class _$ApiResponseImpl implements _ApiResponse {
   @override
   final dynamic data;
   @override
+  @JsonKey(fromJson: _errorFromJson)
   final ApiErrorDetail? error;
 
   @override
@@ -196,9 +207,10 @@ class _$ApiResponseImpl implements _ApiResponse {
 
 abstract class _ApiResponse implements ApiResponse {
   const factory _ApiResponse(
-      {required final bool success,
-      final dynamic data,
-      final ApiErrorDetail? error}) = _$ApiResponseImpl;
+          {required final bool success,
+          final dynamic data,
+          @JsonKey(fromJson: _errorFromJson) final ApiErrorDetail? error}) =
+      _$ApiResponseImpl;
 
   factory _ApiResponse.fromJson(Map<String, dynamic> json) =
       _$ApiResponseImpl.fromJson;
@@ -208,6 +220,7 @@ abstract class _ApiResponse implements ApiResponse {
   @override
   dynamic get data;
   @override
+  @JsonKey(fromJson: _errorFromJson)
   ApiErrorDetail? get error;
 
   /// Create a copy of ApiResponse

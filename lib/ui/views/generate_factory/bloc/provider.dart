@@ -2,8 +2,7 @@ import 'package:clones_desktop/application/apps.dart';
 import 'package:clones_desktop/application/factory.dart';
 import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/application/transaction/provider.dart';
-import 'package:clones_desktop/domain/models/factory/factory_app.dart';
-import 'package:clones_desktop/domain/models/factory/factory_task.dart';
+import 'package:clones_desktop/domain/models/factory/workflow_task.dart';
 import 'package:clones_desktop/ui/views/generate_factory/bloc/setters.dart';
 import 'package:clones_desktop/ui/views/generate_factory/bloc/state.dart';
 import 'package:decimal/decimal.dart';
@@ -27,6 +26,12 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
   }
 
   Future<void> validateAndStartGeneration() async {
+    setError(null);
+    if (state.fundingAmount == null || state.fundingAmount!.isEmpty) {
+      setError('Please enter a reward funding amount');
+      return;
+    }
+
     // Validate balance before proceeding
     if (state.fundingAmount != null && state.fundingAmount!.isNotEmpty) {
       final creatorAddress = ref.read(sessionNotifierProvider).address;
@@ -40,7 +45,7 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
         final tokenSymbol = state.selectedTokenSymbol;
         if (tokenSymbol != null) {
           final fundingAmountDouble = double.tryParse(state.fundingAmount!);
-          if (fundingAmountDouble == null || fundingAmountDouble <= 0) {
+          if (fundingAmountDouble == null || fundingAmountDouble < 0) {
             setError('Please enter a valid funding amount greater than 0');
             return;
           }
@@ -84,36 +89,42 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
     }
 
     state = state.copyWith(currentStep: GenerateFactoryStep.generating);
+
+    var prompt = state.skills!.trim();
+    if (state.openSourceAppsOnly) {
+      prompt += '\n\nInclude only open source applications in the tasks';
+    }
+    if (state.webappAppsOnly) {
+      prompt += '\n\nInclude only webapp applications in the tasks';
+    }
+    if (state.desktopAppsOnly) {
+      prompt += '\n\nInclude only desktop applications in the tasks';
+    }
     try {
       final result = await ref.read(
-        generateAppsProvider(prompt: state.skills!.trim()).future,
+        generateWorkflowsProvider(prompt: prompt).future,
       );
-      final forgeApps = (result['content']['apps'] as List)
-          .map((app) => FactoryApp.fromJson(app))
+      final workflowTasks = (result['content']!['tasks'] as List)
+          .map((task) => WorkflowTask.fromJson(task))
           .toList();
 
       final totalFunding = double.tryParse(state.fundingAmount ?? '0') ?? 0.0;
-      final totalTasks =
-          forgeApps.fold<int>(0, (sum, a) => sum + a.tasks.length);
+      final totalTasks = workflowTasks.length;
       final defaultRewardPerTask = totalTasks > 0
           ? (Decimal.parse(totalFunding.toString()) /
                   Decimal.parse(totalTasks.toString()))
-              .toDecimal()
+              .toDecimal(scaleOnInfinitePrecision: 3)
           : Decimal.zero;
 
-      final newApps = forgeApps.map((app) {
-        final updatedTasks = app.tasks.map((task) {
-          return task.copyWith(
-            rewardLimit: defaultRewardPerTask,
-            uploadLimit: null,
-          );
-        }).toList();
-
-        return app.copyWith(tasks: updatedTasks);
+      final newTasks = workflowTasks.map((task) {
+        return task.copyWith(
+          rewardLimit: defaultRewardPerTask,
+          uploadLimit: null,
+        );
       }).toList();
 
-      setFactoryName(result['content']['name'] ?? 'Desktop Agent Factory');
-      setApps(newApps);
+      setFactoryName(result['content']!['name'] ?? 'Desktop Agent Factory');
+      setTasks(newTasks);
       setCurrentStep(GenerateFactoryStep.preview);
     } catch (e) {
       setError(e.toString());
@@ -121,28 +132,8 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
     }
   }
 
-  void updateAppName(int appIndex, String value) {
-    if (state.apps == null) return;
-
-    // Validate app name length (500 characters max)
-    if (value.length > 500) {
-      setError('App name is too long (${value.length}/500 characters max)');
-      return;
-    } else {
-      // Clear error if it was about app name length
-      if (state.error != null &&
-          state.error!.contains('App name is too long')) {
-        setError('');
-      }
-    }
-
-    final newApps = List<FactoryApp>.from(state.apps!);
-    newApps[appIndex] = newApps[appIndex].copyWith(name: value);
-    setApps(newApps);
-  }
-
-  void updateTaskPrompt(int appIndex, int taskIndex, String value) {
-    if (state.apps == null) return;
+  void updateTaskPrompt(int taskIndex, String value) {
+    if (state.tasks == null) return;
 
     // Validate prompt length (500 characters max like skills)
     if (value.length > 500) {
@@ -156,22 +147,38 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
       }
     }
 
-    final newApps = List<FactoryApp>.from(state.apps!);
-    final appToUpdate = newApps[appIndex];
-    final newTasks = List.from(appToUpdate.tasks);
+    final newTasks = List<WorkflowTask>.from(state.tasks!);
     newTasks[taskIndex] = newTasks[taskIndex].copyWith(prompt: value);
-    newApps[appIndex] = appToUpdate.copyWith(tasks: newTasks.cast());
-    setApps(newApps);
+    setTasks(newTasks);
+  }
+
+  void updateTaskRewardLimit(int taskIndex, double? rewardLimit) {
+    if (state.tasks == null) return;
+
+    final newTasks = List<WorkflowTask>.from(state.tasks!);
+    newTasks[taskIndex] = newTasks[taskIndex].copyWith(
+      rewardLimit:
+          rewardLimit != null ? Decimal.parse(rewardLimit.toString()) : null,
+    );
+    setTasks(newTasks);
+  }
+
+  void updateTaskUploadLimit(int taskIndex, int? uploadLimit) {
+    if (state.tasks == null) return;
+
+    final newTasks = List<WorkflowTask>.from(state.tasks!);
+    newTasks[taskIndex] =
+        newTasks[taskIndex].copyWith(uploadLimit: uploadLimit);
+    setTasks(newTasks);
   }
 
   void updateTaskWithLimits(
-    int appIndex,
     int taskIndex,
     String prompt,
     Decimal? rewardLimit,
     int? uploadLimit,
   ) {
-    if (state.apps == null) return;
+    if (state.tasks == null) return;
 
     // Validate prompt length (500 characters max like skills)
     if (prompt.length > 500) {
@@ -185,76 +192,37 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
       }
     }
 
-    final newApps = List<FactoryApp>.from(state.apps!);
-    final appToUpdate = newApps[appIndex];
-    final newTasks = List.from(appToUpdate.tasks);
+    final newTasks = List<WorkflowTask>.from(state.tasks!);
     newTasks[taskIndex] = newTasks[taskIndex].copyWith(
       prompt: prompt,
       rewardLimit: rewardLimit,
       uploadLimit: uploadLimit,
     );
-    newApps[appIndex] = appToUpdate.copyWith(tasks: newTasks.cast());
-    setApps(newApps);
+    setTasks(newTasks);
   }
 
-  void addTask(int appIndex) {
-    if (state.apps == null) return;
-
-    final newApps = List<FactoryApp>.from(state.apps!);
-    final appToUpdate = newApps[appIndex];
-    final newTasks = List.from(appToUpdate.tasks)
-
+  void addTask() {
+    final newTasks = List<WorkflowTask>.from(state.tasks ?? [])
       // Add a new empty task
       ..add(
-        const FactoryTask(
+        const WorkflowTask(
+          taskName: '',
           prompt: '',
+          appsUsed: [],
         ),
       );
 
-    newApps[appIndex] = appToUpdate.copyWith(tasks: newTasks.cast());
-    setApps(newApps);
+    setTasks(newTasks);
   }
 
-  void removeTask(int appIndex, int taskIndex) {
-    if (state.apps == null) return;
+  void removeTask(int taskIndex) {
+    if (state.tasks == null) return;
 
-    final newApps = List<FactoryApp>.from(state.apps!);
-    final appToUpdate = newApps[appIndex];
-    final newTasks = List.from(appToUpdate.tasks);
+    final newTasks = List<WorkflowTask>.from(state.tasks!);
 
     if (taskIndex >= 0 && taskIndex < newTasks.length) {
       newTasks.removeAt(taskIndex);
-      newApps[appIndex] = appToUpdate.copyWith(tasks: newTasks.cast());
-      setApps(newApps);
-    }
-  }
-
-  void addApp() {
-    final newApps = List<FactoryApp>.from(state.apps ?? [])
-
-      // Add a new empty app with one empty task
-      ..add(
-        const FactoryApp(
-          name: '',
-          domain: '',
-          description: '',
-          tasks: [
-            FactoryTask(prompt: ''),
-          ],
-        ),
-      );
-
-    setApps(newApps);
-  }
-
-  void removeApp(int appIndex) {
-    if (state.apps == null) return;
-
-    final newApps = List<FactoryApp>.from(state.apps!);
-
-    if (appIndex >= 0 && appIndex < newApps.length) {
-      newApps.removeAt(appIndex);
-      setApps(newApps);
+      setTasks(newTasks);
     }
   }
 
@@ -364,7 +332,7 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
     }
   }
 
-  Future<void> createPool() async {
+  Future<void> createFactory() async {
     if (state.selectedTokenSymbol == null) {
       setError('Please select a reward token.');
       return;
@@ -459,7 +427,7 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
             sessionId: transactionState.currentSessionId!,
             factoryName: state.factoryName ?? 'Unnamed Factory',
             skills: state.skills ?? '',
-            apps: state.apps ?? [],
+            tasks: state.tasks ?? [],
             token: state.selectedTokenSymbol!,
             fundingAmount: state.fundingAmount,
           );

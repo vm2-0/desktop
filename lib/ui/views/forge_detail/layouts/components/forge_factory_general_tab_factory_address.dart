@@ -15,7 +15,10 @@ class ForgeFactoryGeneralTabFactoryAddress extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final forgeDetail = ref.watch(forgeDetailNotifierProvider);
 
-    if (forgeDetail.factory == null) return const SizedBox.shrink();
+    if (forgeDetail.factory == null ||
+        forgeDetail.factory!.poolAddress == null) {
+      return const SizedBox.shrink();
+    }
 
     final theme = Theme.of(context);
     return Expanded(
@@ -69,7 +72,7 @@ class ForgeFactoryGeneralTabFactoryAddress extends ConsumerWidget {
                         vertical: 12,
                       ),
                       child: SelectableText(
-                        forgeDetail.factory!.poolAddress,
+                        forgeDetail.factory!.poolAddress ?? '',
                         style: theme.textTheme.bodyMedium,
                       ),
                     ),
@@ -82,7 +85,7 @@ class ForgeFactoryGeneralTabFactoryAddress extends ConsumerWidget {
                   onTap: () {
                     Clipboard.setData(
                       ClipboardData(
-                        text: forgeDetail.factory!.poolAddress,
+                        text: forgeDetail.factory!.poolAddress ?? '',
                       ),
                     );
                     ScaffoldMessenger.of(context).showSnackBar(

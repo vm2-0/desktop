@@ -86,13 +86,6 @@ class _TaskInputFieldState extends State<TaskInputField> {
         // Task prompt
         Row(
           children: [
-            Text(
-              'Task ',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(width: 8),
             Expanded(
               child: DecoratedBox(
                 decoration: BoxDecoration(
@@ -162,138 +155,135 @@ class _TaskInputFieldState extends State<TaskInputField> {
 
         // Limits section (only if showLimits is true)
         if (widget.showLimits && widget.enabled) ...[
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.only(left: 38),
-            child: Row(
-              children: [
-                // Reward limit
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Max reward',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: ClonesColors.rewardInfo,
-                        ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              // Reward limit
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Max reward',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: ClonesColors.rewardInfo,
                       ),
-                      const SizedBox(height: 4),
-                      DecoratedBox(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: ClonesColors.tertiary.withValues(alpha: 0.3),
-                            width: 0.5,
-                          ),
-                          gradient: LinearGradient(
-                            colors: [
-                              ClonesColors.primary.withValues(alpha: 0.03),
-                              ClonesColors.tertiary.withValues(alpha: 0.03),
-                            ],
-                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: ClonesColors.tertiary.withValues(alpha: 0.3),
+                          width: 0.5,
                         ),
-                        child: TextField(
-                          controller: _rewardController,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          style: theme.textTheme.bodySmall,
-                          enabled: widget.enabled,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                              RegExp(r'^\d*\.?\d{0,18}$'),
-                            ),
+                        gradient: LinearGradient(
+                          colors: [
+                            ClonesColors.primary.withValues(alpha: 0.03),
+                            ClonesColors.tertiary.withValues(alpha: 0.03),
                           ],
-                          onChanged: (value) {
-                            final parsedValue =
-                                value.isEmpty ? null : double.tryParse(value);
-                            widget.onRewardLimitChanged?.call(parsedValue);
-                          },
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 8,
-                            ),
-                            hintText: 'Auto',
-                            hintStyle: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.textTheme.bodySmall?.color
-                                  ?.withValues(alpha: 0.4),
-                            ),
-                            suffixText: widget.tokenSymbol,
-                            suffixStyle: theme.textTheme.bodySmall?.copyWith(
-                              color: ClonesColors.rewardInfo,
-                            ),
+                        ),
+                      ),
+                      child: TextField(
+                        controller: _rewardController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        style: theme.textTheme.bodySmall,
+                        enabled: widget.enabled,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                            RegExp(r'^\d*\.?\d{0,18}$'),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          final parsedValue =
+                              value.isEmpty ? null : double.tryParse(value);
+                          widget.onRewardLimitChanged?.call(parsedValue);
+                        },
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 8,
+                          ),
+                          hintText: 'Auto',
+                          hintStyle: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.textTheme.bodySmall?.color
+                                ?.withValues(alpha: 0.4),
+                          ),
+                          suffixText: widget.tokenSymbol,
+                          suffixStyle: theme.textTheme.bodySmall?.copyWith(
+                            color: ClonesColors.rewardInfo,
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                // Upload limit
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Upload limit',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: ClonesColors.uploadLimit,
-                        ),
+              ),
+              const SizedBox(width: 12),
+              // Upload limit
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Upload limit',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: ClonesColors.uploadLimit,
                       ),
-                      const SizedBox(height: 4),
-                      DecoratedBox(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: ClonesColors.tertiary.withValues(alpha: 0.3),
-                            width: 0.5,
-                          ),
-                          gradient: LinearGradient(
-                            colors: [
-                              ClonesColors.primary.withValues(alpha: 0.03),
-                              ClonesColors.tertiary.withValues(alpha: 0.03),
-                            ],
-                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: ClonesColors.tertiary.withValues(alpha: 0.3),
+                          width: 0.5,
                         ),
-                        child: TextField(
-                          controller: _uploadController,
-                          keyboardType: TextInputType.number,
-                          style: theme.textTheme.bodySmall,
-                          enabled: widget.enabled,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
+                        gradient: LinearGradient(
+                          colors: [
+                            ClonesColors.primary.withValues(alpha: 0.03),
+                            ClonesColors.tertiary.withValues(alpha: 0.03),
                           ],
-                          onChanged: (value) {
-                            final parsedValue =
-                                value.isEmpty ? null : int.tryParse(value);
-                            widget.onUploadLimitChanged?.call(parsedValue);
-                          },
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 8,
-                            ),
-                            hintText: 'Unlimited',
-                            hintStyle: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.textTheme.bodySmall?.color
-                                  ?.withValues(alpha: 0.4),
-                            ),
-                            suffixText: 'demos',
-                            suffixStyle: theme.textTheme.bodySmall?.copyWith(
-                              color: ClonesColors.uploadLimit,
-                            ),
+                        ),
+                      ),
+                      child: TextField(
+                        controller: _uploadController,
+                        keyboardType: TextInputType.number,
+                        style: theme.textTheme.bodySmall,
+                        enabled: widget.enabled,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        onChanged: (value) {
+                          final parsedValue =
+                              value.isEmpty ? null : int.tryParse(value);
+                          widget.onUploadLimitChanged?.call(parsedValue);
+                        },
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 8,
+                          ),
+                          hintText: 'Unlimited',
+                          hintStyle: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.textTheme.bodySmall?.color
+                                ?.withValues(alpha: 0.4),
+                          ),
+                          suffixText: 'demos',
+                          suffixStyle: theme.textTheme.bodySmall?.copyWith(
+                            color: ClonesColors.uploadLimit,
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ],

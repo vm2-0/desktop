@@ -1,7 +1,7 @@
 import 'package:clones_desktop/domain/app_info.dart';
 import 'package:clones_desktop/domain/models/demonstration/demonstration.dart';
 import 'package:clones_desktop/domain/models/factory/factory.dart';
-import 'package:clones_desktop/domain/models/factory/factory_task.dart';
+import 'package:clones_desktop/domain/models/factory/workflow_task.dart';
 import 'package:clones_desktop/domain/models/message/message.dart';
 import 'package:clones_desktop/domain/models/message/typing_message.dart';
 import 'package:flutter/material.dart';
@@ -16,7 +16,7 @@ class TrainingSessionState with _$TrainingSessionState {
   const factory TrainingSessionState({
     String? prompt,
     Factory? factory,
-    FactoryTask? factoryTask,
+    WorkflowTask? factoryTask,
     Demonstration? recordedDemonstration,
     Demonstration? recordingDemonstration,
     @Default(false) bool recordingProcessing,
@@ -28,7 +28,6 @@ class TrainingSessionState with _$TrainingSessionState {
     @Default([]) List<Message> chatMessages,
     @Default(null) TypingMessage? typingMessage,
     @Default(false) bool isWaitingForResponse,
-    AppInfo? app,
     @Default(0) int scrollToBottomNonce,
     @Default(false) bool hasGivenUp,
   }) = _TrainingSessionState;

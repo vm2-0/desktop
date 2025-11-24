@@ -1,6 +1,6 @@
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/domain/models/factory/factory.dart';
-import 'package:clones_desktop/domain/models/factory/factory_task.dart';
+import 'package:clones_desktop/domain/models/factory/workflow_task.dart';
 import 'package:clones_desktop/domain/models/factory/factory_token.dart';
 import 'package:clones_desktop/ui/components/design_widget/message_box/message_box.dart';
 import 'package:clones_desktop/ui/components/usd_price.dart';
@@ -18,7 +18,7 @@ class TaskLimitsWidget extends ConsumerWidget {
   });
 
   final Factory factory;
-  final FactoryTask task;
+  final WorkflowTask task;
   final FactoryToken factoryToken;
 
   @override

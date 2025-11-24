@@ -1,11 +1,9 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:ui';
 
 import 'package:clones_desktop/application/factory.dart';
 import 'package:clones_desktop/application/tasks.dart';
 import 'package:clones_desktop/assets.dart';
-import 'package:clones_desktop/domain/app_info.dart';
 import 'package:clones_desktop/domain/models/message/message.dart';
 import 'package:clones_desktop/ui/components/design_widget/dialog/dialog.dart';
 import 'package:clones_desktop/ui/components/design_widget/message_box/message_box.dart';
@@ -26,13 +24,11 @@ class TrainingSessionView extends ConsumerStatefulWidget {
   const TrainingSessionView({
     super.key,
     this.prompt,
-    this.appParam,
     this.poolId,
     this.taskId,
     this.onRecordingCompleted,
   });
   final String? prompt;
-  final String? appParam;
   final String? poolId;
   final String? taskId;
   final Function(String recordingId)? onRecordingCompleted;
@@ -48,16 +44,6 @@ class _TrainingSessionViewState extends ConsumerState<TrainingSessionView> {
   @override
   void initState() {
     Future(() async {
-      if (widget.appParam != null) {
-        try {
-          final decodedParam = jsonDecode(_decodeComponent(widget.appParam!));
-
-          final app = AppInfo.fromJson(decodedParam);
-          ref.read(trainingSessionNotifierProvider.notifier).setApp(app);
-        } catch (error) {
-          debugPrint('Failed to parse app parameter: $error');
-        }
-      }
       if (widget.poolId != null) {
         final factory = await ref
             .read(getFactoryProvider(factoryId: widget.poolId!).future);
@@ -124,14 +110,6 @@ class _TrainingSessionViewState extends ConsumerState<TrainingSessionView> {
     return processed;
   }
 
-  String _decodeComponent(String component) {
-    try {
-      return Uri.decodeComponent(component);
-    } catch (e) {
-      return component;
-    }
-  }
-
   @override
   void dispose() {
     _scrollController.dispose();
@@ -156,6 +134,11 @@ class _TrainingSessionViewState extends ConsumerState<TrainingSessionView> {
                     ref
                         .read(trainingSessionNotifierProvider.notifier)
                         .confirmAndUpload();
+                  },
+                  onCancel: () {
+                    ref
+                        .read(trainingSessionNotifierProvider.notifier)
+                        .setIsUploading(false);
                   },
                 );
               },

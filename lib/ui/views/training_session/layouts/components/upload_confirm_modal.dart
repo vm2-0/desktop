@@ -12,9 +12,11 @@ class UploadConfirmModal extends ConsumerWidget {
   const UploadConfirmModal({
     super.key,
     required this.onConfirm,
+    required this.onCancel,
   });
 
   final VoidCallback onConfirm;
+  final VoidCallback onCancel;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -77,6 +79,7 @@ class UploadConfirmModal extends ConsumerWidget {
                         .read(uploadQueueProvider.notifier)
                         .setUploadDataAllowed(false);
                     Navigator.of(context).pop();
+                    onCancel();
                   },
                   btnPrimaryType: BtnPrimaryType.outlinePrimary,
                 ),

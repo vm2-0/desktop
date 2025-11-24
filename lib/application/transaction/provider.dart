@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/application/transaction/state.dart';
 import 'package:clones_desktop/domain/models/api/api_error.dart';
-import 'package:clones_desktop/domain/models/factory/factory_app.dart';
+import 'package:clones_desktop/domain/models/factory/workflow_task.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:clones_desktop/ui/components/design_widget/dialog/popup_template.dart';
 import 'package:clones_desktop/utils/api_client.dart';
@@ -580,7 +580,7 @@ class TransactionManager extends _$TransactionManager {
     required String sessionId,
     required String factoryName,
     required String skills,
-    required List<FactoryApp> apps,
+    required List<WorkflowTask> tasks,
     required String token,
     String? fundingAmount,
   }) async {
@@ -594,7 +594,7 @@ class TransactionManager extends _$TransactionManager {
         'metadata': {
           'name': factoryName,
           'skills': skills,
-          'apps': apps.map((app) => app.toJson()).toList(),
+          'tasks': tasks.map((task) => task.toJson()).toList(),
           'token': token,
           'fundingAmount': fundingAmount,
         },

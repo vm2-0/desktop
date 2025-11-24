@@ -18,7 +18,7 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$TrainingSessionState {
   String? get prompt => throw _privateConstructorUsedError;
   Factory? get factory => throw _privateConstructorUsedError;
-  FactoryTask? get factoryTask => throw _privateConstructorUsedError;
+  WorkflowTask? get factoryTask => throw _privateConstructorUsedError;
   Demonstration? get recordedDemonstration =>
       throw _privateConstructorUsedError;
   Demonstration? get recordingDemonstration =>
@@ -32,7 +32,6 @@ mixin _$TrainingSessionState {
   List<Message> get chatMessages => throw _privateConstructorUsedError;
   TypingMessage? get typingMessage => throw _privateConstructorUsedError;
   bool get isWaitingForResponse => throw _privateConstructorUsedError;
-  AppInfo? get app => throw _privateConstructorUsedError;
   int get scrollToBottomNonce => throw _privateConstructorUsedError;
   bool get hasGivenUp => throw _privateConstructorUsedError;
 
@@ -52,7 +51,7 @@ abstract class $TrainingSessionStateCopyWith<$Res> {
   $Res call(
       {String? prompt,
       Factory? factory,
-      FactoryTask? factoryTask,
+      WorkflowTask? factoryTask,
       Demonstration? recordedDemonstration,
       Demonstration? recordingDemonstration,
       bool recordingProcessing,
@@ -64,16 +63,14 @@ abstract class $TrainingSessionStateCopyWith<$Res> {
       List<Message> chatMessages,
       TypingMessage? typingMessage,
       bool isWaitingForResponse,
-      AppInfo? app,
       int scrollToBottomNonce,
       bool hasGivenUp});
 
   $FactoryCopyWith<$Res>? get factory;
-  $FactoryTaskCopyWith<$Res>? get factoryTask;
+  $WorkflowTaskCopyWith<$Res>? get factoryTask;
   $DemonstrationCopyWith<$Res>? get recordedDemonstration;
   $DemonstrationCopyWith<$Res>? get recordingDemonstration;
   $TypingMessageCopyWith<$Res>? get typingMessage;
-  $AppInfoCopyWith<$Res>? get app;
 }
 
 /// @nodoc
@@ -106,7 +103,6 @@ class _$TrainingSessionStateCopyWithImpl<$Res,
     Object? chatMessages = null,
     Object? typingMessage = freezed,
     Object? isWaitingForResponse = null,
-    Object? app = freezed,
     Object? scrollToBottomNonce = null,
     Object? hasGivenUp = null,
   }) {
@@ -122,7 +118,7 @@ class _$TrainingSessionStateCopyWithImpl<$Res,
       factoryTask: freezed == factoryTask
           ? _value.factoryTask
           : factoryTask // ignore: cast_nullable_to_non_nullable
-              as FactoryTask?,
+              as WorkflowTask?,
       recordedDemonstration: freezed == recordedDemonstration
           ? _value.recordedDemonstration
           : recordedDemonstration // ignore: cast_nullable_to_non_nullable
@@ -167,10 +163,6 @@ class _$TrainingSessionStateCopyWithImpl<$Res,
           ? _value.isWaitingForResponse
           : isWaitingForResponse // ignore: cast_nullable_to_non_nullable
               as bool,
-      app: freezed == app
-          ? _value.app
-          : app // ignore: cast_nullable_to_non_nullable
-              as AppInfo?,
       scrollToBottomNonce: null == scrollToBottomNonce
           ? _value.scrollToBottomNonce
           : scrollToBottomNonce // ignore: cast_nullable_to_non_nullable
@@ -200,12 +192,12 @@ class _$TrainingSessionStateCopyWithImpl<$Res,
   /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
-  $FactoryTaskCopyWith<$Res>? get factoryTask {
+  $WorkflowTaskCopyWith<$Res>? get factoryTask {
     if (_value.factoryTask == null) {
       return null;
     }
 
-    return $FactoryTaskCopyWith<$Res>(_value.factoryTask!, (value) {
+    return $WorkflowTaskCopyWith<$Res>(_value.factoryTask!, (value) {
       return _then(_value.copyWith(factoryTask: value) as $Val);
     });
   }
@@ -252,20 +244,6 @@ class _$TrainingSessionStateCopyWithImpl<$Res,
       return _then(_value.copyWith(typingMessage: value) as $Val);
     });
   }
-
-  /// Create a copy of TrainingSessionState
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $AppInfoCopyWith<$Res>? get app {
-    if (_value.app == null) {
-      return null;
-    }
-
-    return $AppInfoCopyWith<$Res>(_value.app!, (value) {
-      return _then(_value.copyWith(app: value) as $Val);
-    });
-  }
 }
 
 /// @nodoc
@@ -279,7 +257,7 @@ abstract class _$$TrainingSessionStateImplCopyWith<$Res>
   $Res call(
       {String? prompt,
       Factory? factory,
-      FactoryTask? factoryTask,
+      WorkflowTask? factoryTask,
       Demonstration? recordedDemonstration,
       Demonstration? recordingDemonstration,
       bool recordingProcessing,
@@ -291,22 +269,19 @@ abstract class _$$TrainingSessionStateImplCopyWith<$Res>
       List<Message> chatMessages,
       TypingMessage? typingMessage,
       bool isWaitingForResponse,
-      AppInfo? app,
       int scrollToBottomNonce,
       bool hasGivenUp});
 
   @override
   $FactoryCopyWith<$Res>? get factory;
   @override
-  $FactoryTaskCopyWith<$Res>? get factoryTask;
+  $WorkflowTaskCopyWith<$Res>? get factoryTask;
   @override
   $DemonstrationCopyWith<$Res>? get recordedDemonstration;
   @override
   $DemonstrationCopyWith<$Res>? get recordingDemonstration;
   @override
   $TypingMessageCopyWith<$Res>? get typingMessage;
-  @override
-  $AppInfoCopyWith<$Res>? get app;
 }
 
 /// @nodoc
@@ -336,7 +311,6 @@ class __$$TrainingSessionStateImplCopyWithImpl<$Res>
     Object? chatMessages = null,
     Object? typingMessage = freezed,
     Object? isWaitingForResponse = null,
-    Object? app = freezed,
     Object? scrollToBottomNonce = null,
     Object? hasGivenUp = null,
   }) {
@@ -352,7 +326,7 @@ class __$$TrainingSessionStateImplCopyWithImpl<$Res>
       factoryTask: freezed == factoryTask
           ? _value.factoryTask
           : factoryTask // ignore: cast_nullable_to_non_nullable
-              as FactoryTask?,
+              as WorkflowTask?,
       recordedDemonstration: freezed == recordedDemonstration
           ? _value.recordedDemonstration
           : recordedDemonstration // ignore: cast_nullable_to_non_nullable
@@ -397,10 +371,6 @@ class __$$TrainingSessionStateImplCopyWithImpl<$Res>
           ? _value.isWaitingForResponse
           : isWaitingForResponse // ignore: cast_nullable_to_non_nullable
               as bool,
-      app: freezed == app
-          ? _value.app
-          : app // ignore: cast_nullable_to_non_nullable
-              as AppInfo?,
       scrollToBottomNonce: null == scrollToBottomNonce
           ? _value.scrollToBottomNonce
           : scrollToBottomNonce // ignore: cast_nullable_to_non_nullable
@@ -431,7 +401,6 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
       final List<Message> chatMessages = const [],
       this.typingMessage = null,
       this.isWaitingForResponse = false,
-      this.app,
       this.scrollToBottomNonce = 0,
       this.hasGivenUp = false})
       : _chatMessages = chatMessages,
@@ -442,7 +411,7 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
   @override
   final Factory? factory;
   @override
-  final FactoryTask? factoryTask;
+  final WorkflowTask? factoryTask;
   @override
   final Demonstration? recordedDemonstration;
   @override
@@ -479,8 +448,6 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
   @JsonKey()
   final bool isWaitingForResponse;
   @override
-  final AppInfo? app;
-  @override
   @JsonKey()
   final int scrollToBottomNonce;
   @override
@@ -489,7 +456,7 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
 
   @override
   String toString() {
-    return 'TrainingSessionState(prompt: $prompt, factory: $factory, factoryTask: $factoryTask, recordedDemonstration: $recordedDemonstration, recordingDemonstration: $recordingDemonstration, recordingProcessing: $recordingProcessing, showUploadConfirmModal: $showUploadConfirmModal, currentRecordingId: $currentRecordingId, isUploading: $isUploading, originalWindowSize: $originalWindowSize, recordingState: $recordingState, chatMessages: $chatMessages, typingMessage: $typingMessage, isWaitingForResponse: $isWaitingForResponse, app: $app, scrollToBottomNonce: $scrollToBottomNonce, hasGivenUp: $hasGivenUp)';
+    return 'TrainingSessionState(prompt: $prompt, factory: $factory, factoryTask: $factoryTask, recordedDemonstration: $recordedDemonstration, recordingDemonstration: $recordingDemonstration, recordingProcessing: $recordingProcessing, showUploadConfirmModal: $showUploadConfirmModal, currentRecordingId: $currentRecordingId, isUploading: $isUploading, originalWindowSize: $originalWindowSize, recordingState: $recordingState, chatMessages: $chatMessages, typingMessage: $typingMessage, isWaitingForResponse: $isWaitingForResponse, scrollToBottomNonce: $scrollToBottomNonce, hasGivenUp: $hasGivenUp)';
   }
 
   @override
@@ -523,7 +490,6 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
                 other.typingMessage == typingMessage) &&
             (identical(other.isWaitingForResponse, isWaitingForResponse) ||
                 other.isWaitingForResponse == isWaitingForResponse) &&
-            (identical(other.app, app) || other.app == app) &&
             (identical(other.scrollToBottomNonce, scrollToBottomNonce) ||
                 other.scrollToBottomNonce == scrollToBottomNonce) &&
             (identical(other.hasGivenUp, hasGivenUp) ||
@@ -547,7 +513,6 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
       const DeepCollectionEquality().hash(_chatMessages),
       typingMessage,
       isWaitingForResponse,
-      app,
       scrollToBottomNonce,
       hasGivenUp);
 
@@ -566,7 +531,7 @@ abstract class _TrainingSessionState extends TrainingSessionState {
   const factory _TrainingSessionState(
       {final String? prompt,
       final Factory? factory,
-      final FactoryTask? factoryTask,
+      final WorkflowTask? factoryTask,
       final Demonstration? recordedDemonstration,
       final Demonstration? recordingDemonstration,
       final bool recordingProcessing,
@@ -578,7 +543,6 @@ abstract class _TrainingSessionState extends TrainingSessionState {
       final List<Message> chatMessages,
       final TypingMessage? typingMessage,
       final bool isWaitingForResponse,
-      final AppInfo? app,
       final int scrollToBottomNonce,
       final bool hasGivenUp}) = _$TrainingSessionStateImpl;
   const _TrainingSessionState._() : super._();
@@ -588,7 +552,7 @@ abstract class _TrainingSessionState extends TrainingSessionState {
   @override
   Factory? get factory;
   @override
-  FactoryTask? get factoryTask;
+  WorkflowTask? get factoryTask;
   @override
   Demonstration? get recordedDemonstration;
   @override
@@ -611,8 +575,6 @@ abstract class _TrainingSessionState extends TrainingSessionState {
   TypingMessage? get typingMessage;
   @override
   bool get isWaitingForResponse;
-  @override
-  AppInfo? get app;
   @override
   int get scrollToBottomNonce;
   @override

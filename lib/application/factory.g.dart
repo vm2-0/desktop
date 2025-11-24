@@ -1965,7 +1965,7 @@ class _UpdateFactoryProviderElement
 }
 
 String _$getFactoriesByCreatorHash() =>
-    r'117ad722587ca413040749b80f31ab55310364eb';
+    r'094ea90c881870761824076e23f20fd443e3ce57';
 
 /// See also [getFactoriesByCreator].
 @ProviderFor(getFactoriesByCreator)
@@ -1980,9 +1980,13 @@ class GetFactoriesByCreatorFamily
   /// See also [getFactoriesByCreator].
   GetFactoriesByCreatorProvider call({
     required String creatorAddress,
+    int limit = 20,
+    int offset = 0,
   }) {
     return GetFactoriesByCreatorProvider(
       creatorAddress: creatorAddress,
+      limit: limit,
+      offset: offset,
     );
   }
 
@@ -1992,6 +1996,8 @@ class GetFactoriesByCreatorFamily
   ) {
     return call(
       creatorAddress: provider.creatorAddress,
+      limit: provider.limit,
+      offset: provider.offset,
     );
   }
 
@@ -2016,10 +2022,14 @@ class GetFactoriesByCreatorProvider
   /// See also [getFactoriesByCreator].
   GetFactoriesByCreatorProvider({
     required String creatorAddress,
+    int limit = 20,
+    int offset = 0,
   }) : this._internal(
           (ref) => getFactoriesByCreator(
             ref as GetFactoriesByCreatorRef,
             creatorAddress: creatorAddress,
+            limit: limit,
+            offset: offset,
           ),
           from: getFactoriesByCreatorProvider,
           name: r'getFactoriesByCreatorProvider',
@@ -2031,6 +2041,8 @@ class GetFactoriesByCreatorProvider
           allTransitiveDependencies:
               GetFactoriesByCreatorFamily._allTransitiveDependencies,
           creatorAddress: creatorAddress,
+          limit: limit,
+          offset: offset,
         );
 
   GetFactoriesByCreatorProvider._internal(
@@ -2041,9 +2053,13 @@ class GetFactoriesByCreatorProvider
     required super.debugGetCreateSourceHash,
     required super.from,
     required this.creatorAddress,
+    required this.limit,
+    required this.offset,
   }) : super.internal();
 
   final String creatorAddress;
+  final int limit;
+  final int offset;
 
   @override
   Override overrideWith(
@@ -2060,6 +2076,8 @@ class GetFactoriesByCreatorProvider
         allTransitiveDependencies: null,
         debugGetCreateSourceHash: null,
         creatorAddress: creatorAddress,
+        limit: limit,
+        offset: offset,
       ),
     );
   }
@@ -2072,13 +2090,17 @@ class GetFactoriesByCreatorProvider
   @override
   bool operator ==(Object other) {
     return other is GetFactoriesByCreatorProvider &&
-        other.creatorAddress == creatorAddress;
+        other.creatorAddress == creatorAddress &&
+        other.limit == limit &&
+        other.offset == offset;
   }
 
   @override
   int get hashCode {
     var hash = _SystemHash.combine(0, runtimeType.hashCode);
     hash = _SystemHash.combine(hash, creatorAddress.hashCode);
+    hash = _SystemHash.combine(hash, limit.hashCode);
+    hash = _SystemHash.combine(hash, offset.hashCode);
 
     return _SystemHash.finish(hash);
   }
@@ -2090,6 +2112,12 @@ mixin GetFactoriesByCreatorRef
     on AutoDisposeFutureProviderRef<FactorySearchResult> {
   /// The parameter `creatorAddress` of this provider.
   String get creatorAddress;
+
+  /// The parameter `limit` of this provider.
+  int get limit;
+
+  /// The parameter `offset` of this provider.
+  int get offset;
 }
 
 class _GetFactoriesByCreatorProviderElement
@@ -2100,6 +2128,10 @@ class _GetFactoriesByCreatorProviderElement
   @override
   String get creatorAddress =>
       (origin as GetFactoriesByCreatorProvider).creatorAddress;
+  @override
+  int get limit => (origin as GetFactoriesByCreatorProvider).limit;
+  @override
+  int get offset => (origin as GetFactoriesByCreatorProvider).offset;
 }
 
 String _$searchFactoriesBySkillsHash() =>
@@ -2376,37 +2408,38 @@ class _SearchFactoriesByTokenProviderElement
       (origin as SearchFactoriesByTokenProvider).tokenSymbol;
 }
 
-String _$updateFactoryAppsHash() => r'829be3690c1a4df17079fd95b0d1660ab5315502';
+String _$updateFactoryTasksHash() =>
+    r'eca8c2751045548d335b797a91882b84a3418c30';
 
-/// See also [updateFactoryApps].
-@ProviderFor(updateFactoryApps)
-const updateFactoryAppsProvider = UpdateFactoryAppsFamily();
+/// See also [updateFactoryTasks].
+@ProviderFor(updateFactoryTasks)
+const updateFactoryTasksProvider = UpdateFactoryTasksFamily();
 
-/// See also [updateFactoryApps].
-class UpdateFactoryAppsFamily extends Family<AsyncValue<Factory>> {
-  /// See also [updateFactoryApps].
-  const UpdateFactoryAppsFamily();
+/// See also [updateFactoryTasks].
+class UpdateFactoryTasksFamily extends Family<AsyncValue<Factory>> {
+  /// See also [updateFactoryTasks].
+  const UpdateFactoryTasksFamily();
 
-  /// See also [updateFactoryApps].
-  UpdateFactoryAppsProvider call({
+  /// See also [updateFactoryTasks].
+  UpdateFactoryTasksProvider call({
     required String factoryId,
-    required List<FactoryApp> apps,
+    required List<WorkflowTask> tasks,
     required String walletAddress,
   }) {
-    return UpdateFactoryAppsProvider(
+    return UpdateFactoryTasksProvider(
       factoryId: factoryId,
-      apps: apps,
+      tasks: tasks,
       walletAddress: walletAddress,
     );
   }
 
   @override
-  UpdateFactoryAppsProvider getProviderOverride(
-    covariant UpdateFactoryAppsProvider provider,
+  UpdateFactoryTasksProvider getProviderOverride(
+    covariant UpdateFactoryTasksProvider provider,
   ) {
     return call(
       factoryId: provider.factoryId,
-      apps: provider.apps,
+      tasks: provider.tasks,
       walletAddress: provider.walletAddress,
     );
   }
@@ -2423,38 +2456,38 @@ class UpdateFactoryAppsFamily extends Family<AsyncValue<Factory>> {
       _allTransitiveDependencies;
 
   @override
-  String? get name => r'updateFactoryAppsProvider';
+  String? get name => r'updateFactoryTasksProvider';
 }
 
-/// See also [updateFactoryApps].
-class UpdateFactoryAppsProvider extends AutoDisposeFutureProvider<Factory> {
-  /// See also [updateFactoryApps].
-  UpdateFactoryAppsProvider({
+/// See also [updateFactoryTasks].
+class UpdateFactoryTasksProvider extends AutoDisposeFutureProvider<Factory> {
+  /// See also [updateFactoryTasks].
+  UpdateFactoryTasksProvider({
     required String factoryId,
-    required List<FactoryApp> apps,
+    required List<WorkflowTask> tasks,
     required String walletAddress,
   }) : this._internal(
-          (ref) => updateFactoryApps(
-            ref as UpdateFactoryAppsRef,
+          (ref) => updateFactoryTasks(
+            ref as UpdateFactoryTasksRef,
             factoryId: factoryId,
-            apps: apps,
+            tasks: tasks,
             walletAddress: walletAddress,
           ),
-          from: updateFactoryAppsProvider,
-          name: r'updateFactoryAppsProvider',
+          from: updateFactoryTasksProvider,
+          name: r'updateFactoryTasksProvider',
           debugGetCreateSourceHash:
               const bool.fromEnvironment('dart.vm.product')
                   ? null
-                  : _$updateFactoryAppsHash,
-          dependencies: UpdateFactoryAppsFamily._dependencies,
+                  : _$updateFactoryTasksHash,
+          dependencies: UpdateFactoryTasksFamily._dependencies,
           allTransitiveDependencies:
-              UpdateFactoryAppsFamily._allTransitiveDependencies,
+              UpdateFactoryTasksFamily._allTransitiveDependencies,
           factoryId: factoryId,
-          apps: apps,
+          tasks: tasks,
           walletAddress: walletAddress,
         );
 
-  UpdateFactoryAppsProvider._internal(
+  UpdateFactoryTasksProvider._internal(
     super._createNotifier, {
     required super.name,
     required super.dependencies,
@@ -2462,29 +2495,29 @@ class UpdateFactoryAppsProvider extends AutoDisposeFutureProvider<Factory> {
     required super.debugGetCreateSourceHash,
     required super.from,
     required this.factoryId,
-    required this.apps,
+    required this.tasks,
     required this.walletAddress,
   }) : super.internal();
 
   final String factoryId;
-  final List<FactoryApp> apps;
+  final List<WorkflowTask> tasks;
   final String walletAddress;
 
   @override
   Override overrideWith(
-    FutureOr<Factory> Function(UpdateFactoryAppsRef provider) create,
+    FutureOr<Factory> Function(UpdateFactoryTasksRef provider) create,
   ) {
     return ProviderOverride(
       origin: this,
-      override: UpdateFactoryAppsProvider._internal(
-        (ref) => create(ref as UpdateFactoryAppsRef),
+      override: UpdateFactoryTasksProvider._internal(
+        (ref) => create(ref as UpdateFactoryTasksRef),
         from: from,
         name: null,
         dependencies: null,
         allTransitiveDependencies: null,
         debugGetCreateSourceHash: null,
         factoryId: factoryId,
-        apps: apps,
+        tasks: tasks,
         walletAddress: walletAddress,
       ),
     );
@@ -2492,14 +2525,14 @@ class UpdateFactoryAppsProvider extends AutoDisposeFutureProvider<Factory> {
 
   @override
   AutoDisposeFutureProviderElement<Factory> createElement() {
-    return _UpdateFactoryAppsProviderElement(this);
+    return _UpdateFactoryTasksProviderElement(this);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is UpdateFactoryAppsProvider &&
+    return other is UpdateFactoryTasksProvider &&
         other.factoryId == factoryId &&
-        other.apps == apps &&
+        other.tasks == tasks &&
         other.walletAddress == walletAddress;
   }
 
@@ -2507,7 +2540,7 @@ class UpdateFactoryAppsProvider extends AutoDisposeFutureProvider<Factory> {
   int get hashCode {
     var hash = _SystemHash.combine(0, runtimeType.hashCode);
     hash = _SystemHash.combine(hash, factoryId.hashCode);
-    hash = _SystemHash.combine(hash, apps.hashCode);
+    hash = _SystemHash.combine(hash, tasks.hashCode);
     hash = _SystemHash.combine(hash, walletAddress.hashCode);
 
     return _SystemHash.finish(hash);
@@ -2516,29 +2549,29 @@ class UpdateFactoryAppsProvider extends AutoDisposeFutureProvider<Factory> {
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-mixin UpdateFactoryAppsRef on AutoDisposeFutureProviderRef<Factory> {
+mixin UpdateFactoryTasksRef on AutoDisposeFutureProviderRef<Factory> {
   /// The parameter `factoryId` of this provider.
   String get factoryId;
 
-  /// The parameter `apps` of this provider.
-  List<FactoryApp> get apps;
+  /// The parameter `tasks` of this provider.
+  List<WorkflowTask> get tasks;
 
   /// The parameter `walletAddress` of this provider.
   String get walletAddress;
 }
 
-class _UpdateFactoryAppsProviderElement
+class _UpdateFactoryTasksProviderElement
     extends AutoDisposeFutureProviderElement<Factory>
-    with UpdateFactoryAppsRef {
-  _UpdateFactoryAppsProviderElement(super.provider);
+    with UpdateFactoryTasksRef {
+  _UpdateFactoryTasksProviderElement(super.provider);
 
   @override
-  String get factoryId => (origin as UpdateFactoryAppsProvider).factoryId;
+  String get factoryId => (origin as UpdateFactoryTasksProvider).factoryId;
   @override
-  List<FactoryApp> get apps => (origin as UpdateFactoryAppsProvider).apps;
+  List<WorkflowTask> get tasks => (origin as UpdateFactoryTasksProvider).tasks;
   @override
   String get walletAddress =>
-      (origin as UpdateFactoryAppsProvider).walletAddress;
+      (origin as UpdateFactoryTasksProvider).walletAddress;
 }
 
 String _$getFactoryBalanceHash() => r'74caa983518a37bf79c620f85ccc8fddbfc6197e';

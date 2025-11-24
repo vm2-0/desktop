@@ -7,7 +7,7 @@ part of 'provider.dart';
 // **************************************************************************
 
 String _$factoryFundsModalNotifierHash() =>
-    r'685d27ec4569b9384a7d4471319b7f965e54bb26';
+    r'b50738535ad65bad800196810866792441951a89';
 
 /// See also [FactoryFundsModalNotifier].
 @ProviderFor(FactoryFundsModalNotifier)

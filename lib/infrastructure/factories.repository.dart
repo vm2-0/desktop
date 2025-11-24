@@ -1,6 +1,6 @@
 import 'package:clones_desktop/domain/models/api/request_options.dart';
 import 'package:clones_desktop/domain/models/factory/factory.dart';
-import 'package:clones_desktop/domain/models/factory/factory_app.dart';
+import 'package:clones_desktop/domain/models/factory/workflow_task.dart';
 import 'package:clones_desktop/domain/models/factory/factory_grading_result.dart';
 import 'package:clones_desktop/domain/models/factory/factory_search_criteria.dart';
 import 'package:clones_desktop/domain/models/factory/factory_search_result.dart';
@@ -16,9 +16,9 @@ abstract class FactoriesRepository {
     int offset = 0,
     FactoryStatus? status,
   });
-  Future<Factory> updateFactoryApps({
+  Future<Factory> updateFactoryTasks({
     required String factoryId,
-    required List<FactoryApp> apps,
+    required List<WorkflowTask> tasks,
     required String walletAddress,
   });
 }
@@ -42,8 +42,11 @@ class FactoriesRepositoryImpl implements FactoriesRepository {
       );
 
       return FactorySearchResult.fromJson(responseData);
-    } catch (e) {
-      throw Exception('Failed to search factories: $e');
+    } catch (_) {
+      return FactorySearchResult(
+        limit: criteria.limit,
+        offset: criteria.offset,
+      );
     }
   }
 
@@ -414,84 +417,55 @@ class FactoriesRepositoryImpl implements FactoriesRepository {
     }
   }
 
-  /// Update factory apps - allows adding/modifying tasks
+  /// Update factory tasks - new tasks-first endpoint
   @override
-  Future<Factory> updateFactoryApps({
+  Future<Factory> updateFactoryTasks({
     required String factoryId,
-    required List<FactoryApp> apps,
+    required List<WorkflowTask> tasks,
     required String walletAddress,
   }) async {
     try {
-      // Clean the apps data to match API schema - build from scratch to avoid any unwanted fields
-      final cleanApps = apps.map((app) {
-        // Build clean app object from scratch
-        final cleanApp = <String, dynamic>{
-          'name': app.name,
-          'domain': app.domain,
-          'categories': app.categories,
+      final cleanTasks = tasks.map((task) {
+        final cleanTask = <String, dynamic>{
+          'prompt': task.prompt,
+          'categories': task.categories,
+          'task_name': task.taskName,
+          'apps_used': task.appsUsed
+              .map(
+                (app) => {
+                  'name': app.name,
+                  'domain': app.domain,
+                  'description': app.description,
+                },
+              )
+              .toList(),
         };
 
-        // Only include ID if it's not null and not empty
-        if (app.id != null && app.id!.isNotEmpty) {
-          cleanApp['id'] = app.id;
+        if (task.id != null && task.id!.isNotEmpty) {
+          cleanTask['id'] = task.id;
         }
 
-        // Add description if it exists
-        if (app.description != null && app.description!.isNotEmpty) {
-          cleanApp['description'] = app.description;
+        if (task.uploadLimit != null && task.uploadLimit! >= 1) {
+          cleanTask['uploadLimit'] = task.uploadLimit;
         }
 
-        // Clean tasks - build from scratch to completely exclude limitReason
-        if (app.tasks.isNotEmpty) {
-          cleanApp['tasks'] = app.tasks.map((task) {
-            final cleanTask = <String, dynamic>{
-              'prompt': task.prompt,
-            };
-
-            // Only include ID if it's not null and not empty
-            if (task.id != null && task.id!.isNotEmpty) {
-              cleanTask['id'] = task.id;
-            }
-
-            // Handle uploadLimit: include positive integers or explicit null
-            if (task.uploadLimit != null && task.uploadLimit! >= 1) {
-              cleanTask['uploadLimit'] = task.uploadLimit;
-            } else {
-              cleanTask['uploadLimit'] = null;
-            }
-
-            // Handle rewardLimit: include positive doubles or explicit null
-            if (task.rewardLimit != null && task.rewardLimit!.toDouble() > 0) {
-              cleanTask['rewardLimit'] = task.rewardLimit!.toDouble();
-            } else {
-              cleanTask['rewardLimit'] = null;
-            }
-
-            // limitReason is completely excluded - not included at all
-
-            return cleanTask;
-          }).toList();
-        } else {
-          cleanApp['tasks'] = <Map<String, dynamic>>[];
+        if (task.rewardLimit != null && task.rewardLimit!.toDouble() > 0) {
+          cleanTask['rewardLimit'] = task.rewardLimit!.toDouble();
         }
 
-        return cleanApp;
+        return cleanTask;
       }).toList();
 
       final responseData = await _apiClient.put<Map<String, dynamic>>(
-        '/forge/factories/apps/$factoryId',
-        data: {
-          'apps': cleanApps,
-        },
-        options: const RequestOptions(
-          requiresAuth: true,
-        ),
+        '/forge/factories/apps/$factoryId/workflows',
+        data: {'tasks': cleanTasks},
+        options: const RequestOptions(requiresAuth: true),
         fromJson: (json) => json as Map<String, dynamic>,
       );
 
       return Factory.fromJson(responseData);
     } catch (e) {
-      throw Exception('Failed to update factory apps: $e');
+      throw Exception('Failed to update factory tasks: $e');
     }
   }
 

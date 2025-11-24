@@ -339,7 +339,7 @@ class _RewardCell extends ConsumerWidget {
     if (reward != null && reward > 0) {
       final factory = ref.watch(forgeDetailNotifierProvider).factory;
       return Text(
-        '${reward.toStringAsFixedLowValue(4, 5)} ${factory?.token.symbol}',
+        '${reward.toStringAsFixedLowValue(4, 5)} ${factory?.token?.symbol ?? ''}',
         style: theme.textTheme.bodySmall,
       );
     }

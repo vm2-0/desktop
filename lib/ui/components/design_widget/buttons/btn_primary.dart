@@ -4,6 +4,8 @@ import 'package:gradient_borders/box_borders/gradient_box_border.dart';
 
 enum BtnPrimaryType { primary, outlinePrimary, dark, important }
 
+enum IconPosition { leading, trailing }
+
 class BtnPrimary extends StatelessWidget {
   const BtnPrimary({
     required this.buttonText,
@@ -13,6 +15,7 @@ class BtnPrimary extends StatelessWidget {
     this.widthExpanded = false,
     this.isLoading = false,
     this.icon,
+    this.iconPosition = IconPosition.leading,
     super.key,
   });
   final String buttonText;
@@ -22,6 +25,7 @@ class BtnPrimary extends StatelessWidget {
   final bool widthExpanded;
   final IconData? icon;
   final bool isLoading;
+  final IconPosition iconPosition;
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +57,7 @@ class BtnPrimary extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (icon != null)
+              if (icon != null && iconPosition == IconPosition.leading)
                 Padding(
                   padding:
                       EdgeInsets.only(right: buttonText.isNotEmpty ? 8 : 0),
@@ -70,6 +74,11 @@ class BtnPrimary extends StatelessWidget {
                         : Colors.white,
                     fontWeight: FontWeight.w600,
                   ),
+                ),
+              if (icon != null && iconPosition == IconPosition.trailing)
+                Padding(
+                  padding: EdgeInsets.only(left: buttonText.isNotEmpty ? 4 : 0),
+                  child: Icon(icon, color: Colors.white, size: 16),
                 ),
               if (isLoading)
                 const Padding(

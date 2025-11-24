@@ -1,11 +1,8 @@
-import 'dart:convert';
-
 import 'package:clones_desktop/application/feature_flags.dart';
 import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/assets.dart';
-import 'package:clones_desktop/domain/app_info.dart';
-import 'package:clones_desktop/domain/models/factory/factory_app.dart';
-import 'package:clones_desktop/domain/models/factory/factory_task.dart';
+import 'package:clones_desktop/domain/models/factory/factory.dart';
+import 'package:clones_desktop/domain/models/factory/workflow_task.dart';
 import 'package:clones_desktop/ui/components/design_widget/dialog/dialog.dart';
 import 'package:clones_desktop/ui/views/demo_detail/layouts/components/referral_required_dialog.dart';
 import 'package:clones_desktop/ui/views/demo_detail/layouts/demo_detail_view.dart';
@@ -19,19 +16,19 @@ class TaskActionsWidget extends ConsumerWidget {
   const TaskActionsWidget({
     super.key,
     required this.task,
-    required this.app,
-    required this.appIdx,
     required this.taskIdx,
     required this.forgeId,
+    required this.factoryStatus,
   });
-  final FactoryTask task;
-  final FactoryApp app;
-  final int appIdx;
+
+  final WorkflowTask task;
   final int taskIdx;
   final String forgeId;
+  final FactoryStatus factoryStatus;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (factoryStatus == FactoryStatus.archived) return const SizedBox.shrink();
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -53,21 +50,10 @@ class TaskActionsWidget extends ConsumerWidget {
                 }
               }
 
-              final appInfo = AppInfo(
-                type: 'website',
-                name: app.name,
-                url: 'https://${app.domain}',
-                taskId: task.id,
-              );
-              final appParam = Uri.encodeComponent(
-                jsonEncode(appInfo.toJson()),
-              );
-
               context.go(
                 DemoDetailView.routeName,
                 extra: {
                   'prompt': task.prompt,
-                  'appParam': appParam,
                   'poolId': forgeId,
                   'taskId': task.id,
                 },
@@ -87,12 +73,12 @@ class TaskActionsWidget extends ConsumerWidget {
           ),
         const SizedBox(width: 20),
         // Edit button
+
         InkWell(
           onTap: () {
             ref.read(forgeDetailNotifierProvider.notifier)
               ..setManageTaskModalType(ManageTaskModalType.edit)
               ..setShowManageTaskModal(true)
-              ..setEditingTaskAppIdx(appIdx)
               ..setEditingTaskIdx(taskIdx);
           },
           child: Image.asset(
@@ -102,6 +88,7 @@ class TaskActionsWidget extends ConsumerWidget {
           ),
         ),
         const SizedBox(width: 20),
+
         // Delete button
         InkWell(
           onTap: () async {
@@ -114,7 +101,7 @@ class TaskActionsWidget extends ConsumerWidget {
               () async {
                 ref
                     .read(forgeDetailNotifierProvider.notifier)
-                    .removeTask(appIdx, taskIdx);
+                    .removeTask(taskIdx);
               },
             );
           },

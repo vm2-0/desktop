@@ -1,7 +1,4 @@
-import 'package:clones_desktop/application/apps.dart';
 import 'package:clones_desktop/domain/models/factory/factory.dart';
-
-import 'package:clones_desktop/domain/models/ui/factory_filter.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:clones_desktop/ui/views/forge_detail/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/components/forge_factory_detail_sidebar.dart';
@@ -26,18 +23,11 @@ class _ForgeFactoryDetailState extends ConsumerState<ForgeFactoryDetail> {
   void initState() {
     super.initState();
     Future.delayed(Duration.zero, () async {
-      final apps = await ref.read(
-        getAppsForFactoryProvider(
-          filter: FactoryFilter(poolId: widget.factory.id),
-        ).future,
-      );
-
       ref.read(forgeDetailNotifierProvider.notifier)
         ..setIsUpdateFactoryStatusSuccess(false)
         ..setIsUpdatePoolSuccess(false)
         ..setIsRefreshBalanceSuccess(false)
         ..setError(null)
-        ..setApps(apps)
         ..setFactoryName(widget.factory.name)
         ..setFactoryStatus(widget.factory.status)
         ..setUploadLimitValue(10)

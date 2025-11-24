@@ -1,5 +1,4 @@
 import 'package:clones_desktop/domain/models/factory/factory.dart';
-import 'package:clones_desktop/domain/models/factory/factory_app.dart';
 import 'package:clones_desktop/ui/views/manage_task/bloc/state.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -20,7 +19,6 @@ class ForgeDetailState with _$ForgeDetailState {
     Factory? factory,
     @Default(ViewModeTasks.edit) ViewModeTasks viewModeTasks,
     String? error,
-    @Default([]) List<FactoryApp> apps,
     @Default(false) bool isUpdateFactoryStatusSuccess,
     @Default(false) bool isUpdatePoolSuccess,
     @Default(false) bool isRefreshBalanceSuccess,
@@ -32,7 +30,6 @@ class ForgeDetailState with _$ForgeDetailState {
     ManageTaskModalType manageTaskModalType,
     String? newAppName,
     String? newAppDomain,
-    int? editingTaskAppIdx,
     int? editingTaskIdx,
   }) = _ForgeDetailState;
   const ForgeDetailState._();

@@ -1,10 +1,11 @@
 import 'package:clones_desktop/application/transaction/provider.dart';
+import 'package:clones_desktop/ui/components/app_chip_widget.dart';
+import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
+import 'package:clones_desktop/ui/components/design_widget/dialog/dialog.dart';
 import 'package:clones_desktop/ui/views/generate_factory/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/generate_factory/bloc/state.dart';
-import 'package:clones_desktop/ui/views/generate_factory/layouts/components/generate_factory_textfield_factory_app.dart';
-import 'package:clones_desktop/ui/views/shared/components/editable_app_card.dart';
-import 'package:decimal/decimal.dart';
+import 'package:clones_desktop/ui/views/shared/components/task_input_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -62,162 +63,134 @@ class GenerateFactoryModalStep3 extends ConsumerWidget {
               style: theme.textTheme.bodySmall,
             ),
             const SizedBox(height: 6),
-            const GenerateFactoryTextFieldFactoryApp(),
+            // Factory name will be set from the generation result
             const SizedBox(height: 12),
             Builder(
               builder: (context) {
                 final totalFunding =
                     double.tryParse(generateFactory.fundingAmount ?? '0') ??
                         0.0;
-                final totalTasks = generateFactory.apps
-                        ?.fold<int>(0, (sum, a) => sum + a.tasks.length) ??
-                    1;
+                final totalTasks = generateFactory.tasks?.length ?? 1;
                 final defaultReward =
                     totalTasks > 0 ? totalFunding / totalTasks : 0.0;
 
                 return Text(
-                  'Apps & Tasks: Review and customize the generated apps and tasks below.\n'
+                  'Tasks: Review and customize the generated tasks below.\n'
                   '• Edit task descriptions to be more specific\n'
                   '• Set custom reward amounts (leave empty for automatic distribution: ${defaultReward.toStringAsFixed(4)} ${generateFactory.selectedTokenSymbol ?? ''} per task)\n'
                   '• Set upload limits to control how many times each task can be completed\n'
-                  '• Add or remove apps and tasks as needed',
+                  "• Remove tasks if you don't want to provide them to your factory",
                   style: theme.textTheme.bodySmall,
                 );
               },
             ),
 
-            if (generateFactory.apps != null &&
-                generateFactory.apps!.isNotEmpty)
+            if (generateFactory.tasks != null &&
+                generateFactory.tasks!.isNotEmpty)
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: (generateFactory.apps! as List).length,
-                itemBuilder: (context, appIdx) {
-                  final app = generateFactory.apps![appIdx];
+                itemCount: (generateFactory.tasks! as List).length,
+                itemBuilder: (context, taskIdx) {
+                  final task = generateFactory.tasks![taskIdx];
                   final generateFactoryNotifier =
                       ref.watch(generateFactoryNotifierProvider.notifier);
 
-                  return EditableAppCard(
-                    appName: app.name,
-                    appDomain: app.domain,
-                    tasks:
-                        app.tasks.map<String>((task) => task.prompt).toList(),
-                    showLimits: true,
-                    tokenSymbol: generateFactory.selectedTokenSymbol,
-                    taskRewardLimits: app.tasks
-                        .map((task) => task.rewardLimit?.toDouble())
-                        .toList(),
-                    taskUploadLimits:
-                        app.tasks.map((task) => task.uploadLimit).toList(),
-                    onAppNameChanged: (newName) {
-                      generateFactoryNotifier.updateAppName(appIdx, newName);
-                    },
-                    onTaskChanged: (event) {
-                      generateFactoryNotifier.updateTaskPrompt(
-                        appIdx,
-                        event.taskIndex,
-                        event.newValue,
-                      );
-                    },
-                    onTaskRewardLimitChanged: (taskIdx, rewardLimit) {
-                      final task = app.tasks[taskIdx];
-                      generateFactoryNotifier.updateTaskWithLimits(
-                        appIdx,
-                        taskIdx,
-                        task.prompt,
-                        rewardLimit != null
-                            ? Decimal.parse(rewardLimit.toString())
-                            : null,
-                        task.uploadLimit,
-                      );
-                    },
-                    onTaskUploadLimitChanged: (taskIdx, uploadLimit) {
-                      final task = app.tasks[taskIdx];
-                      generateFactoryNotifier.updateTaskWithLimits(
-                        appIdx,
-                        taskIdx,
-                        task.prompt,
-                        task.rewardLimit,
-                        uploadLimit,
-                      );
-                    },
-                    onTaskAdded: () {
-                      generateFactoryNotifier.addTask(appIdx);
-                    },
-                    onTaskRemoved: (taskIdx) {
-                      generateFactoryNotifier.removeTask(appIdx, taskIdx);
-                    },
-                    onAppRemoved: () {
-                      generateFactoryNotifier.removeApp(appIdx);
-                    },
-                    enabled: !generateFactory.isCreating &&
-                        !generateFactory.isCreated,
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: CardWidget(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                task.taskName,
+                                style: theme.textTheme.titleSmall,
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                ),
+                                onPressed: () {
+                                  AppDialogs.showConfirmDialog(
+                                    context,
+                                    ref,
+                                    'Remove Task?',
+                                    'Are you sure you want to remove this task?',
+                                    'Remove',
+                                    () {
+                                      generateFactoryNotifier
+                                          .removeTask(taskIdx);
+                                    },
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                          TaskInputField(
+                            initialValue: task.prompt,
+                            onChanged: (value) {
+                              ref
+                                  .read(
+                                      generateFactoryNotifierProvider.notifier)
+                                  .updateTaskPrompt(taskIdx, value);
+                            },
+                            showLimits: true,
+                            tokenSymbol: generateFactory.selectedTokenSymbol,
+                            rewardLimit: task.rewardLimit?.toDouble(),
+                            uploadLimit: task.uploadLimit,
+                            onRewardLimitChanged: (rewardLimit) {
+                              ref
+                                  .read(
+                                      generateFactoryNotifierProvider.notifier)
+                                  .updateTaskRewardLimit(taskIdx, rewardLimit);
+                            },
+                            onUploadLimitChanged: (uploadLimit) {
+                              ref
+                                  .read(
+                                      generateFactoryNotifierProvider.notifier)
+                                  .updateTaskUploadLimit(taskIdx, uploadLimit);
+                            },
+                          ),
+                          const SizedBox(height: 20),
+                          if (task.appsUsed.isNotEmpty) ...[
+                            Row(
+                              children: [
+                                Text(
+                                  'Apps to be used:',
+                                  style: theme.textTheme.bodySmall,
+                                ),
+                                const SizedBox(width: 8),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 4,
+                                  children: task.appsUsed
+                                      .asMap()
+                                      .entries
+                                      .map(
+                                        (entry) => AppChipWidget(
+                                          appName: entry.value.name,
+                                          domain: entry.value.domain,
+                                          index: entry.key,
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                   );
                 },
-              ),
-            // TODO(reddwarf03): Add app button
-            /*if (!generateFactory.isCreating && !generateFactory.isCreated)
-            AddAppCard(
-              onAddApp: () {
-                ref.read(generateFactoryNotifierProvider.notifier).addApp();
-              },
-              enabled:
-                  !generateFactory.isCreating && !generateFactory.isCreated,
-            ),*/
-            if (generateFactory.apps == null || generateFactory.apps!.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Center(
-                  child: Text(
-                    'No apps or tasks generated',
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                ),
               ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _footerButtons(BuildContext context, WidgetRef ref) {
-    final generateFactoryNotifier =
-        ref.watch(generateFactoryNotifierProvider.notifier);
-    final generateFactoryState = ref.watch(generateFactoryNotifierProvider);
-
-    // If factory is created, show only close button
-    if (generateFactoryState.isCreated) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          BtnPrimary(
-            buttonText: 'Close',
-            onTap: onClose,
-          ),
-        ],
-      );
-    }
-
-    // Default state: show back and create factory buttons
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        BtnPrimary(
-          buttonText: 'Back',
-          onTap: () => generateFactoryNotifier
-            ..setError(null)
-            ..setCurrentStep(GenerateFactoryStep.input),
-          btnPrimaryType: BtnPrimaryType.outlinePrimary,
-        ),
-        const SizedBox(width: 10),
-        BtnPrimary(
-          isLoading: generateFactoryState.isCreating,
-          buttonText: 'Create Factory',
-          onTap: () async {
-            await generateFactoryNotifier.createPool();
-          },
-        ),
-      ],
     );
   }
 
@@ -501,6 +474,48 @@ class GenerateFactoryModalStep3 extends ConsumerWidget {
                     transactionManager.showTransactionStatus(context),
                 btnPrimaryType: BtnPrimaryType.outlinePrimary,
               ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _footerButtons(BuildContext context, WidgetRef ref) {
+    final generateFactory = ref.watch(generateFactoryNotifierProvider);
+    final generateFactoryNotifier =
+        ref.read(generateFactoryNotifierProvider.notifier);
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          BtnPrimary(
+            onTap: () {
+              generateFactoryNotifier.setCurrentStep(
+                GenerateFactoryStep.input,
+              );
+            },
+            buttonText: 'Back',
+            btnPrimaryType: BtnPrimaryType.outlinePrimary,
+          ),
+          if (generateFactory.isCreated)
+            BtnPrimary(
+              onTap: onClose,
+              buttonText: 'Close',
+            )
+          else
+            BtnPrimary(
+              onTap: generateFactory.isCreating ||
+                      generateFactory.tasks == null ||
+                      generateFactory.tasks!.isEmpty
+                  ? null
+                  : () async {
+                      await generateFactoryNotifier.createFactory();
+                    },
+              buttonText:
+                  generateFactory.isCreating ? 'Creating...' : 'Create Factory',
+              isLoading: generateFactory.isCreating,
             ),
         ],
       ),

@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:clones_desktop/application/factory.dart';
 import 'package:clones_desktop/application/recording.dart';
 import 'package:clones_desktop/application/tauri_api.dart';
@@ -8,7 +7,6 @@ import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/domain/models/demonstration/demonstration_reward.dart';
 import 'package:clones_desktop/domain/models/recording/api_recording.dart';
 import 'package:clones_desktop/ui/components/card.dart';
-import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:clones_desktop/ui/components/design_widget/dialog/dialog.dart';
 import 'package:clones_desktop/ui/components/score_indicator.dart';
 import 'package:clones_desktop/ui/views/demo_detail/layouts/demo_detail_view.dart';
@@ -63,8 +61,6 @@ class RecordingCard extends ConsumerWidget {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                _buildIcon(context),
-                const SizedBox(width: 10),
                 Expanded(child: _buildTitleAndMeta(context)),
                 _buildStatus(context, uploadItem),
                 _buildActions(context, ref, uploadItem, maxReward),
@@ -73,28 +69,6 @@ class RecordingCard extends ConsumerWidget {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildIcon(BuildContext context) {
-    final iconUrl = recording.demonstration?.iconUrl ??
-        recording.submission?.meta.demonstration.iconUrl;
-    return SizedBox(
-      width: 32,
-      height: 32,
-      child: iconUrl != null
-          ? CachedNetworkImage(
-              imageUrl: iconUrl,
-              width: 32,
-              height: 32,
-              placeholder: (context, url) => const CircularProgressIndicator(),
-              errorWidget: (_, __, ___) => const Icon(
-                Icons.apps,
-                color: ClonesColors.primaryText,
-                size: 24,
-              ),
-            )
-          : Icon(Icons.apps, color: ClonesColors.secondaryText),
     );
   }
 
@@ -361,11 +335,6 @@ class RecordingCard extends ConsumerWidget {
     UploadTaskState? uploadItem,
     double maxReward,
   ) {
-    final isUploading = uploadItem?.uploadStatus == UploadStatus.processing ||
-        uploadItem?.uploadStatus == UploadStatus.uploading ||
-        uploadItem?.uploadStatus == UploadStatus.zipping;
-    final isCompleted = uploadItem?.uploadStatus == UploadStatus.done;
-    const isQueued = false; // Not in UploadStatus enum
     final theme = Theme.of(context);
 
     final factoryId = recording.demonstration?.poolId ??

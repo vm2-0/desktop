@@ -1,5 +1,4 @@
 import 'package:clones_desktop/domain/models/factory/factory.dart';
-import 'package:clones_desktop/domain/models/factory/factory_app.dart';
 import 'package:clones_desktop/ui/views/forge_detail/bloc/state.dart';
 import 'package:clones_desktop/ui/views/manage_task/bloc/state.dart';
 import 'package:riverpod/riverpod.dart';
@@ -77,10 +76,6 @@ mixin ForgeDetailSetters on AutoDisposeNotifier<ForgeDetailState> {
     state = state.copyWith(isRefreshBalanceSuccess: isRefreshBalanceSuccess);
   }
 
-  void setApps(List<FactoryApp> apps) {
-    state = state.copyWith(apps: apps);
-  }
-
   void setShowNewAppForm(bool showNewAppForm) {
     state = state.copyWith(showNewAppForm: showNewAppForm);
   }
@@ -101,9 +96,6 @@ mixin ForgeDetailSetters on AutoDisposeNotifier<ForgeDetailState> {
     state = state.copyWith(manageTaskModalType: manageTaskModalType);
   }
 
-  void setEditingTaskAppIdx(int? editingTaskAppIdx) {
-    state = state.copyWith(editingTaskAppIdx: editingTaskAppIdx);
-  }
 
   void setEditingTaskIdx(int? editingTaskIdx) {
     state = state.copyWith(editingTaskIdx: editingTaskIdx);

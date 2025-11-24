@@ -23,7 +23,6 @@ mixin _$ForgeDetailState {
   Factory? get factory => throw _privateConstructorUsedError;
   ViewModeTasks get viewModeTasks => throw _privateConstructorUsedError;
   String? get error => throw _privateConstructorUsedError;
-  List<FactoryApp> get apps => throw _privateConstructorUsedError;
   bool get isUpdateFactoryStatusSuccess => throw _privateConstructorUsedError;
   bool get isUpdatePoolSuccess => throw _privateConstructorUsedError;
   bool get isRefreshBalanceSuccess => throw _privateConstructorUsedError;
@@ -35,7 +34,6 @@ mixin _$ForgeDetailState {
       throw _privateConstructorUsedError;
   String? get newAppName => throw _privateConstructorUsedError;
   String? get newAppDomain => throw _privateConstructorUsedError;
-  int? get editingTaskAppIdx => throw _privateConstructorUsedError;
   int? get editingTaskIdx => throw _privateConstructorUsedError;
 
   /// Create a copy of ForgeDetailState
@@ -59,7 +57,6 @@ abstract class $ForgeDetailStateCopyWith<$Res> {
       Factory? factory,
       ViewModeTasks viewModeTasks,
       String? error,
-      List<FactoryApp> apps,
       bool isUpdateFactoryStatusSuccess,
       bool isUpdatePoolSuccess,
       bool isRefreshBalanceSuccess,
@@ -70,7 +67,6 @@ abstract class $ForgeDetailStateCopyWith<$Res> {
       ManageTaskModalType manageTaskModalType,
       String? newAppName,
       String? newAppDomain,
-      int? editingTaskAppIdx,
       int? editingTaskIdx});
 
   $FactoryCopyWith<$Res>? get factory;
@@ -98,7 +94,6 @@ class _$ForgeDetailStateCopyWithImpl<$Res, $Val extends ForgeDetailState>
     Object? factory = freezed,
     Object? viewModeTasks = null,
     Object? error = freezed,
-    Object? apps = null,
     Object? isUpdateFactoryStatusSuccess = null,
     Object? isUpdatePoolSuccess = null,
     Object? isRefreshBalanceSuccess = null,
@@ -109,7 +104,6 @@ class _$ForgeDetailStateCopyWithImpl<$Res, $Val extends ForgeDetailState>
     Object? manageTaskModalType = null,
     Object? newAppName = freezed,
     Object? newAppDomain = freezed,
-    Object? editingTaskAppIdx = freezed,
     Object? editingTaskIdx = freezed,
   }) {
     return _then(_value.copyWith(
@@ -141,10 +135,6 @@ class _$ForgeDetailStateCopyWithImpl<$Res, $Val extends ForgeDetailState>
           ? _value.error
           : error // ignore: cast_nullable_to_non_nullable
               as String?,
-      apps: null == apps
-          ? _value.apps
-          : apps // ignore: cast_nullable_to_non_nullable
-              as List<FactoryApp>,
       isUpdateFactoryStatusSuccess: null == isUpdateFactoryStatusSuccess
           ? _value.isUpdateFactoryStatusSuccess
           : isUpdateFactoryStatusSuccess // ignore: cast_nullable_to_non_nullable
@@ -185,10 +175,6 @@ class _$ForgeDetailStateCopyWithImpl<$Res, $Val extends ForgeDetailState>
           ? _value.newAppDomain
           : newAppDomain // ignore: cast_nullable_to_non_nullable
               as String?,
-      editingTaskAppIdx: freezed == editingTaskAppIdx
-          ? _value.editingTaskAppIdx
-          : editingTaskAppIdx // ignore: cast_nullable_to_non_nullable
-              as int?,
       editingTaskIdx: freezed == editingTaskIdx
           ? _value.editingTaskIdx
           : editingTaskIdx // ignore: cast_nullable_to_non_nullable
@@ -227,7 +213,6 @@ abstract class _$$ForgeDetailStateImplCopyWith<$Res>
       Factory? factory,
       ViewModeTasks viewModeTasks,
       String? error,
-      List<FactoryApp> apps,
       bool isUpdateFactoryStatusSuccess,
       bool isUpdatePoolSuccess,
       bool isRefreshBalanceSuccess,
@@ -238,7 +223,6 @@ abstract class _$$ForgeDetailStateImplCopyWith<$Res>
       ManageTaskModalType manageTaskModalType,
       String? newAppName,
       String? newAppDomain,
-      int? editingTaskAppIdx,
       int? editingTaskIdx});
 
   @override
@@ -265,7 +249,6 @@ class __$$ForgeDetailStateImplCopyWithImpl<$Res>
     Object? factory = freezed,
     Object? viewModeTasks = null,
     Object? error = freezed,
-    Object? apps = null,
     Object? isUpdateFactoryStatusSuccess = null,
     Object? isUpdatePoolSuccess = null,
     Object? isRefreshBalanceSuccess = null,
@@ -276,7 +259,6 @@ class __$$ForgeDetailStateImplCopyWithImpl<$Res>
     Object? manageTaskModalType = null,
     Object? newAppName = freezed,
     Object? newAppDomain = freezed,
-    Object? editingTaskAppIdx = freezed,
     Object? editingTaskIdx = freezed,
   }) {
     return _then(_$ForgeDetailStateImpl(
@@ -308,10 +290,6 @@ class __$$ForgeDetailStateImplCopyWithImpl<$Res>
           ? _value.error
           : error // ignore: cast_nullable_to_non_nullable
               as String?,
-      apps: null == apps
-          ? _value._apps
-          : apps // ignore: cast_nullable_to_non_nullable
-              as List<FactoryApp>,
       isUpdateFactoryStatusSuccess: null == isUpdateFactoryStatusSuccess
           ? _value.isUpdateFactoryStatusSuccess
           : isUpdateFactoryStatusSuccess // ignore: cast_nullable_to_non_nullable
@@ -352,10 +330,6 @@ class __$$ForgeDetailStateImplCopyWithImpl<$Res>
           ? _value.newAppDomain
           : newAppDomain // ignore: cast_nullable_to_non_nullable
               as String?,
-      editingTaskAppIdx: freezed == editingTaskAppIdx
-          ? _value.editingTaskAppIdx
-          : editingTaskAppIdx // ignore: cast_nullable_to_non_nullable
-              as int?,
       editingTaskIdx: freezed == editingTaskIdx
           ? _value.editingTaskIdx
           : editingTaskIdx // ignore: cast_nullable_to_non_nullable
@@ -375,7 +349,6 @@ class _$ForgeDetailStateImpl extends _ForgeDetailState {
       this.factory,
       this.viewModeTasks = ViewModeTasks.edit,
       this.error,
-      final List<FactoryApp> apps = const [],
       this.isUpdateFactoryStatusSuccess = false,
       this.isUpdatePoolSuccess = false,
       this.isRefreshBalanceSuccess = false,
@@ -386,10 +359,8 @@ class _$ForgeDetailStateImpl extends _ForgeDetailState {
       this.manageTaskModalType = ManageTaskModalType.create,
       this.newAppName,
       this.newAppDomain,
-      this.editingTaskAppIdx,
       this.editingTaskIdx})
-      : _apps = apps,
-        super._();
+      : super._();
 
   @override
   @JsonKey()
@@ -410,15 +381,6 @@ class _$ForgeDetailStateImpl extends _ForgeDetailState {
   final ViewModeTasks viewModeTasks;
   @override
   final String? error;
-  final List<FactoryApp> _apps;
-  @override
-  @JsonKey()
-  List<FactoryApp> get apps {
-    if (_apps is EqualUnmodifiableListView) return _apps;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_apps);
-  }
-
   @override
   @JsonKey()
   final bool isUpdateFactoryStatusSuccess;
@@ -448,13 +410,11 @@ class _$ForgeDetailStateImpl extends _ForgeDetailState {
   @override
   final String? newAppDomain;
   @override
-  final int? editingTaskAppIdx;
-  @override
   final int? editingTaskIdx;
 
   @override
   String toString() {
-    return 'ForgeDetailState(factoryName: $factoryName, uploadLimitValue: $uploadLimitValue, uploadLimitType: $uploadLimitType, factoryStatus: $factoryStatus, factory: $factory, viewModeTasks: $viewModeTasks, error: $error, apps: $apps, isUpdateFactoryStatusSuccess: $isUpdateFactoryStatusSuccess, isUpdatePoolSuccess: $isUpdatePoolSuccess, isRefreshBalanceSuccess: $isRefreshBalanceSuccess, hasUnsavedChanges: $hasUnsavedChanges, hasFactoryPropertyChanges: $hasFactoryPropertyChanges, showNewAppForm: $showNewAppForm, showManageTaskModal: $showManageTaskModal, manageTaskModalType: $manageTaskModalType, newAppName: $newAppName, newAppDomain: $newAppDomain, editingTaskAppIdx: $editingTaskAppIdx, editingTaskIdx: $editingTaskIdx)';
+    return 'ForgeDetailState(factoryName: $factoryName, uploadLimitValue: $uploadLimitValue, uploadLimitType: $uploadLimitType, factoryStatus: $factoryStatus, factory: $factory, viewModeTasks: $viewModeTasks, error: $error, isUpdateFactoryStatusSuccess: $isUpdateFactoryStatusSuccess, isUpdatePoolSuccess: $isUpdatePoolSuccess, isRefreshBalanceSuccess: $isRefreshBalanceSuccess, hasUnsavedChanges: $hasUnsavedChanges, hasFactoryPropertyChanges: $hasFactoryPropertyChanges, showNewAppForm: $showNewAppForm, showManageTaskModal: $showManageTaskModal, manageTaskModalType: $manageTaskModalType, newAppName: $newAppName, newAppDomain: $newAppDomain, editingTaskIdx: $editingTaskIdx)';
   }
 
   @override
@@ -474,7 +434,6 @@ class _$ForgeDetailStateImpl extends _ForgeDetailState {
             (identical(other.viewModeTasks, viewModeTasks) ||
                 other.viewModeTasks == viewModeTasks) &&
             (identical(other.error, error) || other.error == error) &&
-            const DeepCollectionEquality().equals(other._apps, _apps) &&
             (identical(other.isUpdateFactoryStatusSuccess,
                     isUpdateFactoryStatusSuccess) ||
                 other.isUpdateFactoryStatusSuccess ==
@@ -499,36 +458,31 @@ class _$ForgeDetailStateImpl extends _ForgeDetailState {
                 other.newAppName == newAppName) &&
             (identical(other.newAppDomain, newAppDomain) ||
                 other.newAppDomain == newAppDomain) &&
-            (identical(other.editingTaskAppIdx, editingTaskAppIdx) ||
-                other.editingTaskAppIdx == editingTaskAppIdx) &&
             (identical(other.editingTaskIdx, editingTaskIdx) ||
                 other.editingTaskIdx == editingTaskIdx));
   }
 
   @override
-  int get hashCode => Object.hashAll([
-        runtimeType,
-        factoryName,
-        uploadLimitValue,
-        uploadLimitType,
-        factoryStatus,
-        factory,
-        viewModeTasks,
-        error,
-        const DeepCollectionEquality().hash(_apps),
-        isUpdateFactoryStatusSuccess,
-        isUpdatePoolSuccess,
-        isRefreshBalanceSuccess,
-        hasUnsavedChanges,
-        hasFactoryPropertyChanges,
-        showNewAppForm,
-        showManageTaskModal,
-        manageTaskModalType,
-        newAppName,
-        newAppDomain,
-        editingTaskAppIdx,
-        editingTaskIdx
-      ]);
+  int get hashCode => Object.hash(
+      runtimeType,
+      factoryName,
+      uploadLimitValue,
+      uploadLimitType,
+      factoryStatus,
+      factory,
+      viewModeTasks,
+      error,
+      isUpdateFactoryStatusSuccess,
+      isUpdatePoolSuccess,
+      isRefreshBalanceSuccess,
+      hasUnsavedChanges,
+      hasFactoryPropertyChanges,
+      showNewAppForm,
+      showManageTaskModal,
+      manageTaskModalType,
+      newAppName,
+      newAppDomain,
+      editingTaskIdx);
 
   /// Create a copy of ForgeDetailState
   /// with the given fields replaced by the non-null parameter values.
@@ -549,7 +503,6 @@ abstract class _ForgeDetailState extends ForgeDetailState {
       final Factory? factory,
       final ViewModeTasks viewModeTasks,
       final String? error,
-      final List<FactoryApp> apps,
       final bool isUpdateFactoryStatusSuccess,
       final bool isUpdatePoolSuccess,
       final bool isRefreshBalanceSuccess,
@@ -560,7 +513,6 @@ abstract class _ForgeDetailState extends ForgeDetailState {
       final ManageTaskModalType manageTaskModalType,
       final String? newAppName,
       final String? newAppDomain,
-      final int? editingTaskAppIdx,
       final int? editingTaskIdx}) = _$ForgeDetailStateImpl;
   const _ForgeDetailState._() : super._();
 
@@ -578,8 +530,6 @@ abstract class _ForgeDetailState extends ForgeDetailState {
   ViewModeTasks get viewModeTasks;
   @override
   String? get error;
-  @override
-  List<FactoryApp> get apps;
   @override
   bool get isUpdateFactoryStatusSuccess;
   @override
@@ -600,8 +550,6 @@ abstract class _ForgeDetailState extends ForgeDetailState {
   String? get newAppName;
   @override
   String? get newAppDomain;
-  @override
-  int? get editingTaskAppIdx;
   @override
   int? get editingTaskIdx;
 

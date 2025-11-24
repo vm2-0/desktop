@@ -59,7 +59,10 @@ class DemoDetailRewards extends ConsumerWidget {
       ),
       error: (error, stackTrace) => Center(child: Text('Error: $error')),
       data: (factory) {
-        final tokenSymbol = factory.token.symbol;
+        if (factory.token == null) {
+          return const SizedBox.shrink();
+        }
+        final tokenSymbol = factory.token?.symbol ?? '';
 
         final theme = Theme.of(context);
         final score =

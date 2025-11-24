@@ -85,20 +85,20 @@ class ForgeFactoryGeneralTab extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Insufficient ${forgeDetail.factory!.token.symbol} Tokens',
+                'Insufficient ${forgeDetail.factory!.token?.symbol ?? ''} Tokens',
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: ClonesColors.primaryText,
                 ),
               ),
               Text(
-                "Your factory needs ${forgeDetail.factory!.token.symbol} tokens to reward users who provide demonstrations. Without funds, users won't receive compensation.",
+                "Your factory needs ${forgeDetail.factory!.token?.symbol ?? ''} tokens to reward users who provide demonstrations. Without funds, users won't receive compensation.",
                 style: TextStyle(
                   color: ClonesColors.secondaryText,
                 ),
               ),
               Text(
-                'Deposit ${forgeDetail.factory!.token.symbol} to the address above to activate your factory and start collecting data.',
+                'Deposit ${forgeDetail.factory!.token?.symbol ?? ''} to the address above to activate your factory and start collecting data.',
                 style: TextStyle(
                   color: ClonesColors.secondaryText,
                 ),
@@ -115,24 +115,26 @@ class ForgeFactoryGeneralTab extends ConsumerWidget {
     if (forgeDetail.factory == null) {
       return const SizedBox.shrink();
     }
-    return const SizedBox(
+    return SizedBox(
       height: 160,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
+          const Expanded(
             child: ForgeFactoryGeneralTabStatSessionCompleted(),
           ),
-          SizedBox(width: 20),
-          Expanded(
+          const SizedBox(width: 20),
+          const Expanded(
             flex: 2,
             child: ForgeFactoryGeneralTabStatDemo(),
           ),
-          SizedBox(width: 20),
-          Expanded(
-            flex: 2,
-            child: ForgeFactoryGeneralTabStatPoolBalance(),
-          ),
+          const SizedBox(width: 20),
+          if (forgeDetail.factory?.token != null) ...[
+            const Expanded(
+              flex: 2,
+              child: ForgeFactoryGeneralTabStatPoolBalance(),
+            ),
+          ],
         ],
       ),
     );

@@ -2,9 +2,8 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:clones_desktop/application/apps.dart';
 import 'package:clones_desktop/application/settings.dart';
 import 'package:clones_desktop/assets.dart';
-import 'package:clones_desktop/domain/models/factory/factory_app.dart';
 import 'package:clones_desktop/domain/models/factory/factory_settings.dart';
-import 'package:clones_desktop/domain/models/factory/factory_task.dart';
+import 'package:clones_desktop/domain/models/factory/workflow_task.dart';
 import 'package:clones_desktop/domain/models/ui/factory_filter.dart';
 import 'package:clones_desktop/ui/views/factory/layouts/components/filter_panel.dart';
 import 'package:clones_desktop/ui/views/factory/layouts/components/task_card.dart';
@@ -73,13 +72,13 @@ class _AvailableTasksState extends ConsumerState<AvailableTasks> {
     });
   }
 
-  double _getReward(FactoryApp app, FactoryTask task) {
+  double _getReward(WorkflowTask task) {
     return task.rewardLimit?.toDouble() ?? 0.0;
   }
 
   @override
   Widget build(BuildContext context) {
-    final tasksProvider = getAppsForFactoryProvider(filter: _filter);
+    final tasksProvider = getTasksForFactoryProvider(filter: _filter);
     final tasksAsync = ref.watch(tasksProvider);
     final settings = ref.watch(factorySettingsNotifierProvider);
     final theme = Theme.of(context);
@@ -171,44 +170,25 @@ class _AvailableTasksState extends ConsumerState<AvailableTasks> {
                 ),
               ),
               error: (err, stack) => Center(child: Text('Error: $err')),
-              data: (apps) {
-                if (apps.isEmpty) {
+              data: (tasks) {
+                if (tasks.isEmpty) {
                   return const Center(child: Text('No tasks found.'));
                 }
-                final tasks = apps
-                    .expand(
-                      (app) =>
-                          app.tasks.map((task) => {'app': app, 'task': task}),
-                    )
-                    .toList()
+                final sortedTasks = List<WorkflowTask>.from(tasks)
                   ..sort((a, b) {
-                    final rewardA = _getReward(
-                      a['app']! as FactoryApp,
-                      a['task']! as FactoryTask,
-                    );
-                    final rewardB = _getReward(
-                      b['app']! as FactoryApp,
-                      b['task']! as FactoryTask,
-                    );
+                    final rewardA = _getReward(a);
+                    final rewardB = _getReward(b);
                     return _sort == 'htl'
                         ? rewardB.compareTo(rewardA)
                         : rewardA.compareTo(rewardB);
                   });
 
-                return GridView.builder(
+                return ListView.builder(
                   padding: const EdgeInsets.all(16),
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 400,
-                    childAspectRatio: 2 / 1.75,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                  ),
-                  itemCount: tasks.length,
+                  itemCount: sortedTasks.length,
                   itemBuilder: (context, index) {
-                    final app = tasks[index]['app']! as FactoryApp;
-                    final task = tasks[index]['task']! as FactoryTask;
+                    final task = sortedTasks[index];
                     return TaskCard(
-                      app: app,
                       task: task,
                       currencyMode: _currencyMode,
                     );
@@ -247,7 +227,7 @@ class _AvailableTasksState extends ConsumerState<AvailableTasks> {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Text(
-                  '${ref.watch(getAppsForFactoryProvider(filter: _filter)).asData?.value.map((e) => e.tasks.length).fold(0, (a, b) => a + b) ?? 0} Available',
+                  '${ref.watch(getTasksForFactoryProvider(filter: _filter)).asData?.value.length ?? 0} Available',
                   style: theme.textTheme.bodySmall,
                 ),
               ),

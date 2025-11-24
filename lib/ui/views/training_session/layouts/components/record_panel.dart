@@ -33,7 +33,7 @@ class _RecordPanelState extends ConsumerState<RecordPanel> {
         trainingSession.factoryTask?.rewardLimit ?? Decimal.zero;
 
     final rewardText =
-        'Up to: ${rewardAmount.toStringAsFixedLowValue(2, 5)} ${trainingSession.factory?.token.symbol ?? ''}';
+        'Up to: ${rewardAmount.toStringAsFixedLowValue(2, 5)} ${trainingSession.factory?.token?.symbol ?? ''}';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,7 +68,7 @@ class _RecordPanelState extends ConsumerState<RecordPanel> {
                     padding: const EdgeInsets.only(left: 4),
                     child: UsdPrice(
                       amount: rewardAmount,
-                      symbol: trainingSession.factory?.token.symbol ?? '',
+                      symbol: trainingSession.factory?.token?.symbol ?? '',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: ClonesColors.secondary,
                       ),
@@ -117,13 +117,12 @@ Once the recording is finished, you’ll be able to trim segments—for example,
               children: [
                 Text(
                   '• ',
-                  style: theme.textTheme.bodyMedium,
+                  style: theme.textTheme.bodySmall,
                 ),
                 Expanded(
                   child: AppText(
                     text: obj,
-                    style: theme.textTheme.bodyMedium,
-                    iconUrl: trainingSession.recordingDemonstration!.iconUrl,
+                    style: theme.textTheme.bodySmall,
                   ),
                 ),
               ],

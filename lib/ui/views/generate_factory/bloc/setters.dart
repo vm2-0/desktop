@@ -1,4 +1,4 @@
-import 'package:clones_desktop/domain/models/factory/factory_app.dart';
+import 'package:clones_desktop/domain/models/factory/workflow_task.dart';
 import 'package:clones_desktop/ui/views/generate_factory/bloc/state.dart';
 import 'package:riverpod/riverpod.dart';
 
@@ -53,8 +53,8 @@ mixin GenerateFactorySetters on AutoDisposeNotifier<GenerateFactoryState> {
     }
   }
 
-  void setApps(List<FactoryApp> apps) {
-    state = state.copyWith(apps: apps);
+  void setTasks(List<WorkflowTask> tasks) {
+    state = state.copyWith(tasks: tasks);
   }
 
   void setSelectedToken(String symbol) {
@@ -66,5 +66,23 @@ mixin GenerateFactorySetters on AutoDisposeNotifier<GenerateFactoryState> {
 
   void setFundingAmount(String amount) {
     state = state.copyWith(fundingAmount: amount);
+  }
+
+  void setOpenSourceAppsOnly(bool value) {
+    state = state.copyWith(openSourceAppsOnly: value);
+  }
+
+  void setWebappAppsOnly(bool value) {
+    state = state.copyWith(webappAppsOnly: value);
+    if (value) {
+      state = state.copyWith(desktopAppsOnly: false);
+    }
+  }
+
+  void setDesktopAppsOnly(bool value) {
+    state = state.copyWith(desktopAppsOnly: value);
+    if (value) {
+      state = state.copyWith(webappAppsOnly: false);
+    }
   }
 }

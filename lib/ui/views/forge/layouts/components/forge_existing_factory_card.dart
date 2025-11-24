@@ -23,9 +23,6 @@ class ForgeExistingFactoryCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final factoryBalanceAsync = ref.watch(
-      getFactoryBalanceProvider(poolAddress: factory.poolAddress),
-    );
     final gradingResultsAsync =
         ref.watch(getFactoryGradingResultsProvider(factoryId: factory.id));
 
@@ -62,21 +59,26 @@ class ForgeExistingFactoryCard extends ConsumerWidget {
                   error: (_, __) => const SizedBox.shrink(),
                 ),
                 const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Balance:',
-                      style: TextStyle(
-                        color: ClonesColors.secondaryText,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w300,
+                if (factory.poolAddress != null && factory.token != null) ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Balance:',
+                        style: TextStyle(
+                          color: ClonesColors.secondaryText,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w300,
+                        ),
                       ),
-                    ),
-                    _getBalanceText(factoryBalanceAsync, theme),
-                  ],
-                ),
+                      _getBalanceText(ref, context),
+                    ],
+                  ),
+                ] else
+                  const SizedBox(
+                    height: 32,
+                  ),
               ],
             ),
             const SizedBox(height: 8),
@@ -88,16 +90,20 @@ class ForgeExistingFactoryCard extends ConsumerWidget {
   }
 
   Widget _getBalanceText(
-    AsyncValue<double> factoryBalanceAsync,
-    ThemeData theme,
+    WidgetRef ref,
+    BuildContext context,
   ) {
+    final factoryBalanceAsync = ref.watch(
+      getFactoryBalanceProvider(poolAddress: factory.poolAddress ?? ''),
+    );
+    final theme = Theme.of(context);
     return factoryBalanceAsync.when(
       data: (balance) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              '${balance.toStringAsFixed(3)} ${factory.token.symbol}',
+              '${balance.toStringAsFixed(3)} ${factory.token?.symbol ?? ''}',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color:
                     balance == 0 ? ClonesColors.error : ClonesColors.secondary,
@@ -105,7 +111,7 @@ class ForgeExistingFactoryCard extends ConsumerWidget {
             ),
             UsdPrice(
               amount: Decimal.parse(balance.toString()),
-              symbol: factory.token.symbol,
+              symbol: factory.token?.symbol ?? '',
               withParentheses: false,
               style: theme.textTheme.bodySmall?.copyWith(
                 fontSize: 10,

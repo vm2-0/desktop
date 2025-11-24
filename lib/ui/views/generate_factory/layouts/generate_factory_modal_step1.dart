@@ -106,6 +106,7 @@ class _GenerateFactoryModalStep1State
             ),
           ),
         ),
+        _options(ref),
         const SizedBox(height: 10),
         _buildErrorMessage(context, ref),
         _examplePrompts(ref),
@@ -131,6 +132,77 @@ class _GenerateFactoryModalStep1State
         const SizedBox(height: 20),
         _footerButtons(ref),
       ],
+    );
+  }
+
+  Widget _options(WidgetRef ref) {
+    final generateFactoryState = ref.watch(generateFactoryNotifierProvider);
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    'Open source apps only',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  value: generateFactoryState.openSourceAppsOnly,
+                  onChanged: (value) {
+                    ref
+                        .read(generateFactoryNotifierProvider.notifier)
+                        .setOpenSourceAppsOnly(value ?? false);
+                  },
+                  activeColor: ClonesColors.primary,
+                  checkColor: Colors.white,
+                  controlAffinity: ListTileControlAffinity.leading,
+                ),
+              ),
+              Expanded(
+                child: CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    'Webapp apps only',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  value: generateFactoryState.webappAppsOnly,
+                  onChanged: (value) {
+                    ref
+                        .read(generateFactoryNotifierProvider.notifier)
+                        .setWebappAppsOnly(value ?? false);
+                  },
+                  activeColor: ClonesColors.primary,
+                  checkColor: Colors.white,
+                  controlAffinity: ListTileControlAffinity.leading,
+                ),
+              ),
+              Expanded(
+                child: CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    'Desktop apps only',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  value: generateFactoryState.desktopAppsOnly,
+                  onChanged: (value) {
+                    ref
+                        .read(generateFactoryNotifierProvider.notifier)
+                        .setDesktopAppsOnly(value ?? false);
+                  },
+                  activeColor: ClonesColors.primary,
+                  checkColor: Colors.white,
+                  controlAffinity: ListTileControlAffinity.leading,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

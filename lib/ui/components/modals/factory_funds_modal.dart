@@ -111,7 +111,7 @@ class FactoryFundsModal extends ConsumerWidget {
                                     color: theme.textTheme.bodyMedium?.color!
                                         .withValues(alpha: 0.5),
                                   ),
-                                  suffixText: factory?.token.symbol,
+                                  suffixText: factory?.token?.symbol ?? '',
                                   suffixStyle: theme.textTheme.bodyMedium,
                                   errorText: modalState.error?.isNotEmpty ==
                                           true

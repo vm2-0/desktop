@@ -1,6 +1,5 @@
 import 'package:clones_desktop/application/factory.dart';
-import 'package:clones_desktop/domain/models/factory/factory_app.dart';
-import 'package:clones_desktop/domain/models/factory/factory_task.dart';
+import 'package:clones_desktop/domain/models/factory/workflow_task.dart';
 import 'package:clones_desktop/ui/views/forge_detail/bloc/setters.dart';
 import 'package:clones_desktop/ui/views/forge_detail/bloc/state.dart';
 import 'package:flutter/foundation.dart';
@@ -30,7 +29,7 @@ class ForgeDetailNotifier extends _$ForgeDetailNotifier
       // Fetch fresh pool info from backend/blockchain
       final poolInfoData = await ref.read(
         getPoolInfoProvider(
-          poolAddress: factory.poolAddress,
+          poolAddress: factory.poolAddress ?? '',
         ).future,
       );
 
@@ -77,9 +76,9 @@ class ForgeDetailNotifier extends _$ForgeDetailNotifier
   Future<void> updateFactory() async {
     setIsUpdatePoolSuccess(false);
     try {
-      // First save factory apps if there are unsaved changes
+      // First save factory tasks if there are unsaved changes
       if (state.hasUnsavedChanges) {
-        await saveFactoryApps();
+        await saveFactoryTasks();
       }
 
       var updatedFactory = await ref.read(
@@ -104,63 +103,41 @@ class ForgeDetailNotifier extends _$ForgeDetailNotifier
     }
   }
 
-  void createApp() {
-    setError(null);
-
-    if (state.newAppName == null || state.newAppName!.isEmpty) {
-      setError('Name is required');
-      return;
-    }
-
-    final newApp = FactoryApp(
-      name: state.newAppName!,
-      domain: state.newAppDomain!,
-      description: '',
-    );
-    state.apps.add(newApp);
-
-    setNewAppName('');
-    setNewAppDomain('');
-    setShowNewAppForm(false);
-  }
-
-  void removeApp(int idx) {
-    final apps = List<FactoryApp>.from(state.apps);
-    final newApps = List<FactoryApp>.from(apps)..removeAt(idx);
-    setApps(newApps);
+  void removeTask(int taskIdx) {
+    final factory = state.factory;
+    if (factory == null) return;
+    
+    final tasks = List<WorkflowTask>.from(factory.tasks)..removeAt(taskIdx);
+    final updatedFactory = factory.copyWith(tasks: tasks);
+    
+    setFactory(updatedFactory);
     setHasUnsavedChanges(true);
   }
 
-  void removeTask(int appIdx, int taskIdx) {
-    final apps = List<FactoryApp>.from(state.apps);
-    final app = apps[appIdx];
-    final newTasks = List<FactoryTask>.from(app.tasks)..removeAt(taskIdx);
-    apps[appIdx] = app.copyWith(tasks: newTasks);
-
-    setApps(apps);
+  void createTask(WorkflowTask task) {
+    final factory = state.factory;
+    if (factory == null) return;
+    
+    final tasks = List<WorkflowTask>.from(factory.tasks)..add(task);
+    final updatedFactory = factory.copyWith(tasks: tasks);
+    
+    setFactory(updatedFactory);
     setHasUnsavedChanges(true);
   }
 
-  void createTask(int appIndex, FactoryTask task) {
-    final apps = List<FactoryApp>.from(state.apps);
-    final app = apps[appIndex];
-    final newTasks = List<FactoryTask>.from(app.tasks)..add(task);
-    apps[appIndex] = app.copyWith(tasks: newTasks);
-    setApps(apps);
+  void updateTask(int taskIndex, WorkflowTask task) {
+    final factory = state.factory;
+    if (factory == null) return;
+    
+    final tasks = List<WorkflowTask>.from(factory.tasks);
+    tasks[taskIndex] = task;
+    final updatedFactory = factory.copyWith(tasks: tasks);
+    
+    setFactory(updatedFactory);
     setHasUnsavedChanges(true);
   }
 
-  void updateTask(int appIndex, int taskIndex, FactoryTask task) {
-    final apps = List<FactoryApp>.from(state.apps);
-    final app = apps[appIndex];
-    final newTasks = List<FactoryTask>.from(app.tasks);
-    newTasks[taskIndex] = task;
-    apps[appIndex] = app.copyWith(tasks: newTasks);
-    setApps(apps);
-    setHasUnsavedChanges(true);
-  }
-
-  Future<void> saveFactoryApps() async {
+  Future<void> saveFactoryTasks() async {
     setError(null);
     final factory = state.factory;
     if (factory == null) {
@@ -170,9 +147,9 @@ class ForgeDetailNotifier extends _$ForgeDetailNotifier
 
     try {
       var updatedFactory = await ref.read(
-        UpdateFactoryAppsProvider(
+        updateFactoryTasksProvider(
           factoryId: factory.id,
-          apps: state.apps,
+          tasks: factory.tasks,
           walletAddress: factory.ownerAddress,
         ).future,
       );
@@ -183,10 +160,10 @@ class ForgeDetailNotifier extends _$ForgeDetailNotifier
         factory: updatedFactory,
         hasUnsavedChanges: false,
       );
-      debugPrint('Factory apps saved successfully');
+      debugPrint('Factory tasks saved successfully');
     } catch (e) {
-      debugPrint('Failed to save factory apps: $e');
-      setError('Failed to save apps: $e');
+      debugPrint('Failed to save factory tasks: $e');
+      setError('Failed to save tasks: $e');
     }
   }
 }

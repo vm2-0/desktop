@@ -71,11 +71,11 @@ class FactoryWithdrawModalNotifier extends _$FactoryWithdrawModalNotifier {
     // Fetch max safe withdrawal and pool health on modal open
     try {
       final maxWithdrawal = await ref.read(
-        getMaxWithdrawalProvider(poolAddress: factory.poolAddress).future,
+        getMaxWithdrawalProvider(poolAddress: factory.poolAddress ?? '').future,
       );
 
       final poolHealth = await ref.read(
-        getPoolHealthProvider(poolAddress: factory.poolAddress).future,
+        getPoolHealthProvider(poolAddress: factory.poolAddress ?? '').future,
       );
 
       state = state.copyWith(
@@ -172,9 +172,9 @@ class FactoryWithdrawModalNotifier extends _$FactoryWithdrawModalNotifier {
         estimateFactoryGasProvider(
           type: 'withdrawPool',
           amount: state.withdrawAmount,
-          token: state.factory!.token.symbol,
+          token: state.factory!.token?.symbol,
           creator: ref.read(sessionNotifierProvider).address,
-          poolAddress: state.factory!.poolAddress,
+          poolAddress: state.factory!.poolAddress ?? '',
         ).future,
       );
 
@@ -250,7 +250,7 @@ class FactoryWithdrawModalNotifier extends _$FactoryWithdrawModalNotifier {
     try {
       final validation = await ref.read(
         validateWithdrawalProvider(
-          poolAddress: state.factory!.poolAddress,
+          poolAddress: state.factory!.poolAddress ?? '',
           amount: state.withdrawAmount,
         ).future,
       );
@@ -270,9 +270,9 @@ class FactoryWithdrawModalNotifier extends _$FactoryWithdrawModalNotifier {
 
       final transactionManager = ref.read(transactionManagerProvider.notifier);
       await transactionManager.withdrawPool(
-        token: state.factory!.token.symbol,
+        token: state.factory!.token?.symbol ?? '',
         amount: state.withdrawAmount,
-        poolAddress: state.factory!.poolAddress,
+        poolAddress: state.factory!.poolAddress ?? '',
         creator: userAddress,
       );
 
