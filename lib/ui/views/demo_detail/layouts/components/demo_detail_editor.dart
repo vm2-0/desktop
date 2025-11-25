@@ -81,6 +81,14 @@ class _MessageCardState extends State<_MessageCard>
 
     final theme = Theme.of(context);
 
+    // Extract role and content using pattern matching
+    final messageRole = widget.message.map(
+      assistant: (_) => 'ASSISTANT',
+      user: (_) => 'USER',
+      contextAnnotation: (_) => 'CONTEXT',
+      unknown: (_) => 'UNKNOWN',
+    );
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Stack(
@@ -106,60 +114,153 @@ class _MessageCardState extends State<_MessageCard>
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          widget.message.role.toUpperCase(),
+                          messageRole,
                           style: theme.textTheme.bodySmall,
                         ),
                         const SizedBox(height: 30),
                       ],
                     ),
                     const SizedBox(height: 10),
-                    if (widget.message.content is String)
-                      Row(
-                        children: [
-                          Icon(
-                            widget.message.content
-                                    .toLowerCase()
-                                    .contains('click')
-                                ? Icons.ads_click
-                                : widget.message.content
-                                        .toLowerCase()
-                                        .contains('scroll')
-                                    ? Icons.swap_vert
-                                    : widget.message.content
-                                            .toLowerCase()
-                                            .contains('app_focus')
-                                        ? Icons.apps
-                                        : Icons.keyboard,
-                            color: ClonesColors.tertiary,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: SelectableText(
-                              widget.message.content
-                                  .replaceAll('```python', '')
-                                  .replaceAll('```', ''),
-                              style: theme.textTheme.bodySmall,
+                    // Render content based on message type
+                    widget.message.when(
+                      assistant: (content, timestamp, type, data) {
+                        return Row(
+                          children: [
+                            Icon(
+                              content.toLowerCase().contains('click')
+                                  ? Icons.ads_click
+                                  : content.toLowerCase().contains('scroll')
+                                      ? Icons.swap_vert
+                                      : content
+                                              .toLowerCase()
+                                              .contains('app_focus')
+                                          ? Icons.apps
+                                          : Icons.keyboard,
+                              color: ClonesColors.tertiary,
+                              size: 20,
                             ),
-                          ),
-                        ],
-                      )
-                    else
-                      () {
-                        final imageData =
-                            base64Decode(widget.message.content['data']);
-                        return MouseRegion(
-                          cursor: SystemMouseCursors.click,
-                          child: GestureDetector(
-                            onTap: () =>
-                                _showFullscreenImage(context, imageData),
-                            child: Image.memory(
-                              imageData,
-                              fit: BoxFit.contain,
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: SelectableText(
+                                content
+                                    .replaceAll('```python', '')
+                                    .replaceAll('```', ''),
+                                style: theme.textTheme.bodySmall,
+                              ),
                             ),
-                          ),
+                          ],
                         );
-                      }(),
+                      },
+                      user: (content, timestamp) {
+                        return content.when(
+                          image: (data) {
+                            final imageData = base64Decode(data);
+                            return MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child: GestureDetector(
+                                onTap: () =>
+                                    _showFullscreenImage(context, imageData),
+                                child: Image.memory(
+                                  imageData,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            );
+                          },
+                          text: (data) {
+                            return Row(
+                              children: [
+                                const Icon(
+                                  Icons.text_fields,
+                                  color: ClonesColors.tertiary,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: SelectableText(
+                                    data,
+                                    style: theme.textTheme.bodySmall,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                      contextAnnotation: (timestamp, data) {
+                        final description =
+                            data['description'] as String? ?? '';
+                        final status = data['status'] as String? ?? 'neutral';
+
+                        // Get status color (same as in demo_detail_submission_result.dart)
+                        Color getStatusColor(String status) {
+                          switch (status) {
+                            case 'success':
+                              return ClonesColors.highScore;
+                            case 'failed':
+                              return ClonesColors.lowScore;
+                            case 'neutral':
+                              return ClonesColors.mediumScore;
+                            default:
+                              return ClonesColors.tertiary;
+                          }
+                        }
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: getStatusColor(status),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    status.toUpperCase(),
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (description.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              SelectableText(
+                                description,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
+                          ],
+                        );
+                      },
+                      unknown: (timestamp, rawData) {
+                        return Row(
+                          children: [
+                            const Icon(
+                              Icons.warning_amber,
+                              color: Colors.orange,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: SelectableText(
+                                'Unknown message type: $rawData',
+                                style: theme.textTheme.bodySmall,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -225,11 +326,24 @@ class EditorChatItem {
       messageIndex; // Original index in sftMessages list (for memoization)
 }
 
-class DemoDetailEditor extends ConsumerWidget {
+class DemoDetailEditor extends ConsumerStatefulWidget {
   const DemoDetailEditor({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DemoDetailEditor> createState() => _DemoDetailEditorState();
+}
+
+class _DemoDetailEditorState extends ConsumerState<DemoDetailEditor> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isConnected =
         ref.watch(sessionNotifierProvider.select((s) => s.isConnected));
     final demoDetail = ref.watch(
@@ -335,22 +449,42 @@ class DemoDetailEditor extends ConsumerWidget {
           ),
         ),
         Expanded(
-          child: ListView.builder(
-            itemCount: combinedData.length,
-            itemBuilder: (context, index) {
-              final chatItem = combinedData[index];
-              return _MessageCard(
-                message: chatItem.item,
-                startTime: startTime,
-                isInDeletedZone:
-                    messagesInDeletedZones.contains(chatItem.messageIndex),
-                messageIndex: chatItem.messageIndex!,
-                onSeekToTimestamp: videoSeekCallback != null
-                    ? (timestampMs) =>
-                        videoSeekCallback(Duration(milliseconds: timestampMs))
-                    : null,
-              );
-            },
+          child: ScrollbarTheme(
+            data: ScrollbarThemeData(
+              thumbColor: WidgetStateProperty.all(
+                ClonesColors.secondaryText.withValues(alpha: 0.5),
+              ),
+              trackColor: WidgetStateProperty.all(
+                ClonesColors.secondaryText.withValues(alpha: 0.1),
+              ),
+              trackBorderColor: WidgetStateProperty.all(
+                ClonesColors.secondaryText.withValues(alpha: 0.2),
+              ),
+              thickness: WidgetStateProperty.all(8),
+              radius: const Radius.circular(4),
+              thumbVisibility: WidgetStateProperty.all(true),
+            ),
+            child: Scrollbar(
+              controller: _scrollController,
+              child: ListView.builder(
+                controller: _scrollController,
+                itemCount: combinedData.length,
+                itemBuilder: (context, index) {
+                  final chatItem = combinedData[index];
+                  return _MessageCard(
+                    message: chatItem.item,
+                    startTime: startTime,
+                    isInDeletedZone:
+                        messagesInDeletedZones.contains(chatItem.messageIndex),
+                    messageIndex: chatItem.messageIndex!,
+                    onSeekToTimestamp: videoSeekCallback != null
+                        ? (timestampMs) => videoSeekCallback(
+                            Duration(milliseconds: timestampMs))
+                        : null,
+                  );
+                },
+              ),
+            ),
           ),
         ),
       ],
