@@ -44,7 +44,7 @@ class TasksViewModeButtonsWidget extends ConsumerWidget {
               ),
             ],
           ),
-          if (forgeDetail.factory!.tasks.isNotEmpty) ...[
+          if (forgeDetail.factory?.tasks.isNotEmpty ?? false) ...[
             BtnPrimary(
               onTap: () {
                 final tasksText =
