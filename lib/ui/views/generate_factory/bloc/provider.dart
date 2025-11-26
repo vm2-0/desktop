@@ -2,9 +2,11 @@ import 'package:clones_desktop/application/apps.dart';
 import 'package:clones_desktop/application/factory.dart';
 import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/application/transaction/provider.dart';
+import 'package:clones_desktop/domain/models/factory/task_app.dart';
 import 'package:clones_desktop/domain/models/factory/workflow_task.dart';
 import 'package:clones_desktop/ui/views/generate_factory/bloc/setters.dart';
 import 'package:clones_desktop/ui/views/generate_factory/bloc/state.dart';
+import 'package:clones_desktop/utils/api_client.dart';
 import 'package:decimal/decimal.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -135,15 +137,15 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
   void updateTaskPrompt(int taskIndex, String value) {
     if (state.tasks == null) return;
 
-    // Validate prompt length (500 characters max like skills)
-    if (value.length > 500) {
-      setError('Task prompt is too long (${value.length}/500 characters max)');
+    // Validate prompt length (2000 characters max like skills)
+    if (value.length > 2000) {
+      setError('Task prompt is too long (${value.length}/2000 characters max)');
       return;
     } else {
       // Clear error if it was about prompt length
       if (state.error != null &&
           state.error!.contains('Task prompt is too long')) {
-        setError('');
+        setError(null);
       }
     }
 
@@ -188,7 +190,7 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
       // Clear error if it was about prompt length
       if (state.error != null &&
           state.error!.contains('Task prompt is too long')) {
-        setError('');
+        setError(null);
       }
     }
 
@@ -224,6 +226,38 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
       newTasks.removeAt(taskIndex);
       setTasks(newTasks);
     }
+  }
+
+  void replaceAppInTask(
+    int taskIndex,
+    int appIndex,
+    String newAppName,
+    String newAppDomain,
+    String newAppDescription,
+  ) {
+    if (state.tasks == null) return;
+
+    final newTasks = List<WorkflowTask>.from(state.tasks!);
+    if (taskIndex < 0 || taskIndex >= newTasks.length) return;
+
+    final task = newTasks[taskIndex];
+    final appsUsed = List<TaskApp>.from(task.appsUsed);
+
+    if (appIndex < 0 || appIndex >= appsUsed.length) return;
+
+    // Replace the app at the specified index
+    appsUsed[appIndex] = TaskApp(
+      name: newAppName,
+      domain: newAppDomain,
+      description: newAppDescription,
+    );
+
+    // Update the task with new apps
+    newTasks[taskIndex] = task.copyWith(
+      appsUsed: appsUsed,
+    );
+
+    setTasks(newTasks);
   }
 
   void setSelectedTokenWithPrediction(String tokenSymbol) {
@@ -347,13 +381,37 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
       state = state.copyWith(
         isCreating: true,
         error: null,
-        transactionStatus: 'Preparing transaction...',
+        transactionStatus: 'Validating factory metadata...',
       );
 
       final creatorAddress = ref.read(sessionNotifierProvider).address;
       if (creatorAddress == null) {
         throw Exception('User is not authenticated');
       }
+
+      // CRITICAL: Validate metadata with backend BEFORE creating smart contract
+      // This prevents orphaned smart contracts if validation fails
+      final apiClient = ref.read(apiClientProvider);
+
+      try {
+        await apiClient.post<Map<String, dynamic>>(
+          '/transaction/validate-factory-metadata',
+          data: {
+            'metadata': {
+              'name': state.factoryName,
+              'skills': state.skills,
+              'tasks': state.tasks?.map((task) => task.toJson()).toList(),
+            },
+          },
+        );
+      } catch (e) {
+        // If validation fails, stop immediately before any blockchain interaction
+        throw Exception('Metadata validation failed: $e');
+      }
+
+      state = state.copyWith(
+        transactionStatus: 'Preparing transaction...',
+      );
 
       final transactionManager = ref.read(transactionManagerProvider.notifier);
 

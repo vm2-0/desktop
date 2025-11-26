@@ -40,3 +40,25 @@ Future<List<String>> getFactoryCategories(Ref ref) async {
   final appsRepository = ref.read(appsRepositoryProvider);
   return appsRepository.getFactoryCategories();
 }
+
+@riverpod
+Future<List<Map<String, dynamic>>> getAppAlternatives(
+  Ref ref, {
+  required String identifier,
+  List<String>? categories,
+}) async {
+  final appsRepository = ref.read(appsRepositoryProvider);
+  return appsRepository.getAppAlternatives(
+    identifier: identifier,
+    categories: categories,
+  );
+}
+
+@riverpod
+Future<void> incrementAppUsage(
+  Ref ref, {
+  required String identifier,
+}) async {
+  final appsRepository = ref.read(appsRepositoryProvider);
+  return appsRepository.incrementAppUsage(identifier: identifier);
+}

@@ -112,6 +112,24 @@ class _TaskInputFieldState extends State<TaskInputField> {
                   keyboardType: TextInputType.multiline,
                   minLines: widget.minLines,
                   maxLines: widget.maxLines,
+                  maxLength: widget.maxLength,
+                  buildCounter: (context, {required currentLength, required isFocused, maxLength}) {
+                    final threshold = (maxLength! * 0.8).round(); // Warning at 80%
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        '$currentLength/$maxLength',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontSize: 10,
+                          color: currentLength > threshold
+                            ? (currentLength >= maxLength
+                                ? Colors.red.withValues(alpha: 0.8)
+                                : Colors.orange.withValues(alpha: 0.8))
+                            : theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    );
+                  },
                   inputFormatters: [
                     LengthLimitingTextInputFormatter(widget.maxLength),
                   ],
