@@ -121,9 +121,10 @@ class AppAlternativesModal extends ConsumerWidget {
                           itemCount: alternatives.length,
                           itemBuilder: (context, index) {
                             final alt = alternatives[index];
-                            final name = alt['name'] as String;
-                            final domain = alt['domain'] as String;
-                            final description = alt['description'] as String;
+                            final name = alt['name'] as String? ?? 'Unknown';
+                            final domain = alt['domain'] as String? ?? '';
+                            final description = alt['description'] as String? ??
+                                'No description available';
                             final categories =
                                 (alt['categories'] as List?)?.cast<String>() ??
                                     [];
@@ -322,6 +323,7 @@ class AppAlternativesModal extends ConsumerWidget {
     return category
         .replaceAll('_', ' ')
         .split(' ')
+        .where((word) => word.isNotEmpty)
         .map((word) => word[0].toUpperCase() + word.substring(1))
         .join(' ');
   }

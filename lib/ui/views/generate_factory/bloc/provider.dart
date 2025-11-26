@@ -2,6 +2,7 @@ import 'package:clones_desktop/application/apps.dart';
 import 'package:clones_desktop/application/factory.dart';
 import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/application/transaction/provider.dart';
+import 'package:clones_desktop/domain/models/api/request_options.dart';
 import 'package:clones_desktop/domain/models/factory/task_app.dart';
 import 'package:clones_desktop/domain/models/factory/workflow_task.dart';
 import 'package:clones_desktop/ui/views/generate_factory/bloc/setters.dart';
@@ -137,7 +138,7 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
   void updateTaskPrompt(int taskIndex, String value) {
     if (state.tasks == null) return;
 
-    // Validate prompt length (2000 characters max like skills)
+    // Validate prompt length (2000 characters max)
     if (value.length > 2000) {
       setError('Task prompt is too long (${value.length}/2000 characters max)');
       return;
@@ -182,9 +183,11 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
   ) {
     if (state.tasks == null) return;
 
-    // Validate prompt length (500 characters max like skills)
-    if (prompt.length > 500) {
-      setError('Task prompt is too long (${prompt.length}/500 characters max)');
+    // Validate prompt length (2000 characters max like skills)
+    if (prompt.length > 2000) {
+      setError(
+        'Task prompt is too long (${prompt.length}/2000 characters max)',
+      );
       return;
     } else {
       // Clear error if it was about prompt length
@@ -403,6 +406,7 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
               'tasks': state.tasks?.map((task) => task.toJson()).toList(),
             },
           },
+          options: const RequestOptions(requiresAuth: true),
         );
       } catch (e) {
         // If validation fails, stop immediately before any blockchain interaction
