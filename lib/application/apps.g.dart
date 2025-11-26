@@ -332,5 +332,289 @@ final getFactoryCategoriesProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef GetFactoryCategoriesRef = AutoDisposeFutureProviderRef<List<String>>;
+String _$getAppAlternativesHash() =>
+    r'6a11e8438fca40e9de089b423ef1a1f25fb8f85c';
+
+/// See also [getAppAlternatives].
+@ProviderFor(getAppAlternatives)
+const getAppAlternativesProvider = GetAppAlternativesFamily();
+
+/// See also [getAppAlternatives].
+class GetAppAlternativesFamily
+    extends Family<AsyncValue<List<Map<String, dynamic>>>> {
+  /// See also [getAppAlternatives].
+  const GetAppAlternativesFamily();
+
+  /// See also [getAppAlternatives].
+  GetAppAlternativesProvider call({
+    required String identifier,
+    List<String>? categories,
+  }) {
+    return GetAppAlternativesProvider(
+      identifier: identifier,
+      categories: categories,
+    );
+  }
+
+  @override
+  GetAppAlternativesProvider getProviderOverride(
+    covariant GetAppAlternativesProvider provider,
+  ) {
+    return call(
+      identifier: provider.identifier,
+      categories: provider.categories,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'getAppAlternativesProvider';
+}
+
+/// See also [getAppAlternatives].
+class GetAppAlternativesProvider
+    extends AutoDisposeFutureProvider<List<Map<String, dynamic>>> {
+  /// See also [getAppAlternatives].
+  GetAppAlternativesProvider({
+    required String identifier,
+    List<String>? categories,
+  }) : this._internal(
+          (ref) => getAppAlternatives(
+            ref as GetAppAlternativesRef,
+            identifier: identifier,
+            categories: categories,
+          ),
+          from: getAppAlternativesProvider,
+          name: r'getAppAlternativesProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$getAppAlternativesHash,
+          dependencies: GetAppAlternativesFamily._dependencies,
+          allTransitiveDependencies:
+              GetAppAlternativesFamily._allTransitiveDependencies,
+          identifier: identifier,
+          categories: categories,
+        );
+
+  GetAppAlternativesProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.identifier,
+    required this.categories,
+  }) : super.internal();
+
+  final String identifier;
+  final List<String>? categories;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<Map<String, dynamic>>> Function(
+            GetAppAlternativesRef provider)
+        create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: GetAppAlternativesProvider._internal(
+        (ref) => create(ref as GetAppAlternativesRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        identifier: identifier,
+        categories: categories,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<Map<String, dynamic>>> createElement() {
+    return _GetAppAlternativesProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GetAppAlternativesProvider &&
+        other.identifier == identifier &&
+        other.categories == categories;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, identifier.hashCode);
+    hash = _SystemHash.combine(hash, categories.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin GetAppAlternativesRef
+    on AutoDisposeFutureProviderRef<List<Map<String, dynamic>>> {
+  /// The parameter `identifier` of this provider.
+  String get identifier;
+
+  /// The parameter `categories` of this provider.
+  List<String>? get categories;
+}
+
+class _GetAppAlternativesProviderElement
+    extends AutoDisposeFutureProviderElement<List<Map<String, dynamic>>>
+    with GetAppAlternativesRef {
+  _GetAppAlternativesProviderElement(super.provider);
+
+  @override
+  String get identifier => (origin as GetAppAlternativesProvider).identifier;
+  @override
+  List<String>? get categories =>
+      (origin as GetAppAlternativesProvider).categories;
+}
+
+String _$incrementAppUsageHash() => r'aa9c82eea27e564af163c2e0a7f5eaa6fad167e2';
+
+/// See also [incrementAppUsage].
+@ProviderFor(incrementAppUsage)
+const incrementAppUsageProvider = IncrementAppUsageFamily();
+
+/// See also [incrementAppUsage].
+class IncrementAppUsageFamily extends Family<AsyncValue<void>> {
+  /// See also [incrementAppUsage].
+  const IncrementAppUsageFamily();
+
+  /// See also [incrementAppUsage].
+  IncrementAppUsageProvider call({
+    required String identifier,
+  }) {
+    return IncrementAppUsageProvider(
+      identifier: identifier,
+    );
+  }
+
+  @override
+  IncrementAppUsageProvider getProviderOverride(
+    covariant IncrementAppUsageProvider provider,
+  ) {
+    return call(
+      identifier: provider.identifier,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'incrementAppUsageProvider';
+}
+
+/// See also [incrementAppUsage].
+class IncrementAppUsageProvider extends AutoDisposeFutureProvider<void> {
+  /// See also [incrementAppUsage].
+  IncrementAppUsageProvider({
+    required String identifier,
+  }) : this._internal(
+          (ref) => incrementAppUsage(
+            ref as IncrementAppUsageRef,
+            identifier: identifier,
+          ),
+          from: incrementAppUsageProvider,
+          name: r'incrementAppUsageProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$incrementAppUsageHash,
+          dependencies: IncrementAppUsageFamily._dependencies,
+          allTransitiveDependencies:
+              IncrementAppUsageFamily._allTransitiveDependencies,
+          identifier: identifier,
+        );
+
+  IncrementAppUsageProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.identifier,
+  }) : super.internal();
+
+  final String identifier;
+
+  @override
+  Override overrideWith(
+    FutureOr<void> Function(IncrementAppUsageRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: IncrementAppUsageProvider._internal(
+        (ref) => create(ref as IncrementAppUsageRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        identifier: identifier,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<void> createElement() {
+    return _IncrementAppUsageProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is IncrementAppUsageProvider && other.identifier == identifier;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, identifier.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin IncrementAppUsageRef on AutoDisposeFutureProviderRef<void> {
+  /// The parameter `identifier` of this provider.
+  String get identifier;
+}
+
+class _IncrementAppUsageProviderElement
+    extends AutoDisposeFutureProviderElement<void> with IncrementAppUsageRef {
+  _IncrementAppUsageProviderElement(super.provider);
+
+  @override
+  String get identifier => (origin as IncrementAppUsageProvider).identifier;
+}
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

@@ -89,6 +89,17 @@ class _GenerateFactoryModalStep1State
               textInputAction: TextInputAction.newline,
               keyboardType: TextInputType.multiline,
               maxLines: 5,
+              maxLength: 1000,
+              buildCounter: (context, {required currentLength, required isFocused, maxLength}) {
+                return Text(
+                  '$currentLength/$maxLength',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: currentLength > 900
+                      ? Colors.orange
+                      : theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+                  ),
+                );
+              },
               onChanged: (v) => ref
                   .read(generateFactoryNotifierProvider.notifier)
                   .setSkills(v),
@@ -97,7 +108,7 @@ class _GenerateFactoryModalStep1State
               decoration: InputDecoration(
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.only(left: 10),
-                hintText: 'List the skills to train (one per line)...',
+                hintText: 'List the skills to train (one per line, max 1000 characters)...',
                 hintStyle: theme.textTheme.bodyMedium?.copyWith(
                   color:
                       theme.textTheme.bodyMedium?.color!.withValues(alpha: 0.2),

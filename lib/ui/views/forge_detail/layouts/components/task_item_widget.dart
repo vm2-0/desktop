@@ -42,7 +42,7 @@ class TaskItemWidget extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              SelectableText(
                                 task.prompt,
                                 style: theme.textTheme.bodyMedium,
                               ),
@@ -55,20 +55,22 @@ class TaskItemWidget extends StatelessWidget {
                                       style: theme.textTheme.bodySmall,
                                     ),
                                     const SizedBox(width: 8),
-                                    Wrap(
-                                      spacing: 8,
-                                      runSpacing: 4,
-                                      children: task.appsUsed
-                                          .asMap()
-                                          .entries
-                                          .map(
-                                            (entry) => AppChipWidget(
-                                              appName: entry.value.name,
-                                              domain: entry.value.domain,
-                                              index: entry.key,
-                                            ),
-                                          )
-                                          .toList(),
+                                    Expanded(
+                                      child: Wrap(
+                                        spacing: 8,
+                                        runSpacing: 4,
+                                        children: task.appsUsed
+                                            .asMap()
+                                            .entries
+                                            .map(
+                                              (entry) => AppChipWidget(
+                                                appName: entry.value.name,
+                                                domain: entry.value.domain,
+                                                index: entry.key,
+                                              ),
+                                            )
+                                            .toList(),
+                                      ),
                                     ),
                                   ],
                                 ),

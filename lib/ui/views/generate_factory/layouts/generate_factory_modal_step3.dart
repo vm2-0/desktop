@@ -1,3 +1,4 @@
+import 'package:clones_desktop/application/apps.dart';
 import 'package:clones_desktop/application/transaction/provider.dart';
 import 'package:clones_desktop/ui/components/app_chip_widget.dart';
 import 'package:clones_desktop/ui/components/card.dart';
@@ -5,8 +6,10 @@ import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.d
 import 'package:clones_desktop/ui/components/design_widget/dialog/dialog.dart';
 import 'package:clones_desktop/ui/views/generate_factory/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/generate_factory/bloc/state.dart';
+import 'package:clones_desktop/ui/views/generate_factory/widgets/app_alternatives_modal.dart';
 import 'package:clones_desktop/ui/views/shared/components/task_input_field.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class GenerateFactoryModalStep3 extends ConsumerWidget {
@@ -84,7 +87,6 @@ class GenerateFactoryModalStep3 extends ConsumerWidget {
                 );
               },
             ),
-
             if (generateFactory.tasks != null &&
                 generateFactory.tasks!.isNotEmpty)
               ListView.builder(
@@ -132,10 +134,14 @@ class GenerateFactoryModalStep3 extends ConsumerWidget {
                           ),
                           TaskInputField(
                             initialValue: task.prompt,
+                            maxLength: 2000,
+                            minLines: 3,
+                            maxLines: 8,
                             onChanged: (value) {
                               ref
                                   .read(
-                                      generateFactoryNotifierProvider.notifier)
+                                    generateFactoryNotifierProvider.notifier,
+                                  )
                                   .updateTaskPrompt(taskIdx, value);
                             },
                             showLimits: true,
@@ -145,39 +151,64 @@ class GenerateFactoryModalStep3 extends ConsumerWidget {
                             onRewardLimitChanged: (rewardLimit) {
                               ref
                                   .read(
-                                      generateFactoryNotifierProvider.notifier)
+                                    generateFactoryNotifierProvider.notifier,
+                                  )
                                   .updateTaskRewardLimit(taskIdx, rewardLimit);
                             },
                             onUploadLimitChanged: (uploadLimit) {
                               ref
                                   .read(
-                                      generateFactoryNotifierProvider.notifier)
+                                    generateFactoryNotifierProvider.notifier,
+                                  )
                                   .updateTaskUploadLimit(taskIdx, uploadLimit);
                             },
                           ),
                           const SizedBox(height: 20),
                           if (task.appsUsed.isNotEmpty) ...[
                             Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'Apps to be used:',
-                                  style: theme.textTheme.bodySmall,
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Text(
+                                    'Apps to be used:',
+                                    style: theme.textTheme.bodySmall,
+                                  ),
                                 ),
                                 const SizedBox(width: 8),
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 4,
-                                  children: task.appsUsed
-                                      .asMap()
-                                      .entries
-                                      .map(
-                                        (entry) => AppChipWidget(
-                                          appName: entry.value.name,
-                                          domain: entry.value.domain,
-                                          index: entry.key,
-                                        ),
-                                      )
-                                      .toList(),
+                                Expanded(
+                                  child: Wrap(
+                                    spacing: 8,
+                                    runSpacing: 4,
+                                    children: task.appsUsed
+                                        .asMap()
+                                        .entries
+                                        .map(
+                                          (entry) => InkWell(
+                                            onTap: () => _showAppAlternatives(
+                                              context,
+                                              ref,
+                                              taskIdx,
+                                              entry.key,
+                                              entry.value.name,
+                                              entry.value.domain,
+                                              generateFactory,
+                                            ),
+                                            borderRadius:
+                                                BorderRadius.circular(16),
+                                            child: Tooltip(
+                                              message:
+                                                  'Click to replace with alternative',
+                                              child: AppChipWidget(
+                                                appName: entry.value.name,
+                                                domain: entry.value.domain,
+                                                index: entry.key,
+                                              ),
+                                            ),
+                                          ),
+                                        )
+                                        .toList(),
+                                  ),
                                 ),
                               ],
                             ),
@@ -499,25 +530,95 @@ class GenerateFactoryModalStep3 extends ConsumerWidget {
             buttonText: 'Back',
             btnPrimaryType: BtnPrimaryType.outlinePrimary,
           ),
-          if (generateFactory.isCreated)
-            BtnPrimary(
-              onTap: onClose,
-              buttonText: 'Close',
-            )
-          else
-            BtnPrimary(
-              onTap: generateFactory.isCreating ||
-                      generateFactory.tasks == null ||
-                      generateFactory.tasks!.isEmpty
-                  ? null
-                  : () async {
-                      await generateFactoryNotifier.createFactory();
-                    },
-              buttonText:
-                  generateFactory.isCreating ? 'Creating...' : 'Create Factory',
-              isLoading: generateFactory.isCreating,
-            ),
+          Row(
+            children: [
+              if (generateFactory.tasks != null &&
+                  generateFactory.tasks!.isNotEmpty) ...[
+                BtnPrimary(
+                  onTap: () {
+                    final tasksText =
+                        generateFactory.tasks!.asMap().entries.map((entry) {
+                      final index = entry.key + 1;
+                      final task = entry.value;
+                      return 'Task $index: ${task.taskName}\n${task.prompt}';
+                    }).join('\n\n');
+
+                    Clipboard.setData(ClipboardData(text: tasksText));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Copied ${generateFactory.tasks!.length} ${generateFactory.tasks!.length > 1 ? 'tasks' : 'task'} to clipboard',
+                        ),
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                  buttonText: 'Copy All Tasks',
+                  btnPrimaryType: BtnPrimaryType.outlinePrimary,
+                ),
+              ],
+              const SizedBox(width: 12),
+              if (generateFactory.isCreated)
+                BtnPrimary(
+                  onTap: onClose,
+                  buttonText: 'Close',
+                )
+              else
+                BtnPrimary(
+                  onTap: generateFactory.isCreating ||
+                          generateFactory.tasks == null ||
+                          generateFactory.tasks!.isEmpty
+                      ? null
+                      : () async {
+                          await generateFactoryNotifier.createFactory();
+                        },
+                  buttonText: generateFactory.isCreating
+                      ? 'Creating...'
+                      : 'Create Factory',
+                  isLoading: generateFactory.isCreating,
+                ),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+
+  void _showAppAlternatives(
+    BuildContext context,
+    WidgetRef ref,
+    int taskIndex,
+    int appIndex,
+    String currentAppName,
+    String currentAppDomain,
+    GenerateFactoryState generateFactory,
+  ) {
+    // Build categories filter from current state
+    final filterCategories = <String>[];
+    if (generateFactory.openSourceAppsOnly) {
+      filterCategories.add('open_source');
+    }
+    if (generateFactory.webappAppsOnly) {
+      filterCategories.add('webapp');
+    }
+    if (generateFactory.desktopAppsOnly) {
+      filterCategories.add('desktop');
+    }
+
+    showDialog<void>(
+      context: context,
+      builder: (context) => AppAlternativesModal(
+        currentAppName: currentAppName,
+        currentAppDomain: currentAppDomain,
+        filterCategories: filterCategories.isEmpty ? null : filterCategories,
+        onSelectAlternative: (name, domain, description) {
+          ref
+              .read(generateFactoryNotifierProvider.notifier)
+              .replaceAppInTask(taskIndex, appIndex, name, domain, description);
+
+          // Track usage increment
+          ref.read(incrementAppUsageProvider(identifier: name).future);
+        },
       ),
     );
   }
