@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/application/transaction/state.dart';
 import 'package:clones_desktop/domain/models/api/api_error.dart';
+import 'package:clones_desktop/domain/models/api/request_options.dart';
 import 'package:clones_desktop/domain/models/factory/workflow_task.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:clones_desktop/ui/components/design_widget/dialog/popup_template.dart';
@@ -599,6 +600,7 @@ class TransactionManager extends _$TransactionManager {
           'fundingAmount': fundingAmount,
         },
       },
+      options: const RequestOptions(requiresAuth: true),
     );
   }
 
