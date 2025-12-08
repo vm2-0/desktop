@@ -8,6 +8,7 @@ import 'package:clones_desktop/domain/models/factory/workflow_task.dart';
 import 'package:clones_desktop/ui/components/app_chip_widget.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
+import 'package:clones_desktop/ui/components/design_widget/text/app_text.dart';
 import 'package:clones_desktop/ui/views/demo_detail/layouts/components/referral_required_dialog.dart';
 import 'package:clones_desktop/ui/views/demo_detail/layouts/demo_detail_view.dart';
 import 'package:clones_desktop/utils/format_num.dart';
@@ -15,7 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class TaskCard extends ConsumerWidget {
+class TaskCard extends ConsumerStatefulWidget {
   const TaskCard({
     super.key,
     required this.task,
@@ -26,16 +27,27 @@ class TaskCard extends ConsumerWidget {
   final String currencyMode;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TaskCard> createState() => _TaskCardState();
+}
+
+class _TaskCardState extends ConsumerState<TaskCard> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final task = widget.task;
+    final currencyMode = widget.currencyMode;
     final theme = Theme.of(context);
-    final factory = ref
-        .watch(
-          getFactoryProvider(factoryId: task.poolId!),
-        )
-        .valueOrNull;
+    final factoryAsync = ref.watch(
+      getFactoryProvider(factoryId: task.poolId!),
+    );
+    final factory = factoryAsync.valueOrNull;
 
     if (factory == null) {
-      return const SizedBox.shrink();
+      return const Padding(
+        padding: EdgeInsets.all(10),
+        child: SizedBox(height: 190),
+      );
     }
 
     final tokenSymbol = factory.token?.symbol ?? '';
@@ -71,158 +83,268 @@ class TaskCard extends ConsumerWidget {
       );
     }
 
-    return Container(
-      height: 230,
-      padding: const EdgeInsets.all(10),
-      child: Stack(
-        alignment: Alignment.bottomRight,
+    final content = Padding(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(15),
-            child: CardWidget(
-              padding: CardPadding.small,
-              variant: CardVariant.secondary,
-              child: InkWell(
-                onTap: task.uploadLimit != null &&
-                        task.currentSubmissions != null &&
-                        task.currentSubmissions! >= task.uploadLimit!
-                    ? null
-                    : factory.balance >= rewardAmount
-                        ? () async => onTap(context)
-                        : null,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: task.appsUsed
+                .asMap()
+                .entries
+                .map(
+                  (entry) => AppChipWidget(
+                    appName: entry.value.name,
+                    domain: entry.value.domain,
+                    index: entry.key,
+                  ),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            task.prompt,
+            maxLines: 3,
+            style: theme.textTheme.bodySmall,
+          ),
+          const SizedBox(height: 8),
+          _buildTaskContent(theme),
+        ],
+      ),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.all(10),
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        alignment: Alignment.topCenter,
+        child: SelectionArea(
+          child: SizedBox(
+            height: _isExpanded ? null : 220,
+            child: Stack(
+              alignment: Alignment.bottomRight,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(15),
+                  child: CardWidget(
+                    padding: CardPadding.small,
+                    variant: CardVariant.secondary,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  task.taskName,
+                                  style: theme.textTheme.titleSmall,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (_isExpanded) content else Expanded(child: content),
+                        if (task.uploadLimit != null &&
+                            task.currentSubmissions != null &&
+                            task.currentSubmissions! < task.uploadLimit!)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 12),
                             child: Text(
-                              task.taskName,
-                              style: theme.textTheme.titleSmall,
-                              overflow: TextOverflow.ellipsis,
+                              'Only ${task.uploadLimit! - task.currentSubmissions!} more - keep going!',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: ClonesColors.important,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (factory.status == FactoryStatus.archived)
+                  const BtnPrimary(
+                    isLocked: true,
+                    btnPrimaryType: BtnPrimaryType.outlinePrimary,
+                    onTap: null,
+                    buttonText: 'Archived',
+                  )
+                else if (task.uploadLimit != null &&
+                    task.currentSubmissions != null &&
+                    task.currentSubmissions! >= task.uploadLimit!)
+                  const BtnPrimary(
+                    isLocked: true,
+                    btnPrimaryType: BtnPrimaryType.outlinePrimary,
+                    onTap: null,
+                    buttonText: 'All demos completed!',
+                  )
+                else if (factory.balance >= rewardAmount)
+                  BtnPrimary(
+                    onTap: () async => onTap(context),
+                    buttonText: 'Start Training',
+                    icon: Icons.play_arrow,
+                    iconPosition: IconPosition.trailing,
+                  )
+                else
+                  const BtnPrimary(
+                    isLocked: true,
+                    btnPrimaryType: BtnPrimaryType.outlinePrimary,
+                    onTap: null,
+                    buttonText: 'Insufficient funds',
+                  ),
+                if (rewardAmount > 0) ...[
+                  Positioned(
+                    top: 25,
+                    right: 25,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: factory.balance >= rewardAmount
+                            ? ClonesColors.rewardInfo.withValues(alpha: 0.3)
+                            : ClonesColors.rewardInfo.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF000000).withAlpha(60),
+                            blurRadius: 6,
+                            offset: const Offset(
+                              0,
+                              3,
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SelectableText(
-                              task.prompt,
-                              maxLines: 3,
-                              style: theme.textTheme.bodySmall,
-                            ),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 4,
-                              children: task.appsUsed
-                                  .asMap()
-                                  .entries
-                                  .map(
-                                    (entry) => AppChipWidget(
-                                      appName: entry.value.name,
-                                      domain: entry.value.domain,
-                                      index: entry.key,
-                                    ),
-                                  )
-                                  .toList(),
-                            ),
-                          ],
+                      child: Text(
+                        rewardText,
+                        style: theme.textTheme.bodySmall!.copyWith(
+                          color: factory.balance >= rewardAmount
+                              ? ClonesColors.rewardInfo
+                              : Colors.white.withValues(alpha: 0.4),
                         ),
                       ),
                     ),
-                    if (task.uploadLimit != null &&
-                        task.currentSubmissions != null &&
-                        task.currentSubmissions! < task.uploadLimit!)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 12),
-                        child: Text(
-                          'Only ${task.uploadLimit! - task.currentSubmissions!} more - keep going!',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: ClonesColors.important,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
+                  ),
+                ],
+              ],
             ),
           ),
-          if (factory.status == FactoryStatus.archived)
-            const BtnPrimary(
-              isLocked: true,
-              btnPrimaryType: BtnPrimaryType.outlinePrimary,
-              onTap: null,
-              buttonText: 'Archived',
-            )
-          else if (task.uploadLimit != null &&
-              task.currentSubmissions != null &&
-              task.currentSubmissions! >= task.uploadLimit!)
-            const BtnPrimary(
-              isLocked: true,
-              btnPrimaryType: BtnPrimaryType.outlinePrimary,
-              onTap: null,
-              buttonText: 'All demos completed!',
-            )
-          else if (factory.balance >= rewardAmount)
-            BtnPrimary(
-              onTap: () async => onTap(context),
-              buttonText: 'Start Training',
-              icon: Icons.play_arrow,
-              iconPosition: IconPosition.trailing,
-            )
-          else
-            const BtnPrimary(
-              isLocked: true,
-              btnPrimaryType: BtnPrimaryType.outlinePrimary,
-              onTap: null,
-              buttonText: 'Insufficient funds',
-            ),
-          if (rewardAmount > 0) ...[
-            Positioned(
-              top: 25,
-              right: 25,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: factory.balance >= rewardAmount
-                      ? ClonesColors.rewardInfo.withValues(alpha: 0.3)
-                      : ClonesColors.rewardInfo.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF000000).withAlpha(60),
-                      blurRadius: 6,
-                      offset: const Offset(
-                        0,
-                        3,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTaskContent(ThemeData theme) {
+    final task = widget.task;
+    final hasObjectives =
+        task.objectives != null && task.objectives!.isNotEmpty;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Show expand button if objectives exist
+        if (hasObjectives) ...[
+          _buildExpandButton(theme),
+        ],
+
+        // Show objectives when expanded
+        if (_isExpanded && hasObjectives) ...[
+          const SizedBox(height: 12),
+          ...task.objectives!.asMap().entries.map((entry) {
+            final index = entry.key;
+            final objective = entry.value;
+
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: index < task.objectives!.length - 1 ? 6 : 0,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(top: 2, right: 8),
+                    width: 4,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: ClonesColors.secondary.withValues(alpha: 0.6),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  Expanded(
+                    child: AppText(
+                      text: objective,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        height: 1.4,
                       ),
                     ),
-                  ],
-                ),
-                child: Text(
-                  rewardText,
-                  style: theme.textTheme.bodySmall!.copyWith(
-                    color: factory.balance >= rewardAmount
-                        ? ClonesColors.rewardInfo
-                        : Colors.white.withValues(alpha: 0.4),
                   ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildExpandButton(ThemeData theme) {
+    final task = widget.task;
+    final objectivesCount = task.objectives!.length;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _isExpanded = !_isExpanded;
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: ClonesColors.secondary.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: ClonesColors.secondary.withValues(alpha: 0.3),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _isExpanded
+                    ? 'Hide objectives'
+                    : 'Show $objectivesCount objective${objectivesCount > 1 ? 's' : ''}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: ClonesColors.secondary,
+                  letterSpacing: 0.3,
                 ),
               ),
-            ),
-          ],
-        ],
+              const SizedBox(width: 4),
+              AnimatedRotation(
+                turns: _isExpanded ? 0.5 : 0,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                child: const Icon(
+                  Icons.keyboard_arrow_down,
+                  size: 14,
+                  color: ClonesColors.secondary,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

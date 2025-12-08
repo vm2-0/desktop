@@ -36,6 +36,7 @@ mixin _$WorkflowTask {
   String? get limitReason => throw _privateConstructorUsedError;
   @JsonKey(name: 'pool_id')
   String? get poolId => throw _privateConstructorUsedError;
+  List<String>? get objectives => throw _privateConstructorUsedError;
 
   /// Serializes this WorkflowTask to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -65,7 +66,8 @@ abstract class $WorkflowTaskCopyWith<$Res> {
       @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       Decimal? rewardLimit,
       String? limitReason,
-      @JsonKey(name: 'pool_id') String? poolId});
+      @JsonKey(name: 'pool_id') String? poolId,
+      List<String>? objectives});
 }
 
 /// @nodoc
@@ -94,6 +96,7 @@ class _$WorkflowTaskCopyWithImpl<$Res, $Val extends WorkflowTask>
     Object? rewardLimit = freezed,
     Object? limitReason = freezed,
     Object? poolId = freezed,
+    Object? objectives = freezed,
   }) {
     return _then(_value.copyWith(
       id: freezed == id
@@ -140,6 +143,10 @@ class _$WorkflowTaskCopyWithImpl<$Res, $Val extends WorkflowTask>
           ? _value.poolId
           : poolId // ignore: cast_nullable_to_non_nullable
               as String?,
+      objectives: freezed == objectives
+          ? _value.objectives
+          : objectives // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
     ) as $Val);
   }
 }
@@ -164,7 +171,8 @@ abstract class _$$WorkflowTaskImplCopyWith<$Res>
       @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       Decimal? rewardLimit,
       String? limitReason,
-      @JsonKey(name: 'pool_id') String? poolId});
+      @JsonKey(name: 'pool_id') String? poolId,
+      List<String>? objectives});
 }
 
 /// @nodoc
@@ -191,6 +199,7 @@ class __$$WorkflowTaskImplCopyWithImpl<$Res>
     Object? rewardLimit = freezed,
     Object? limitReason = freezed,
     Object? poolId = freezed,
+    Object? objectives = freezed,
   }) {
     return _then(_$WorkflowTaskImpl(
       id: freezed == id
@@ -237,6 +246,10 @@ class __$$WorkflowTaskImplCopyWithImpl<$Res>
           ? _value.poolId
           : poolId // ignore: cast_nullable_to_non_nullable
               as String?,
+      objectives: freezed == objectives
+          ? _value._objectives
+          : objectives // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
     ));
   }
 }
@@ -256,9 +269,11 @@ class _$WorkflowTaskImpl implements _WorkflowTask {
       @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       this.rewardLimit,
       this.limitReason,
-      @JsonKey(name: 'pool_id') this.poolId})
+      @JsonKey(name: 'pool_id') this.poolId,
+      final List<String>? objectives})
       : _categories = categories,
-        _appsUsed = appsUsed;
+        _appsUsed = appsUsed,
+        _objectives = objectives;
 
   factory _$WorkflowTaskImpl.fromJson(Map<String, dynamic> json) =>
       _$$WorkflowTaskImplFromJson(json);
@@ -303,10 +318,19 @@ class _$WorkflowTaskImpl implements _WorkflowTask {
   @override
   @JsonKey(name: 'pool_id')
   final String? poolId;
+  final List<String>? _objectives;
+  @override
+  List<String>? get objectives {
+    final value = _objectives;
+    if (value == null) return null;
+    if (_objectives is EqualUnmodifiableListView) return _objectives;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
 
   @override
   String toString() {
-    return 'WorkflowTask(id: $id, prompt: $prompt, categories: $categories, appsUsed: $appsUsed, taskName: $taskName, uploadLimit: $uploadLimit, currentSubmissions: $currentSubmissions, uploadLimitReached: $uploadLimitReached, rewardLimit: $rewardLimit, limitReason: $limitReason, poolId: $poolId)';
+    return 'WorkflowTask(id: $id, prompt: $prompt, categories: $categories, appsUsed: $appsUsed, taskName: $taskName, uploadLimit: $uploadLimit, currentSubmissions: $currentSubmissions, uploadLimitReached: $uploadLimitReached, rewardLimit: $rewardLimit, limitReason: $limitReason, poolId: $poolId, objectives: $objectives)';
   }
 
   @override
@@ -331,7 +355,9 @@ class _$WorkflowTaskImpl implements _WorkflowTask {
                 other.rewardLimit == rewardLimit) &&
             (identical(other.limitReason, limitReason) ||
                 other.limitReason == limitReason) &&
-            (identical(other.poolId, poolId) || other.poolId == poolId));
+            (identical(other.poolId, poolId) || other.poolId == poolId) &&
+            const DeepCollectionEquality()
+                .equals(other._objectives, _objectives));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -348,7 +374,8 @@ class _$WorkflowTaskImpl implements _WorkflowTask {
       uploadLimitReached,
       rewardLimit,
       limitReason,
-      poolId);
+      poolId,
+      const DeepCollectionEquality().hash(_objectives));
 
   /// Create a copy of WorkflowTask
   /// with the given fields replaced by the non-null parameter values.
@@ -379,7 +406,8 @@ abstract class _WorkflowTask implements WorkflowTask {
       @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       final Decimal? rewardLimit,
       final String? limitReason,
-      @JsonKey(name: 'pool_id') final String? poolId}) = _$WorkflowTaskImpl;
+      @JsonKey(name: 'pool_id') final String? poolId,
+      final List<String>? objectives}) = _$WorkflowTaskImpl;
 
   factory _WorkflowTask.fromJson(Map<String, dynamic> json) =
       _$WorkflowTaskImpl.fromJson;
@@ -411,6 +439,8 @@ abstract class _WorkflowTask implements WorkflowTask {
   @override
   @JsonKey(name: 'pool_id')
   String? get poolId;
+  @override
+  List<String>? get objectives;
 
   /// Create a copy of WorkflowTask
   /// with the given fields replaced by the non-null parameter values.

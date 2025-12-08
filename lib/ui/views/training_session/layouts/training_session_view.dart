@@ -68,7 +68,7 @@ class _TrainingSessionViewState extends ConsumerState<TrainingSessionView> {
             .read(trainingSessionNotifierProvider.notifier)
             .setFactoryTask(factoryTask);
       }
-      await ref.read(trainingSessionNotifierProvider.notifier).initialMessage();
+      await ref.read(trainingSessionNotifierProvider.notifier).initializeFromTask();
     });
     super.initState();
   }

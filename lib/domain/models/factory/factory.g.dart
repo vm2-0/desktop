@@ -26,6 +26,11 @@ _$FactoryImpl _$$FactoryImplFromJson(Map<String, dynamic> json) =>
       balance: (json['balance'] as num?)?.toDouble() ?? 0.0,
       totalEarned: DecimalJson.fromJson(json['totalEarned']),
       demonstrations: (json['demonstrations'] as num?)?.toInt() ?? 0,
+      gradingResults: (json['gradingResults'] as List<dynamic>?)
+              ?.map((e) =>
+                  FactoryGradingResult.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
       tasks: (json['tasks'] as List<dynamic>?)
               ?.map((e) => WorkflowTask.fromJson(e as Map<String, dynamic>))
               .toList() ??
@@ -50,6 +55,7 @@ Map<String, dynamic> _$$FactoryImplToJson(_$FactoryImpl instance) =>
       'balance': instance.balance,
       'totalEarned': DecimalJson.toJson(instance.totalEarned),
       'demonstrations': instance.demonstrations,
+      'gradingResults': instance.gradingResults,
       'tasks': instance.tasks,
       'searchText': instance.searchText,
       'expanded': instance.expanded,

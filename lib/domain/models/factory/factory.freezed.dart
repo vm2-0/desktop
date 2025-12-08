@@ -38,7 +38,8 @@ mixin _$Factory {
       throw _privateConstructorUsedError; // Keep for backward compatibility
   @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
   Decimal? get totalEarned => throw _privateConstructorUsedError; // Statistics
-  int get demonstrations =>
+  int get demonstrations => throw _privateConstructorUsedError;
+  List<FactoryGradingResult> get gradingResults =>
       throw _privateConstructorUsedError; // Tasks (tasks-first architecture)
   List<WorkflowTask> get tasks =>
       throw _privateConstructorUsedError; // Search optimization
@@ -76,6 +77,7 @@ abstract class $FactoryCopyWith<$Res> {
       @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       Decimal? totalEarned,
       int demonstrations,
+      List<FactoryGradingResult> gradingResults,
       List<WorkflowTask> tasks,
       String searchText,
       bool expanded,
@@ -112,6 +114,7 @@ class _$FactoryCopyWithImpl<$Res, $Val extends Factory>
     Object? balance = null,
     Object? totalEarned = freezed,
     Object? demonstrations = null,
+    Object? gradingResults = null,
     Object? tasks = null,
     Object? searchText = null,
     Object? expanded = null,
@@ -170,6 +173,10 @@ class _$FactoryCopyWithImpl<$Res, $Val extends Factory>
           ? _value.demonstrations
           : demonstrations // ignore: cast_nullable_to_non_nullable
               as int,
+      gradingResults: null == gradingResults
+          ? _value.gradingResults
+          : gradingResults // ignore: cast_nullable_to_non_nullable
+              as List<FactoryGradingResult>,
       tasks: null == tasks
           ? _value.tasks
           : tasks // ignore: cast_nullable_to_non_nullable
@@ -226,6 +233,7 @@ abstract class _$$FactoryImplCopyWith<$Res> implements $FactoryCopyWith<$Res> {
       @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       Decimal? totalEarned,
       int demonstrations,
+      List<FactoryGradingResult> gradingResults,
       List<WorkflowTask> tasks,
       String searchText,
       bool expanded,
@@ -261,6 +269,7 @@ class __$$FactoryImplCopyWithImpl<$Res>
     Object? balance = null,
     Object? totalEarned = freezed,
     Object? demonstrations = null,
+    Object? gradingResults = null,
     Object? tasks = null,
     Object? searchText = null,
     Object? expanded = null,
@@ -319,6 +328,10 @@ class __$$FactoryImplCopyWithImpl<$Res>
           ? _value.demonstrations
           : demonstrations // ignore: cast_nullable_to_non_nullable
               as int,
+      gradingResults: null == gradingResults
+          ? _value._gradingResults
+          : gradingResults // ignore: cast_nullable_to_non_nullable
+              as List<FactoryGradingResult>,
       tasks: null == tasks
           ? _value._tasks
           : tasks // ignore: cast_nullable_to_non_nullable
@@ -357,11 +370,13 @@ class _$FactoryImpl implements _Factory {
       @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       this.totalEarned,
       this.demonstrations = 0,
+      final List<FactoryGradingResult> gradingResults = const [],
       final List<WorkflowTask> tasks = const [],
       this.searchText = '',
       this.expanded = false,
       this.isLoading = false})
       : _skills = skills,
+        _gradingResults = gradingResults,
         _tasks = tasks;
 
   factory _$FactoryImpl.fromJson(Map<String, dynamic> json) =>
@@ -411,6 +426,15 @@ class _$FactoryImpl implements _Factory {
   @override
   @JsonKey()
   final int demonstrations;
+  final List<FactoryGradingResult> _gradingResults;
+  @override
+  @JsonKey()
+  List<FactoryGradingResult> get gradingResults {
+    if (_gradingResults is EqualUnmodifiableListView) return _gradingResults;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_gradingResults);
+  }
+
 // Tasks (tasks-first architecture)
   final List<WorkflowTask> _tasks;
 // Tasks (tasks-first architecture)
@@ -436,7 +460,7 @@ class _$FactoryImpl implements _Factory {
 
   @override
   String toString() {
-    return 'Factory(id: $id, poolAddress: $poolAddress, name: $name, description: $description, ownerAddress: $ownerAddress, status: $status, createdAt: $createdAt, updatedAt: $updatedAt, skills: $skills, token: $token, balance: $balance, totalEarned: $totalEarned, demonstrations: $demonstrations, tasks: $tasks, searchText: $searchText, expanded: $expanded, isLoading: $isLoading)';
+    return 'Factory(id: $id, poolAddress: $poolAddress, name: $name, description: $description, ownerAddress: $ownerAddress, status: $status, createdAt: $createdAt, updatedAt: $updatedAt, skills: $skills, token: $token, balance: $balance, totalEarned: $totalEarned, demonstrations: $demonstrations, gradingResults: $gradingResults, tasks: $tasks, searchText: $searchText, expanded: $expanded, isLoading: $isLoading)';
   }
 
   @override
@@ -464,6 +488,8 @@ class _$FactoryImpl implements _Factory {
                 other.totalEarned == totalEarned) &&
             (identical(other.demonstrations, demonstrations) ||
                 other.demonstrations == demonstrations) &&
+            const DeepCollectionEquality()
+                .equals(other._gradingResults, _gradingResults) &&
             const DeepCollectionEquality().equals(other._tasks, _tasks) &&
             (identical(other.searchText, searchText) ||
                 other.searchText == searchText) &&
@@ -490,6 +516,7 @@ class _$FactoryImpl implements _Factory {
       balance,
       totalEarned,
       demonstrations,
+      const DeepCollectionEquality().hash(_gradingResults),
       const DeepCollectionEquality().hash(_tasks),
       searchText,
       expanded,
@@ -527,6 +554,7 @@ abstract class _Factory implements Factory {
       @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
       final Decimal? totalEarned,
       final int demonstrations,
+      final List<FactoryGradingResult> gradingResults,
       final List<WorkflowTask> tasks,
       final String searchText,
       final bool expanded,
@@ -561,7 +589,10 @@ abstract class _Factory implements Factory {
   @JsonKey(toJson: DecimalJson.toJson, fromJson: DecimalJson.fromJson)
   Decimal? get totalEarned; // Statistics
   @override
-  int get demonstrations; // Tasks (tasks-first architecture)
+  int get demonstrations;
+  @override
+  List<FactoryGradingResult>
+      get gradingResults; // Tasks (tasks-first architecture)
   @override
   List<WorkflowTask> get tasks; // Search optimization
   @override
