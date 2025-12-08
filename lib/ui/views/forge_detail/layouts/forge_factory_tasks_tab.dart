@@ -1,8 +1,8 @@
 import 'package:clones_desktop/ui/views/factory/layouts/available_tasks.dart';
 import 'package:clones_desktop/ui/views/forge_detail/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/forge_detail/bloc/state.dart';
-import 'package:clones_desktop/ui/views/forge_detail/layouts/components/task_card_widget.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/components/forge_factory_header.dart';
+import 'package:clones_desktop/ui/views/forge_detail/layouts/components/task_card_widget.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/components/tasks_view_mode_buttons_widget.dart';
 import 'package:clones_desktop/ui/views/manage_task/bloc/state.dart';
 import 'package:clones_desktop/ui/views/manage_task/layouts/manage_task_modal.dart';

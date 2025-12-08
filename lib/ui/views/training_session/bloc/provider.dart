@@ -302,6 +302,53 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
     }
   }
 
+  Future<void> initializeFromTask() async {
+    try {
+      // If we have a factoryTask with objectives, use them directly
+      if (state.factoryTask?.objectives != null &&
+          state.factoryTask!.objectives!.isNotEmpty) {
+        final appName = state.factoryTask!.appsUsed.isNotEmpty
+            ? state.factoryTask!.appsUsed.first.name
+            : 'App';
+
+        final demonstration = Demonstration(
+          title: state.factoryTask!.taskName,
+          app: appName,
+          objectives: state.factoryTask!.objectives!,
+          content: state.prompt ?? state.factoryTask!.prompt,
+          poolId: state.factory?.id,
+          taskId: state.factoryTask?.id,
+        );
+
+        // Add welcome message
+        await addMessage(
+          generateAssistantMessage(
+            'Ready to record your demonstration for "${state.factoryTask!.taskName}".',
+          ),
+        );
+
+        // Check if factory has rewards
+        if (state.factory?.id != null) {
+          await addMessage(
+            generateUserMessage("I'll show you how to do this task."),
+          );
+        }
+
+        setRecordingDemonstration(demonstration);
+      } else {
+        // Fallback to API call if no objectives available
+        await initialMessage();
+      }
+    } catch (e) {
+      debugPrint('Failed to initialize from task: $e');
+      await addMessage(
+        generateAssistantMessage(
+          "I'm sorry, I encountered an error starting the session. Please try again.",
+        ),
+      );
+    }
+  }
+
   Future<void> initialMessage() async {
     setIsWaitingForResponse(true);
 

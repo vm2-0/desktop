@@ -35,111 +35,113 @@ class _RecordPanelState extends ConsumerState<RecordPanel> {
     final rewardText =
         'Up to: ${rewardAmount.toStringAsFixedLowValue(2, 5)} ${trainingSession.factory?.token?.symbol ?? ''}';
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.only(
-            right: trainingSession.factory?.token != null ? 100 : 0,
+    return SelectionArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(
+              right: trainingSession.factory?.token != null ? 100 : 0,
+            ),
+            child: Text(
+              trainingSession.recordingDemonstration!.title,
+              style: theme.textTheme.titleLarge,
+            ),
           ),
-          child: Text(
-            trainingSession.recordingDemonstration!.title,
-            style: theme.textTheme.titleLarge,
-          ),
-        ),
-        const SizedBox(height: 10),
-        if (trainingSession.factory?.token != null)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Complete the task to earn a reward.',
-                style: theme.textTheme.bodyMedium,
-              ),
-              Row(
-                children: [
-                  Text(
-                    rewardText,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: ClonesColors.secondary,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 4),
-                    child: UsdPrice(
-                      amount: rewardAmount,
-                      symbol: trainingSession.factory?.token?.symbol ?? '',
+          const SizedBox(height: 10),
+          if (trainingSession.factory?.token != null)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Complete the task to earn a reward.',
+                  style: theme.textTheme.bodyMedium,
+                ),
+                Row(
+                  children: [
+                    Text(
+                      rewardText,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: ClonesColors.secondary,
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                '''
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4),
+                      child: UsdPrice(
+                        amount: rewardAmount,
+                        symbol: trainingSession.factory?.token?.symbol ?? '',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: ClonesColors.secondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  '''
 Please focus on the required steps: keep actions efficient, avoid unnecessary clicks, and limit unrelated activity.
 For the cleanest recording, it’s best to close any applications you don’t need before starting.
 Once the recording is finished, you’ll be able to trim segments—for example, to remove personal data or any information you don’t want to share.''',
-                style: theme.textTheme.bodyMedium,
-              ),
-            ],
-          )
-        else
-          Column(
-            children: [
-              Text(
-                'Complete the task to get a reward.',
-                style: theme.textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                '''
-Please focus on the required steps: keep actions efficient, avoid unnecessary clicks, and limit unrelated activity.
-For the cleanest recording, it’s best to close any applications you don’t need before starting.
-Once the recording is finished, you’ll be able to trim segments—for example, to remove personal data or any information you don’t want to share.''',
-                style: theme.textTheme.bodyMedium,
-              ),
-            ],
-          ),
-        const SizedBox(height: 10),
-        Text(
-          'Your Objectives:',
-          style: theme.textTheme.titleSmall,
-        ),
-        const SizedBox(height: 8),
-        ...trainingSession.recordingDemonstration!.objectives.map(
-          (obj) => Padding(
-            padding: const EdgeInsets.only(left: 8, bottom: 10),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ],
+            )
+          else
+            Column(
               children: [
                 Text(
-                  '• ',
-                  style: theme.textTheme.bodySmall,
+                  'Complete the task to get a reward.',
+                  style: theme.textTheme.bodyMedium,
                 ),
-                Expanded(
-                  child: AppText(
-                    text: obj,
-                    style: theme.textTheme.bodySmall,
-                  ),
+                const SizedBox(height: 10),
+                Text(
+                  '''
+    Please focus on the required steps: keep actions efficient, avoid unnecessary clicks, and limit unrelated activity.
+    For the cleanest recording, it’s best to close any applications you don’t need before starting.
+    Once the recording is finished, you’ll be able to trim segments—for example, to remove personal data or any information you don’t want to share.''',
+                  style: theme.textTheme.bodyMedium,
                 ),
               ],
             ),
+          const SizedBox(height: 10),
+          Text(
+            'Your Objectives:',
+            style: theme.textTheme.titleSmall,
           ),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          '''
-Warning: The maximum length of a recording is 2 minutes.''',
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: ClonesColors.uploadLimit,
+          const SizedBox(height: 8),
+          ...trainingSession.recordingDemonstration!.objectives.map(
+            (obj) => Padding(
+              padding: const EdgeInsets.only(left: 8, bottom: 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '• ',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  Expanded(
+                    child: AppText(
+                      text: obj,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
-        const SizedBox(height: 20),
-        _buildActionButtons(recordingState),
-      ],
+          const SizedBox(height: 10),
+          Text(
+            '''
+    Warning: The maximum length of a recording is 2 minutes.''',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: ClonesColors.uploadLimit,
+            ),
+          ),
+          const SizedBox(height: 20),
+          _buildActionButtons(recordingState),
+        ],
+      ),
     );
   }
 

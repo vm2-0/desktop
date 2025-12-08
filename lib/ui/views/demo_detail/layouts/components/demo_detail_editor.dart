@@ -479,7 +479,8 @@ class _DemoDetailEditorState extends ConsumerState<DemoDetailEditor> {
                     messageIndex: chatItem.messageIndex!,
                     onSeekToTimestamp: videoSeekCallback != null
                         ? (timestampMs) => videoSeekCallback(
-                            Duration(milliseconds: timestampMs))
+                              Duration(milliseconds: timestampMs),
+                            )
                         : null,
                   );
                 },

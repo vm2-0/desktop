@@ -1,7 +1,8 @@
 // ignore_for_file: invalid_annotation_target
 
-import 'package:clones_desktop/domain/models/factory/workflow_task.dart';
+import 'package:clones_desktop/domain/models/factory/factory_grading_result.dart';
 import 'package:clones_desktop/domain/models/factory/factory_token.dart';
+import 'package:clones_desktop/domain/models/factory/workflow_task.dart';
 import 'package:clones_desktop/utils/decimal_json.dart';
 import 'package:decimal/decimal.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -87,6 +88,7 @@ class Factory with _$Factory {
 
     // Statistics
     @Default(0) int demonstrations,
+    @Default([]) List<FactoryGradingResult> gradingResults,
 
     // Tasks (tasks-first architecture)
     @Default([]) List<WorkflowTask> tasks,

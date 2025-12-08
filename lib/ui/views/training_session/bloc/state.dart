@@ -1,4 +1,3 @@
-import 'package:clones_desktop/domain/app_info.dart';
 import 'package:clones_desktop/domain/models/demonstration/demonstration.dart';
 import 'package:clones_desktop/domain/models/factory/factory.dart';
 import 'package:clones_desktop/domain/models/factory/workflow_task.dart';

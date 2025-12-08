@@ -2,7 +2,7 @@ name: clones_desktop
 description: "A desktop application for contributing to the world's largest dataset for multimodal computer-use agents."
 publish_to: 'none'
 
-version: 0.4.2+119
+version: 0.5.0+120
 
 environment:
   sdk: ">=3.6.0 <4.0.0"
@@ -65,7 +65,7 @@ msix_config:
   publisher_display_name: Clones
   publisher: CN=ED6E50CB-2C1F-484F-B7E7-07431405E106
   identity_name: Clones.ClonesAIDesktop
-  msix_version: 0.4.2.119
+  msix_version: 0.5.0.120
   logo_path: assets/icons-app/icon.png
   start_menu_icon_path: assets/icons-app/icon.png
   tile_icon_path: assets/icons-app/icon.png

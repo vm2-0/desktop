@@ -125,14 +125,14 @@ class WindowsUpdater {
       final xml = response.data!;
 
       // Try to extract sparkle:version first
-      final versionMatch = RegExp(r'sparkle:version="([^"]+)"').firstMatch(xml);
+      final versionMatch = RegExp('sparkle:version="([^"]+)"').firstMatch(xml);
       if (versionMatch != null) {
         return versionMatch.group(1);
       }
 
       // Fall back to sparkle:shortVersionString
       final shortVersionMatch =
-          RegExp(r'sparkle:shortVersionString="([^"]+)"').firstMatch(xml);
+          RegExp('sparkle:shortVersionString="([^"]+)"').firstMatch(xml);
       if (shortVersionMatch != null) {
         return shortVersionMatch.group(1);
       }
@@ -159,11 +159,15 @@ class WindowsUpdater {
     final currentParts = currentClean.split('.').map(int.tryParse).toList();
 
     // Ensure both have 3 parts
-    while (availableParts.length < 3) availableParts.add(0);
-    while (currentParts.length < 3) currentParts.add(0);
+    while (availableParts.length < 3) {
+      availableParts.add(0);
+    }
+    while (currentParts.length < 3) {
+      currentParts.add(0);
+    }
 
     // Compare major.minor.patch
-    for (int i = 0; i < 3; i++) {
+    for (var i = 0; i < 3; i++) {
       final available = availableParts[i] ?? 0;
       final current = currentParts[i] ?? 0;
 

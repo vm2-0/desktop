@@ -44,34 +44,36 @@ class AppText extends StatelessWidget {
   Widget build(BuildContext context) {
     final parts = parseText(text);
 
-    return Wrap(
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: 4,
-      children: parts.map((part) {
-        if (part.type == PartType.text) {
-          return SelectableText(
-            part.content,
-            style: style,
-          );
-        } else {
-          return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.grey.withValues(alpha: 0.5)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  part.content,
-                  style: style,
-                ),
-              ],
-            ),
-          );
-        }
-      }).toList(),
+    return SelectionArea(
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 4,
+        children: parts.map((part) {
+          if (part.type == PartType.text) {
+            return Text(
+              part.content,
+              style: style,
+            );
+          } else {
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.grey.withValues(alpha: 0.5)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    part.content,
+                    style: style,
+                  ),
+                ],
+              ),
+            );
+          }
+        }).toList(),
+      ),
     );
   }
 }

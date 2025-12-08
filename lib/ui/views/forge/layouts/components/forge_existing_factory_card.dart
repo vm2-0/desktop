@@ -1,4 +1,3 @@
-import 'package:clones_desktop/application/factory.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/domain/models/factory/factory.dart';
 import 'package:clones_desktop/ui/components/card.dart';
@@ -23,8 +22,10 @@ class ForgeExistingFactoryCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final gradingResultsAsync =
-        ref.watch(getFactoryGradingResultsProvider(factoryId: factory.id));
+
+    // Grading results are now included in the factory object from search API
+    // No need for separate API call per factory!
+    final gradingResults = factory.gradingResults;
 
     return CardWidget(
       padding: CardPadding.small,
@@ -46,17 +47,13 @@ class ForgeExistingFactoryCard extends ConsumerWidget {
             Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                gradingResultsAsync.when(
-                  data: (results) => Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: ScoreDistributionBars(
-                      results: results,
-                      barHeight: 4,
-                      spacing: 6,
-                    ),
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: ScoreDistributionBars(
+                    results: gradingResults,
+                    barHeight: 4,
+                    spacing: 6,
                   ),
-                  loading: () => const SizedBox.shrink(),
-                  error: (_, __) => const SizedBox.shrink(),
                 ),
                 const SizedBox(height: 8),
                 if (factory.poolAddress != null && factory.token != null) ...[
@@ -93,47 +90,30 @@ class ForgeExistingFactoryCard extends ConsumerWidget {
     WidgetRef ref,
     BuildContext context,
   ) {
-    final factoryBalanceAsync = ref.watch(
-      getFactoryBalanceProvider(poolAddress: factory.poolAddress ?? ''),
-    );
     final theme = Theme.of(context);
-    return factoryBalanceAsync.when(
-      data: (balance) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              '${balance.toStringAsFixed(3)} ${factory.token?.symbol ?? ''}',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color:
-                    balance == 0 ? ClonesColors.error : ClonesColors.secondary,
-              ),
-            ),
-            UsdPrice(
-              amount: Decimal.parse(balance.toString()),
-              symbol: factory.token?.symbol ?? '',
-              withParentheses: false,
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontSize: 10,
-                color:
-                    balance == 0 ? ClonesColors.error : ClonesColors.secondary,
-              ),
-            ),
-          ],
-        );
-      },
-      loading: () => const SizedBox.square(
-        dimension: 12,
-        child: CircularProgressIndicator(
-          strokeWidth: 0.5,
+
+    // Use balance from factory object (included in search response)
+    final balance = factory.balance;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(
+          '${balance.toStringAsFixed(3)} ${factory.token?.symbol ?? ''}',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: balance == 0 ? ClonesColors.error : ClonesColors.secondary,
+          ),
         ),
-      ),
-      error: (error, stack) => Text(
-        'Error loading balance',
-        style: theme.textTheme.bodyMedium?.copyWith(
-          color: ClonesColors.error,
+        UsdPrice(
+          amount: Decimal.parse(balance.toString()),
+          symbol: factory.token?.symbol ?? '',
+          withParentheses: false,
+          style: theme.textTheme.bodySmall?.copyWith(
+            fontSize: 10,
+            color: balance == 0 ? ClonesColors.error : ClonesColors.secondary,
+          ),
         ),
-      ),
+      ],
     );
   }
 

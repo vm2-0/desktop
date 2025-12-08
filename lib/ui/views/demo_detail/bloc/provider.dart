@@ -349,7 +349,7 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       ..sort((a, b) => a.time.compareTo(b.time));
 
     final eventTypes = events.map((e) => e.event).toSet();
-    final startTime =
+    const startTime =
         0; // Use 0 since timestamps in input_logs.jsonl are already relative to recording start
 
     // Disable axtree and ffmpeg_stderr by default

@@ -20,7 +20,8 @@ class AvailableTasks extends ConsumerStatefulWidget {
   ConsumerState<AvailableTasks> createState() => _AvailableTasksState();
 }
 
-class _AvailableTasksState extends ConsumerState<AvailableTasks> {
+class _AvailableTasksState extends ConsumerState<AvailableTasks>
+    with AutomaticKeepAliveClientMixin {
   late FactoryFilter _filter;
   List<String> _allCategories = [];
   final Set<String> _selectedCategories = {};
@@ -28,24 +29,38 @@ class _AvailableTasksState extends ConsumerState<AvailableTasks> {
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _minPriceController = TextEditingController();
   final TextEditingController _maxPriceController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   bool _showFilters = false;
   String _currencyMode = 'crypto';
+
+  List<WorkflowTask>? _cachedTasks;
+  List<WorkflowTask>? _cachedSortedTasks;
+  String? _cachedSort;
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _searchController.dispose();
+    _minPriceController.dispose();
+    _maxPriceController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
-    _filter = const FactoryFilter();
+    _filter = FactoryFilter(poolId: widget.poolId);
     _fetchCategories();
+    _initSettings();
+  }
 
-    // Initialize controllers when settings are loaded
-    ref.listenManual(factorySettingsNotifierProvider, (previous, next) {
-      if (next.hasValue) {
-        final settings = next.value!;
-        _minPriceController.text = settings.minPrice.toString();
-        _maxPriceController.text = settings.maxPrice.toString();
-        _applyFilters();
-      }
-    });
+  Future<void> _initSettings() async {
+    final settings = await ref.read(factorySettingsNotifierProvider.future);
+    _minPriceController.text = settings.minPrice.toString();
+    _maxPriceController.text = settings.maxPrice.toString();
   }
 
   Future<void> _fetchCategories() async {
@@ -76,133 +91,157 @@ class _AvailableTasksState extends ConsumerState<AvailableTasks> {
     return task.rewardLimit?.toDouble() ?? 0.0;
   }
 
+  List<WorkflowTask> _getSortedTasks(List<WorkflowTask> tasks) {
+    // Return cached sorted tasks if data hasn't changed
+    if (identical(_cachedTasks, tasks) &&
+        _cachedSort == _sort &&
+        _cachedSortedTasks != null) {
+      return _cachedSortedTasks!;
+    }
+
+    // Create new sorted list
+    final sortedTasks = List<WorkflowTask>.from(tasks)
+      ..sort((a, b) {
+        final rewardA = _getReward(a);
+        final rewardB = _getReward(b);
+        return _sort == 'htl'
+            ? rewardB.compareTo(rewardA)
+            : rewardA.compareTo(rewardB);
+      });
+
+    // Cache the results
+    _cachedTasks = tasks;
+    _cachedSort = _sort;
+    _cachedSortedTasks = sortedTasks;
+
+    return sortedTasks;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final tasksProvider = getTasksForFactoryProvider(filter: _filter);
-    final tasksAsync = ref.watch(tasksProvider);
-    final settings = ref.watch(factorySettingsNotifierProvider);
+    super.build(context);
+    final tasksAsync = ref.watch(
+      getTasksForFactoryProvider(filter: _filter),
+    );
+    final factorySettings =
+        ref.watch(factorySettingsNotifierProvider).valueOrNull ??
+            const FactorySettings();
     final theme = Theme.of(context);
-    return settings.when(
-      loading: () => const Center(
-        child: CircularProgressIndicator(
-          strokeWidth: 0.5,
-        ),
-      ),
-      error: (err, stack) =>
-          Center(child: Text('Error loading settings: $err')),
-      data: (factorySettings) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Expanded(
-                child: AutoSizeText(
-                  'Your journey starts here: choose a task and record your demo.',
-                  maxLines: 2,
-                  textAlign: TextAlign.center,
-                  minFontSize: 14,
-                  style: theme.textTheme.titleLarge,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          _buildHeader(),
-          if (_showFilters)
-            FilterPanel(
-              settings: factorySettings,
-              searchController: _searchController,
-              onSortChanged: (value) {
-                if (value != null) {
-                  setState(() {
-                    _sort = value;
-                  });
-                }
-              },
-              allCategories: _allCategories,
-              selectedCategories: _selectedCategories,
-              onCategorySelected: (category, selected) {
-                setState(() {
-                  if (selected) {
-                    _selectedCategories.add(category);
-                  } else {
-                    _selectedCategories.remove(category);
-                  }
-                });
-                _applyFilters();
-              },
-              onSelectAllCategories: () {
-                setState(_selectedCategories.clear);
-                _applyFilters();
-              },
-              onApplyFilters: () {
-                final newSettings = factorySettings.copyWith(
-                  minPrice: int.tryParse(_minPriceController.text) ??
-                      factorySettings.minPrice,
-                  maxPrice: int.tryParse(_maxPriceController.text) ??
-                      factorySettings.maxPrice,
-                );
-                ref
-                    .read(factorySettingsNotifierProvider.notifier)
-                    .saveFactorySettings(newSettings);
-                _applyFilters();
-              },
-              onResetFilters: () {
-                _searchController.clear();
-                _selectedCategories.clear();
-                setState(() {
-                  _sort = 'htl';
-                });
-                ref
-                    .read(factorySettingsNotifierProvider.notifier)
-                    .saveFactorySettings(
-                      const FactorySettings(),
-                    );
-                _applyFilters();
-              },
-            ),
-          Expanded(
-            child: tasksAsync.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 0.5,
-                ),
-              ),
-              error: (err, stack) => Center(child: Text('Error: $err')),
-              data: (tasks) {
-                if (tasks.isEmpty) {
-                  return const Center(child: Text('No tasks found.'));
-                }
-                final sortedTasks = List<WorkflowTask>.from(tasks)
-                  ..sort((a, b) {
-                    final rewardA = _getReward(a);
-                    final rewardB = _getReward(b);
-                    return _sort == 'htl'
-                        ? rewardB.compareTo(rewardA)
-                        : rewardA.compareTo(rewardB);
-                  });
 
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: sortedTasks.length,
-                  itemBuilder: (context, index) {
-                    final task = sortedTasks[index];
-                    return TaskCard(
-                      task: task,
-                      currencyMode: _currencyMode,
-                    );
-                  },
-                );
-              },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Expanded(
+              child: AutoSizeText(
+                'Your journey starts here: choose a task and record your demo.',
+                maxLines: 2,
+                textAlign: TextAlign.center,
+                minFontSize: 14,
+                style: theme.textTheme.titleLarge,
+              ),
             ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        _buildHeader(tasksAsync),
+        if (_showFilters)
+          FilterPanel(
+            settings: factorySettings,
+            searchController: _searchController,
+            onSortChanged: (value) {
+              if (value != null) {
+                setState(() {
+                  _sort = value;
+                });
+              }
+            },
+            allCategories: _allCategories,
+            selectedCategories: _selectedCategories,
+            onCategorySelected: (category, selected) {
+              setState(() {
+                if (selected) {
+                  _selectedCategories.add(category);
+                } else {
+                  _selectedCategories.remove(category);
+                }
+              });
+              _applyFilters();
+            },
+            onSelectAllCategories: () {
+              setState(_selectedCategories.clear);
+              _applyFilters();
+            },
+            onApplyFilters: () {
+              final newSettings = factorySettings.copyWith(
+                minPrice: int.tryParse(_minPriceController.text) ??
+                    factorySettings.minPrice,
+                maxPrice: int.tryParse(_maxPriceController.text) ??
+                    factorySettings.maxPrice,
+              );
+              ref
+                  .read(factorySettingsNotifierProvider.notifier)
+                  .saveFactorySettings(newSettings);
+              _applyFilters();
+            },
+            onResetFilters: () {
+              _searchController.clear();
+              _selectedCategories.clear();
+              setState(() {
+                _sort = 'htl';
+              });
+              ref
+                  .read(factorySettingsNotifierProvider.notifier)
+                  .saveFactorySettings(
+                    const FactorySettings(),
+                  );
+              _applyFilters();
+            },
           ),
-        ],
-      ),
+        Expanded(
+          child: _buildTasksList(tasksAsync),
+        ),
+      ],
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildTasksList(AsyncValue<List<WorkflowTask>> tasksAsync) {
+    final tasks = tasksAsync.valueOrNull;
+
+    if (tasksAsync.isLoading && tasks == null) {
+      return const Center(
+        child: CircularProgressIndicator(strokeWidth: 0.5),
+      );
+    }
+
+    if (tasksAsync.hasError && tasks == null) {
+      return Center(child: Text('Error: ${tasksAsync.error}'));
+    }
+
+    if (tasks == null || tasks.isEmpty) {
+      return const Center(child: Text('No tasks found.'));
+    }
+
+    final sortedTasks = _getSortedTasks(tasks);
+
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.all(16),
+      itemCount: sortedTasks.length,
+      itemBuilder: (context, index) {
+        final task = sortedTasks[index];
+        return TaskCard(
+          key: ValueKey(task.id),
+          task: task,
+          currencyMode: _currencyMode,
+        );
+      },
+    );
+  }
+
+  Widget _buildHeader(AsyncValue<List<WorkflowTask>> tasksAsync) {
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.all(8),
@@ -227,7 +266,7 @@ class _AvailableTasksState extends ConsumerState<AvailableTasks> {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Text(
-                  '${ref.watch(getTasksForFactoryProvider(filter: _filter)).asData?.value.length ?? 0} Available',
+                  '${tasksAsync.asData?.value.length ?? 0} Available',
                   style: theme.textTheme.bodySmall,
                 ),
               ),

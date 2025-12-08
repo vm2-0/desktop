@@ -27,6 +27,7 @@ class WorkflowTask with _$WorkflowTask {
     Decimal? rewardLimit,
     String? limitReason,
     @JsonKey(name: 'pool_id') String? poolId,
+    List<String>? objectives,
   }) = _WorkflowTask;
 
   factory WorkflowTask.fromJson(Map<String, dynamic> json) =>

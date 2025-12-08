@@ -24,6 +24,9 @@ _$WorkflowTaskImpl _$$WorkflowTaskImplFromJson(Map<String, dynamic> json) =>
       rewardLimit: DecimalJson.fromJson(json['rewardLimit']),
       limitReason: json['limitReason'] as String?,
       poolId: json['pool_id'] as String?,
+      objectives: (json['objectives'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
     );
 
 Map<String, dynamic> _$$WorkflowTaskImplToJson(_$WorkflowTaskImpl instance) =>
@@ -39,4 +42,5 @@ Map<String, dynamic> _$$WorkflowTaskImplToJson(_$WorkflowTaskImpl instance) =>
       'rewardLimit': DecimalJson.toJson(instance.rewardLimit),
       'limitReason': instance.limitReason,
       'pool_id': instance.poolId,
+      'objectives': instance.objectives,
     };

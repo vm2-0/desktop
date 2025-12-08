@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:clones_desktop/domain/app_info.dart';
 import 'package:clones_desktop/domain/models/demonstration/demonstration.dart';
@@ -246,25 +245,31 @@ class TauriApiClient {
     List<Map<String, double>> deletedRanges,
   ) async {
     // Validate deleted ranges before sending
-    for (int i = 0; i < deletedRanges.length; i++) {
+    for (var i = 0; i < deletedRanges.length; i++) {
       final range = deletedRanges[i];
       final start = range['start'];
       final end = range['end'];
-      
+
       if (start == null || end == null) {
-        throw Exception('Invalid deleted range at index $i: missing start or end');
+        throw Exception(
+          'Invalid deleted range at index $i: missing start or end',
+        );
       }
-      
+
       if (start < 0 || end <= start) {
-        throw Exception('Invalid deleted range at index $i: start=$start, end=$end');
+        throw Exception(
+          'Invalid deleted range at index $i: start=$start, end=$end',
+        );
       }
     }
 
     // Sort ranges by start time to ensure consistent processing
-    final sortedRanges = List<Map<String, double>>.from(deletedRanges);
-    sortedRanges.sort((a, b) => a['start']!.compareTo(b['start']!));
+    final sortedRanges = List<Map<String, double>>.from(deletedRanges)
+      ..sort((a, b) => a['start']!.compareTo(b['start']!));
 
-    debugPrint('[TauriApiClient] Sending ${sortedRanges.length} deleted ranges: $sortedRanges');
+    debugPrint(
+      '[TauriApiClient] Sending ${sortedRanges.length} deleted ranges: $sortedRanges',
+    );
 
     final response = await _client.post(
       Uri.parse('$_baseUrl/recordings/$recordingId/filtered-zip'),

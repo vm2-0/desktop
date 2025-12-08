@@ -2,6 +2,7 @@ import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/domain/models/submission/grade_result.dart';
 import 'package:clones_desktop/ui/components/card.dart';
+import 'package:clones_desktop/ui/components/design_widget/text/app_text.dart';
 import 'package:clones_desktop/ui/components/score_indicator.dart';
 import 'package:clones_desktop/ui/components/wallet_not_connected.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart'
@@ -232,8 +233,8 @@ class _DemoDetailSubmissionResultState
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: Text(
-                                  item['description'] ?? '',
+                                child: AppText(
+                                  text: item['description'] ?? '',
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     height: 1.4,
                                   ),
