@@ -1,4 +1,5 @@
 import 'package:clones_desktop/domain/models/api/request_options.dart';
+import 'package:clones_desktop/domain/models/submission/paginated_submissions.dart';
 import 'package:clones_desktop/domain/models/submission/pool_submission.dart';
 import 'package:clones_desktop/domain/models/submission/submission_status.dart';
 import 'package:clones_desktop/utils/api_client.dart';
@@ -37,6 +38,23 @@ class SubmissionsRepositoryImpl {
       return submissions.cast<SubmissionStatus>();
     } catch (e) {
       throw Exception('Failed to list submissions: $e');
+    }
+  }
+
+  Future<PaginatedSubmissions> listSubmissionsPaginated({
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    try {
+      final result = await _client.get<Map<String, dynamic>>(
+        '/forge/submissions/user?limit=$limit&offset=$offset',
+        options: const RequestOptions(requiresAuth: true),
+        fromJson: (json) => json as Map<String, dynamic>,
+      );
+
+      return PaginatedSubmissions.fromJson(result);
+    } catch (e) {
+      throw Exception('Failed to list submissions (paginated): $e');
     }
   }
 

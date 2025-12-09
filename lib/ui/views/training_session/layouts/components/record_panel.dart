@@ -10,6 +10,7 @@ import 'package:clones_desktop/ui/views/training_session/bloc/state.dart';
 import 'package:clones_desktop/utils/format_num.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -105,30 +106,44 @@ Once the recording is finished, you’ll be able to trim segments—for example,
               ],
             ),
           const SizedBox(height: 10),
-          Text(
-            'Your Objectives:',
-            style: theme.textTheme.titleSmall,
+          Row(
+            children: [
+              Text(
+                'Your Objectives:',
+                style: theme.textTheme.titleSmall,
+              ),
+              const SizedBox(width: 8),
+              _buildCopyButton(
+                theme,
+                trainingSession.recordingDemonstration!.objectives,
+              ),
+            ],
           ),
           const SizedBox(height: 8),
-          ...trainingSession.recordingDemonstration!.objectives.map(
-            (obj) => Padding(
-              padding: const EdgeInsets.only(left: 8, bottom: 10),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '• ',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  Expanded(
-                    child: AppText(
-                      text: obj,
-                      style: theme.textTheme.bodySmall,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: trainingSession.recordingDemonstration!.objectives
+                .map(
+                  (obj) => Padding(
+                    padding: const EdgeInsets.only(left: 8, bottom: 10),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '• ',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                        Expanded(
+                          child: AppText(
+                            text: obj,
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ),
+                )
+                .toList(),
           ),
           const SizedBox(height: 10),
           Text(
@@ -183,5 +198,57 @@ Once the recording is finished, you’ll be able to trim segments—for example,
         buttonText: 'Start Recording',
       );
     }
+  }
+
+  Widget _buildCopyButton(ThemeData theme, List<String> objectives) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () async {
+          final objectivesText = objectives.join('\n');
+          await Clipboard.setData(ClipboardData(text: objectivesText));
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content:
+                    Text('${objectives.length} objectives copied to clipboard'),
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: ClonesColors.secondary.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: ClonesColors.secondary.withValues(alpha: 0.3),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.copy,
+                size: 12,
+                color: ClonesColors.secondary,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Copy all',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: ClonesColors.secondary,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

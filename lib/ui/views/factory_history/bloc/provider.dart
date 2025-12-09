@@ -1,4 +1,5 @@
 import 'package:clones_desktop/application/recording.dart';
+import 'package:clones_desktop/application/submissions.dart';
 import 'package:clones_desktop/domain/models/recording/api_recording.dart';
 import 'package:clones_desktop/ui/views/factory_history/bloc/state.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -21,6 +22,12 @@ class FactoryHistoryNotifier extends _$FactoryHistoryNotifier {
       });
 
     return FactoryHistoryState(recordings: preparedRecordings);
+  }
+
+  Future<void> loadMoreSubmissions() async {
+    await ref.read(paginatedSubmissionsNotifierProvider.notifier).loadMore();
+    // After loading more, the mergedRecordingsProvider will automatically update
+    // since it watches paginatedSubmissionsNotifierProvider
   }
 
   void setSortOrder(FactoryHistorySortOrder sortOrder) {

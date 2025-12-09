@@ -68,3 +68,78 @@ Future<String> getDemoFileAsBase64(
     filename: filename,
   );
 }
+
+// Metadata for pagination
+class PaginationMetadata {
+  PaginationMetadata({
+    required this.total,
+    required this.hasMore,
+    required this.currentOffset,
+  });
+
+  final int total;
+  final bool hasMore;
+  final int currentOffset;
+}
+
+@riverpod
+class PaginatedSubmissionsNotifier extends _$PaginatedSubmissionsNotifier {
+  static const int pageSize = 20;
+
+  // Store pagination metadata separately
+  PaginationMetadata _metadata = PaginationMetadata(
+    total: 0,
+    hasMore: true,
+    currentOffset: 0,
+  );
+
+  PaginationMetadata get metadata => _metadata;
+
+  @override
+  Future<List<SubmissionStatus>> build() async {
+    final submissionsRepository = ref.watch(submissionsRepositoryProvider);
+    final result = await submissionsRepository.listSubmissionsPaginated();
+
+    _metadata = PaginationMetadata(
+      total: result.total,
+      hasMore: result.hasMore,
+      currentOffset: pageSize,
+    );
+
+    return result.submissions;
+  }
+
+  Future<void> loadMore() async {
+    if (!_metadata.hasMore) return;
+
+    final currentSubmissions = state.valueOrNull ?? [];
+    final submissionsRepository = ref.watch(submissionsRepositoryProvider);
+
+    final result = await submissionsRepository.listSubmissionsPaginated(
+      offset: _metadata.currentOffset,
+    );
+
+    _metadata = PaginationMetadata(
+      total: result.total,
+      hasMore: result.hasMore,
+      currentOffset: _metadata.currentOffset + pageSize,
+    );
+
+    state = AsyncValue.data([...currentSubmissions, ...result.submissions]);
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncValue.loading();
+
+    final submissionsRepository = ref.watch(submissionsRepositoryProvider);
+    final result = await submissionsRepository.listSubmissionsPaginated();
+
+    _metadata = PaginationMetadata(
+      total: result.total,
+      hasMore: result.hasMore,
+      currentOffset: pageSize,
+    );
+
+    state = AsyncValue.data(result.submissions);
+  }
+}

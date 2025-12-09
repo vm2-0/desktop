@@ -53,7 +53,8 @@ Future<void> deleteRecording(Ref ref, {required String recordingId}) async {
 // TODO(reddwarf03): To test
 @riverpod
 Future<List<ApiRecording>> mergedRecordings(Ref ref) async {
-  final submissions = await ref.watch(listSubmissionsProvider.future);
+  final submissions =
+      await ref.watch(paginatedSubmissionsNotifierProvider.future);
   final localRecordings = await ref.watch(listRecordingsProvider.future);
 
   final result = <ApiRecording>[];

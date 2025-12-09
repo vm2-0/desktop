@@ -635,5 +635,24 @@ class _GetDemoFileAsBase64ProviderElement
   @override
   String get filename => (origin as GetDemoFileAsBase64Provider).filename;
 }
+
+String _$paginatedSubmissionsNotifierHash() =>
+    r'9ea7869b33790047768f1204d2814bc0a5288223';
+
+/// See also [PaginatedSubmissionsNotifier].
+@ProviderFor(PaginatedSubmissionsNotifier)
+final paginatedSubmissionsNotifierProvider = AutoDisposeAsyncNotifierProvider<
+    PaginatedSubmissionsNotifier, List<SubmissionStatus>>.internal(
+  PaginatedSubmissionsNotifier.new,
+  name: r'paginatedSubmissionsNotifierProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$paginatedSubmissionsNotifierHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$PaginatedSubmissionsNotifier
+    = AutoDisposeAsyncNotifier<List<SubmissionStatus>>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

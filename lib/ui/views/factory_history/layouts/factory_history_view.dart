@@ -1,6 +1,8 @@
 import 'package:clones_desktop/application/recording.dart';
 import 'package:clones_desktop/application/session/provider.dart';
+import 'package:clones_desktop/application/submissions.dart';
 import 'package:clones_desktop/assets.dart';
+import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:clones_desktop/ui/components/design_widget/message_box/message_box.dart';
 import 'package:clones_desktop/ui/components/wallet_not_connected.dart';
 import 'package:clones_desktop/ui/views/factory_history/bloc/provider.dart';
@@ -55,8 +57,31 @@ class FactoryHistoryView extends ConsumerWidget {
   }
 
   Widget _buildFooter(BuildContext context, WidgetRef ref) {
-    return const Row(
+    final paginatedSubmissions =
+        ref.watch(paginatedSubmissionsNotifierProvider);
+    final hasMore = !paginatedSubmissions.isLoading &&
+        ref
+            .read(paginatedSubmissionsNotifierProvider.notifier)
+            .metadata
+            .hasMore;
+
+    if (!hasMore) {
+      return const SizedBox.shrink();
+    }
+
+    return Row(
       mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        BtnPrimary(
+          onTap: () async {
+            await ref
+                .read(paginatedSubmissionsNotifierProvider.notifier)
+                .loadMore();
+          },
+          buttonText: 'Load More',
+          btnPrimaryType: BtnPrimaryType.outlinePrimary,
+        ),
+      ],
     );
   }
 
