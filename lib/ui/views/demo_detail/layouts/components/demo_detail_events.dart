@@ -31,7 +31,6 @@ class DemoDetailEvents extends ConsumerWidget {
     final eventTypes = demoDetail.eventTypes;
     final enabledEventTypes = demoDetail.enabledEventTypes;
     final videoSeekCallback = ref.watch(videoSeekCallbackProvider);
-    final startTime = demoDetail.startTime;
 
     // Build a map from filtered events to their original indices for deleted zone lookup
     final filteredEventIndices = <int>[];

@@ -101,6 +101,7 @@ class VideoStateNotifier extends StateNotifier<VideoState> {
     state = state.copyWith(
       status: VideoPlayerStatus.ready,
       totalDuration: totalDuration,
+      currentPosition: Duration.zero,
     );
   }
 

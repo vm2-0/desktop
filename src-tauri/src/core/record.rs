@@ -1123,14 +1123,16 @@ pub async fn get_recording_file(
     }
 
     let mut file = File::open(&file_path).map_err(|e| format!("Failed to open file: {}", e))?;
-    if as_base64 == Some(true) {
+
+    let result = if as_base64 == Some(true) {
         let mut reader = BufReader::new(file);
         let mut buffer = Vec::new();
         reader
             .read_to_end(&mut buffer)
             .map_err(|e| format!("Failed to read file: {}", e))?;
 
-        Ok(format!("data:video/mp4;base64,{}", BASE64.encode(&buffer)))
+        let encoded = format!("data:video/mp4;base64,{}", BASE64.encode(&buffer));
+        Ok(encoded)
     } else if as_path == Some(true) {
         Ok(file_path.to_str().ok_or("Invalid path")?.to_string())
     } else {
@@ -1139,7 +1141,9 @@ pub async fn get_recording_file(
             .map_err(|e| format!("Failed to read file: {}", e))?;
 
         Ok(contents)
-    }
+    };
+
+    result
 }
 
 pub async fn process_recording(

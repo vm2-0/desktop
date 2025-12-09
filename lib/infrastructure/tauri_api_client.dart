@@ -59,6 +59,20 @@ class TauriApiClient {
     }
   }
 
+  /// Get streaming URL for a recording's video file
+  /// Returns the HTTP URL that can be used for video streaming with Range request support
+  Future<String> getRecordingVideoUrl({required String recordingId}) async {
+    final response = await _client.get(
+      Uri.parse('$_baseUrl/recordings/$recordingId/video_url'),
+    );
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = json.decode(response.body);
+      return data['url'] as String;
+    } else {
+      throw Exception('Failed to get recording video URL: ${response.body}');
+    }
+  }
+
   Future<void> startRecording({Demonstration? demonstration}) async {
     final response = await _client.post(
       Uri.parse('$_baseUrl/recordings/start'),

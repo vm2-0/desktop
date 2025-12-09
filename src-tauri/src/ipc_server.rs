@@ -33,6 +33,7 @@ use crate::utils::heartbeat::{
 
 // Import business logic from the local `core` module
 use crate::core::record::{self, Demonstration};
+use crate::core::video_server;
 // Import functions from `commands/general`
 use crate::commands::general::{list_apps, open_logs_folder, take_screenshot};
 // Import function from `commands/settings`
@@ -558,14 +559,27 @@ async fn write_recording_file_handler(
     }
 }
 
-// Handler to get a recording video URL
+// Handler to get a recording video URL for streaming
 async fn get_recording_video_url_handler(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> impl IntoResponse {
-    // BASIC VERSION THAT WORKS - NO FANCY SHIT
-    let url = format!("http://127.0.0.1:8080/{}/recording.mp4", id);
-    (StatusCode::OK, Json(serde_json::json!({ "url": url })))
+    log::info!("[IPC] Getting video URL for recording: {}", id);
+
+    match video_server::get_video_url(state.app_handle.clone(), &id).await {
+        Ok(url) => {
+            log::info!("[IPC] Video URL generated successfully: {}", url);
+            (StatusCode::OK, Json(serde_json::json!({ "url": url }))).into_response()
+        }
+        Err(e) => {
+            log::error!("[IPC] Failed to get video URL: {}", e);
+            (
+                StatusCode::NOT_FOUND,
+                Json(serde_json::json!({ "error": e })),
+            )
+                .into_response()
+        }
+    }
 }
 
 // Handler to get a recording file (simplified)

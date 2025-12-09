@@ -27,7 +27,16 @@ class _DemoDetailVideoPreviewState
     extends ConsumerState<DemoDetailVideoPreview> {
   @override
   Widget build(BuildContext context) {
-    final demoDetail = ref.watch(demoDetailNotifierProvider);
+    // Select only specific fields to prevent unnecessary rebuilds
+    final videoState = ref.watch(
+      demoDetailNotifierProvider.select(
+        (s) => (
+          isLoading: s.isLoading,
+          showAxTreeOverlay: s.showAxTreeOverlay,
+          recordingLocation: s.recording?.location,
+        ),
+      ),
+    );
 
     final theme = Theme.of(context);
 
@@ -50,7 +59,7 @@ class _DemoDetailVideoPreviewState
                     IconButton(
                       icon: Icon(
                         Icons.account_tree,
-                        color: demoDetail.showAxTreeOverlay
+                        color: videoState.showAxTreeOverlay
                             ? ClonesColors.tertiary
                             : ClonesColors.tertiary.withValues(alpha: 0.5),
                       ),
@@ -59,7 +68,7 @@ class _DemoDetailVideoPreviewState
                             .read(demoDetailNotifierProvider.notifier)
                             .toggleAxTreeOverlay();
                       },
-                      tooltip: demoDetail.showAxTreeOverlay
+                      tooltip: videoState.showAxTreeOverlay
                           ? 'Hide AxTree overlay'
                           : 'Show AxTree overlay',
                     ),
@@ -77,7 +86,7 @@ class _DemoDetailVideoPreviewState
             ],
           ),
           const SizedBox(height: 10),
-          if (demoDetail.isLoading)
+          if (videoState.isLoading)
             Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -110,7 +119,7 @@ class _DemoDetailVideoPreviewState
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            demoDetail.recording?.location == 'cloud'
+                            videoState.recordingLocation == 'cloud'
                                 ? Icons.cloud_outlined
                                 : Icons.videocam_off,
                             size: 48,
@@ -118,7 +127,7 @@ class _DemoDetailVideoPreviewState
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            demoDetail.recording?.location == 'cloud'
+                            videoState.recordingLocation == 'cloud'
                                 ? 'No video available for this cloud recording'
                                 : 'No video found',
                             style: theme.textTheme.bodyMedium?.copyWith(
@@ -141,8 +150,6 @@ class _DemoDetailVideoPreviewState
   bool _hasAxTreeEvents() {
     // TODO(reddwarf03): Hardcoded for now, we need to improve this
     return false;
-    final state = ref.read(demoDetailNotifierProvider);
-    return state.events.any((e) => e.event.contains('axtree'));
   }
 
   Widget _buildVideoContainer() {
@@ -165,12 +172,16 @@ class _DemoDetailVideoPreviewState
       return const SizedBox.shrink();
     }
 
-    final state = ref.watch(demoDetailNotifierProvider);
+    final showAxTreeOverlay = ref.watch(
+      demoDetailNotifierProvider.select((s) => s.showAxTreeOverlay),
+    );
 
     // If AxTree overlay is disabled or no AxTree events, just return the original video
-    if (!state.showAxTreeOverlay || !_hasAxTreeEvents()) {
+    if (!showAxTreeOverlay || !_hasAxTreeEvents()) {
       return widget.videoWidget!;
     }
+
+    // ... rest of the method
 
     // Find current AxTree event based on video position
     final currentAxTreeEvent = _getCurrentAxTreeEvent();

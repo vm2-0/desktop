@@ -19,11 +19,62 @@ import 'package:clones_desktop/ui/views/demo_detail/bloc/state.dart';
 import 'package:clones_desktop/utils/decimal_json.dart';
 import 'package:clones_desktop/utils/env.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'provider.g.dart';
+
+/// Result class for parsing events in isolate
+class _ParsedEventsResult {
+  _ParsedEventsResult({
+    required this.events,
+    required this.eventTypes,
+    required this.enabledEventTypes,
+    required this.startTime,
+  });
+  final List<RecordingEvent> events;
+  final Set<String> eventTypes;
+  final Set<String> enabledEventTypes;
+  final int startTime;
+}
+
+/// Parse events from JSONL string - runs in isolate
+_ParsedEventsResult _parseEventsInIsolate(String eventsJsonl) {
+  final events = eventsJsonl
+      .split('\n')
+      .where((line) => line.trim().isNotEmpty)
+      .map((line) {
+        try {
+          return RecordingEvent.fromJson(jsonDecode(line));
+        } catch (e) {
+          return null;
+        }
+      })
+      .where((item) => item != null)
+      .cast<RecordingEvent>()
+      .toList()
+
+    // Sort events by time
+    ..sort((a, b) => a.time.compareTo(b.time));
+
+  final eventTypes = events.map((e) => e.event).toSet();
+  const recordingStartTime =
+      0; // Use 0 since timestamps in input_logs.jsonl are already relative to recording start
+
+  // Disable axtree and ffmpeg_stderr by default
+  final filteredEventTypes = eventTypes
+      .where((type) => type != 'axtree' && type != 'ffmpeg_stderr')
+      .toSet();
+
+  return _ParsedEventsResult(
+    events: events,
+    eventTypes: eventTypes,
+    enabledEventTypes: filteredEventTypes,
+    startTime: recordingStartTime,
+  );
+}
 
 /// Provider to store the video seek callback
 final videoSeekCallbackProvider =
@@ -83,10 +134,12 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
         userAccessType: 'owner',
       );
 
-      // Now load other data separately to avoid one failure stopping others
-      await loadEvents(recordingId);
-      await loadSftData(recordingId);
-      await initializeVideoPlayer(recordingId);
+      // Load data in parallel for faster loading
+      await Future.wait([
+        loadEvents(recordingId),
+        loadSftData(recordingId),
+        initializeVideoPlayer(recordingId),
+      ]);
 
       state = state.copyWith(isLoading: false);
     } catch (_) {}
@@ -160,10 +213,12 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
           userAccessType: 'factory_creator',
         );
 
-        // Load other data
-        await loadEvents(submissionId);
-        await loadSftData(submissionId);
-        await initializeVideoPlayer(submissionId);
+        // Load data in parallel for faster loading
+        await Future.wait([
+          loadEvents(submissionId),
+          loadSftData(submissionId),
+          initializeVideoPlayer(submissionId),
+        ]);
       } else {
         // If not found, try with the regular loadRecording method
         await loadRecording(submissionId);
@@ -205,13 +260,11 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
 
   Future<void> _initializeVideoFromLocal(String recordingId) async {
     try {
-      final videoData = await ref.read(tauriApiClientProvider).getRecordingFile(
-            recordingId: recordingId,
-            filename: 'recording.mp4',
-            asBase64: true,
-          );
+      final streamingUrl = await ref
+          .read(tauriApiClientProvider)
+          .getRecordingVideoUrl(recordingId: recordingId);
 
-      await _createVideoSource(videoData);
+      await _createVideoSourceFromUrl(streamingUrl);
     } catch (e) {
       debugPrint('Error loading local video: $e');
       // This is expected for recordings without video files
@@ -223,23 +276,30 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     if (submissionId == null) return;
 
     try {
-      final videoData = await ref.read(
-        getDemoFileAsBase64Provider(
-          submissionId: submissionId,
-          filename: 'recording.mp4',
-        ).future,
+      // Get connect-token from session
+      final token = ref.read(
+        sessionNotifierProvider.select((s) => s.connectionToken),
       );
 
-      await _createVideoSource(videoData);
+      if (token == null || token.isEmpty) {
+        debugPrint('Error loading cloud video: No connect token available');
+        return;
+      }
+
+      // Build URL with token query parameter (for media players without auth headers)
+      final fullUrl =
+          '${Env.apiBackendUrl}/api/v1/forge/demo-files/$submissionId/recording.mp4?token=$token';
+
+      await _createVideoSourceFromUrl(fullUrl);
     } catch (e) {
       debugPrint('Error loading cloud video: $e');
       // Video might not exist or not accessible
     }
   }
 
-  Future<void> _createVideoSource(String videoData) async {
-    // Create VideoSource for your custom video player system
-    final videoSource = Base64VideoSource(videoData);
+  Future<void> _createVideoSourceFromUrl(String url) async {
+    // Create HttpVideoSource for streaming
+    final videoSource = HttpVideoSource(url);
 
     // Force a complete refresh by setting videoSource to null first
     state = state.copyWith(
@@ -331,37 +391,14 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
   }
 
   Future<void> _parseEventsData(String eventsJsonl) async {
-    final events = eventsJsonl
-        .split('\n')
-        .where((line) => line.trim().isNotEmpty)
-        .map((line) {
-          try {
-            return RecordingEvent.fromJson(jsonDecode(line));
-          } catch (e) {
-            return null;
-          }
-        })
-        .where((item) => item != null)
-        .cast<RecordingEvent>()
-        .toList()
-
-      // Sort events by time
-      ..sort((a, b) => a.time.compareTo(b.time));
-
-    final eventTypes = events.map((e) => e.event).toSet();
-    const startTime =
-        0; // Use 0 since timestamps in input_logs.jsonl are already relative to recording start
-
-    // Disable axtree and ffmpeg_stderr by default
-    final filteredEventTypes = eventTypes
-        .where((type) => type != 'axtree' && type != 'ffmpeg_stderr')
-        .toSet();
+    // Parse events in a separate isolate to avoid blocking the UI thread
+    final result = await compute(_parseEventsInIsolate, eventsJsonl);
 
     state = state.copyWith(
-      events: events,
-      eventTypes: eventTypes,
-      enabledEventTypes: filteredEventTypes,
-      startTime: startTime,
+      events: result.events,
+      eventTypes: result.eventTypes,
+      enabledEventTypes: result.enabledEventTypes,
+      startTime: result.startTime,
     );
   }
 
@@ -716,7 +753,6 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
   static const String fullThirdMessage =
       'Your demo is now being uploaded and reviewed by the Clones Quality Agent. This may take a little while...';
 
-  static const Duration typingInterval = Duration(milliseconds: 30);
   static const Duration messageDelay = Duration(milliseconds: 500);
 
   void startPreUploadAnimation() {
@@ -724,121 +760,24 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
 
     state = state.copyWith(
       showFirstMessage: true,
-      currentMessageIndex: 0,
-      currentTypingIndex: 0,
-      firstMessage: '',
-      secondMessage: '',
-      thirdMessage: '',
     );
-    _startTypingTimer();
   }
 
-  void _startTypingTimer() {
-    if (_typingTimer?.isActive == true) return;
+  void onFirstMessageAnimationComplete() {
+    if (state.showSecondMessage) return;
 
-    _typingTimer = Timer.periodic(typingInterval, (timer) {
-      updateTypingAnimation();
-
-      // Check if current message is complete
-      final isComplete = _isCurrentMessageComplete();
-
-      if (isComplete) {
-        timer.cancel();
-
-        if (state.currentMessageIndex == 0) {
-          // Start second message after delay
-          Timer(messageDelay, _startTypingTimer);
-        }
+    // Start second message after delay
+    Future.delayed(messageDelay, () {
+      if (!state.showSecondMessage) {
+        state = state.copyWith(showSecondMessage: true);
       }
     });
   }
 
-  bool _isCurrentMessageComplete() {
-    final messageIndex = state.currentMessageIndex;
-    final currentIndex = state.currentTypingIndex;
-
-    String fullMessage;
-    switch (messageIndex) {
-      case 0:
-        fullMessage = fullFirstMessage;
-        break;
-      case 1:
-        fullMessage = fullSecondMessage;
-        break;
-      case 2:
-        fullMessage = fullThirdMessage;
-        break;
-      default:
-        return true;
-    }
-
-    return currentIndex >= fullMessage.length;
-  }
-
-  void updateTypingAnimation() {
-    final currentIndex = state.currentTypingIndex;
-    final messageIndex = state.currentMessageIndex;
-
-    String fullMessage;
-    switch (messageIndex) {
-      case 0:
-        fullMessage = fullFirstMessage;
-        break;
-      case 1:
-        fullMessage = fullSecondMessage;
-        break;
-      case 2:
-        fullMessage = fullThirdMessage;
-        break;
-      default:
-        return;
-    }
-
-    if (currentIndex < fullMessage.length) {
-      final currentText = fullMessage.substring(0, currentIndex + 1);
-
-      switch (messageIndex) {
-        case 0:
-          state = state.copyWith(
-            firstMessage: currentText,
-            currentTypingIndex: currentIndex + 1,
-          );
-          break;
-        case 1:
-          state = state.copyWith(
-            secondMessage: currentText,
-            currentTypingIndex: currentIndex + 1,
-          );
-          break;
-        case 2:
-          state = state.copyWith(
-            thirdMessage: currentText,
-            currentTypingIndex: currentIndex + 1,
-          );
-          break;
-      }
-    } else {
-      // Current message complete
-      if (messageIndex == 0) {
-        // Start second message after delay
-        state = state.copyWith(
-          showSecondMessage: true,
-          currentMessageIndex: 1,
-          currentTypingIndex: 0,
-        );
-      }
-    }
-  }
-
   void startThirdMessageAnimation() {
-    _typingTimer?.cancel();
     state = state.copyWith(
       showThirdMessage: true,
-      currentMessageIndex: 2,
-      currentTypingIndex: 0,
-      thirdMessage: '',
     );
-    _startTypingTimer();
   }
 
   Future<void> uploadRecording() async {
@@ -866,18 +805,20 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
           // Invalidate recording providers to force refresh of cached data
           ref
             ..invalidate(listRecordingsProvider)
+            ..invalidate(listSubmissionsProvider)
             ..invalidate(mergedRecordingsProvider);
 
           // Delete the recording from the local filesystem
           await ref
               .read(deleteRecordingProvider(recordingId: recordingId).future);
 
-          // Wait a bit to ensure file deletion is complete
-          await Future.delayed(const Duration(milliseconds: 500));
+          // Wait a bit to ensure file deletion is complete and backend processing
+          await Future.delayed(const Duration(milliseconds: 1000));
 
-          // Force invalidation again after deletion to ensure fresh data
+          // Force invalidation again after deletion to ensure fresh data from backend
           ref
             ..invalidate(listRecordingsProvider)
+            ..invalidate(listSubmissionsProvider)
             ..invalidate(mergedRecordingsProvider);
 
           // Reload recording to get updated submission data (this also calls initializeVideoPlayer)
