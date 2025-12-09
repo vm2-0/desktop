@@ -104,7 +104,6 @@ class _VideoPlayerState extends ConsumerVideoPlayerState<VideoPlayer>
     // Watch for current position changes to update AxTree overlay
     final videoState = ref.watch(videoStateNotifierProvider(_videoId));
 
-    // Only watch necessary fields to avoid rebuilding with full 37k events
     final showAxTreeOverlay = ref.watch(
       demoDetailNotifierProvider.select((s) => s.showAxTreeOverlay),
     );

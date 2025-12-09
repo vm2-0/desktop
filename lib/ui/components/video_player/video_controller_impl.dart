@@ -62,8 +62,6 @@ class VideoControllerImpl with VideoControllerMixin {
               ? Uri.parse(filePath)
               : Uri.file(filePath);
 
-      debugPrint('VideoController: Opening media from: $mediaUri');
-
       await withInitializationTimeout(
         _player!.open(
           Media(mediaUri.toString()),
@@ -144,9 +142,6 @@ class VideoControllerImpl with VideoControllerMixin {
           .read(videoStateNotifierProvider(_videoId).notifier)
           .setError('Failed to initialize video: $e');
 
-      if (kDebugMode) {
-        print('Video initialization failed: $e');
-      }
       rethrow;
     }
   }
@@ -314,11 +309,7 @@ class VideoControllerImpl with VideoControllerMixin {
         if (tempFile.existsSync()) {
           tempFile.deleteSync();
         }
-      } catch (e) {
-        if (kDebugMode) {
-          print('Failed to delete temp video file: $e');
-        }
-      }
+      } catch (_) {}
       _tempFilePath = null;
     }
   }
