@@ -59,27 +59,13 @@ mixin VideoControllerMixin {
           ? e.message
           : 'Unexpected error during $operationName: $e';
 
-      if (kDebugMode) {
-        print('VideoController Error [$operationName]: $message');
-        if (e is VideoControllerException && e.originalException != null) {
-          print('Original exception: ${e.originalException}');
-        }
-      }
-
       // Only set error if videoId is provided (new scoped approach)
       if (videoId != null) {
         try {
           ref
               .read(videoStateNotifierProvider(videoId).notifier)
               .setError(message);
-        } catch (refError) {
-          // Widget was disposed, ignore the error state update
-          if (kDebugMode) {
-            print(
-              'VideoController: Could not set error state (widget disposed)',
-            );
-          }
-        }
+        } catch (_) {}
       }
     }
   }

@@ -181,8 +181,6 @@ class _DemoDetailVideoPreviewState
       return widget.videoWidget!;
     }
 
-    // ... rest of the method
-
     // Find current AxTree event based on video position
     final currentAxTreeEvent = _getCurrentAxTreeEvent();
 
