@@ -26,6 +26,7 @@ class _VideoPlayerState extends ConsumerVideoPlayerState<VideoPlayer>
     with VideoControllerMixin {
   late VideoControllerImpl _controller;
   late String _videoId;
+  bool _shouldRenderVideo = false;
 
   @override
   String get videoId => _videoId;
@@ -37,7 +38,7 @@ class _VideoPlayerState extends ConsumerVideoPlayerState<VideoPlayer>
     _videoId =
         '${widget.source.hashCode}-${DateTime.now().microsecondsSinceEpoch}';
     _controller = VideoControllerImpl(widget.source, ref, _videoId);
-    
+
     // Register the seek callback for external access
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Make the videoSeek method available to other widgets
@@ -47,6 +48,16 @@ class _VideoPlayerState extends ConsumerVideoPlayerState<VideoPlayer>
         // Provider might not be available in all contexts
       }
       _initializeVideo();
+    });
+
+    // CRITICAL: Delay video widget creation to avoid blocking UI
+    // The Video widget creation is synchronous and blocks the main thread
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() {
+          _shouldRenderVideo = true;
+        });
+      }
     });
   }
 
@@ -92,7 +103,17 @@ class _VideoPlayerState extends ConsumerVideoPlayerState<VideoPlayer>
 
     // Watch for current position changes to update AxTree overlay
     final videoState = ref.watch(videoStateNotifierProvider(_videoId));
-    final demoDetail = ref.watch(demoDetailNotifierProvider);
+
+    // Only watch necessary fields to avoid rebuilding with full 37k events
+    final showAxTreeOverlay = ref.watch(
+      demoDetailNotifierProvider.select((s) => s.showAxTreeOverlay),
+    );
+    final currentAxTreeEvent = ref.watch(
+      demoDetailNotifierProvider.select((s) => s.currentAxTreeEvent),
+    );
+    final recording = ref.watch(
+      demoDetailNotifierProvider.select((s) => s.recording),
+    );
 
     // Update AxTree for current position
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -113,30 +134,48 @@ class _VideoPlayerState extends ConsumerVideoPlayerState<VideoPlayer>
         color: Colors.black,
         child: Stack(
           children: [
-            // Media Kit Video player - will take full container size
-            Positioned.fill(
-              child: Video(
-                controller: videoController,
-                controls: NoVideoControls,
+            // Only render Video widget after delay to avoid blocking UI
+            if (_shouldRenderVideo)
+              Positioned.fill(
+                child: Video(
+                  controller: videoController,
+                  controls: NoVideoControls,
+                ),
+              )
+            else
+              // Show loading state while waiting for render delay
+              const Positioned.fill(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        'Preparing video player...',
+                        style: TextStyle(color: Colors.white70, fontSize: 14),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
 
             // AxTree overlay
-            if (demoDetail.showAxTreeOverlay &&
-                demoDetail.currentAxTreeEvent != null)
+            if (showAxTreeOverlay && currentAxTreeEvent != null)
               Positioned.fill(
                 child: IgnorePointer(
                   child: AxTreeOverlay(
-                    axTreeEvent: demoDetail.currentAxTreeEvent!,
+                    axTreeEvent: currentAxTreeEvent,
                     videoSize: Size(
                       videoController.rect.value?.width ?? 1920,
                       videoController.rect.value?.height ?? 1080,
                     ),
                     recordingResolution: Size(
-                      demoDetail.recording?.primaryMonitor.width.toDouble() ??
-                          1920,
-                      demoDetail.recording?.primaryMonitor.height.toDouble() ??
-                          1080,
+                      recording?.primaryMonitor.width.toDouble() ?? 1920,
+                      recording?.primaryMonitor.height.toDouble() ?? 1080,
                     ),
                   ),
                 ),

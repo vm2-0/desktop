@@ -62,3 +62,18 @@ class Base64VideoSource extends VideoSource {
   @override
   int get hashCode => dataUri.hashCode;
 }
+
+@immutable
+class HttpVideoSource extends VideoSource {
+  const HttpVideoSource(this.url);
+  final String url;
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is HttpVideoSource && other.url == url;
+  }
+
+  @override
+  int get hashCode => url.hashCode;
+}

@@ -188,8 +188,8 @@ pub async fn create_recording_zip(app: AppHandle, recording_id: String) -> Resul
 /// # Returns
 /// * `Ok(String)` with the video URL, or `Err(String)` if failed.
 #[tauri::command]
-pub fn get_video_url(app: AppHandle, recording_id: String) -> Result<String, String> {
-    video_server::get_video_url(app, &recording_id)
+pub async fn get_video_url(app: AppHandle, recording_id: String) -> Result<String, String> {
+    video_server::get_video_url(app, &recording_id).await
 }
 
 /// Gets the application data directory path.

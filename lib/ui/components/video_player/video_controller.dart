@@ -68,9 +68,18 @@ mixin VideoControllerMixin {
 
       // Only set error if videoId is provided (new scoped approach)
       if (videoId != null) {
-        ref
-            .read(videoStateNotifierProvider(videoId).notifier)
-            .setError(message);
+        try {
+          ref
+              .read(videoStateNotifierProvider(videoId).notifier)
+              .setError(message);
+        } catch (refError) {
+          // Widget was disposed, ignore the error state update
+          if (kDebugMode) {
+            print(
+              'VideoController: Could not set error state (widget disposed)',
+            );
+          }
+        }
       }
     }
   }

@@ -33,6 +33,8 @@ class VideoControllerImpl with VideoControllerMixin {
   Timer? _postSeekCoalesceTimer;
   Duration? _postSeekLatestPosition;
   bool _coalescingSeek = false;
+  // Track if video has ever been played to prevent initial position jump
+  bool _hasStartedPlaying = false;
 
   /// Returns the media_kit video controller for the widget
   VideoController? get videoController => _videoController;
@@ -54,9 +56,17 @@ class VideoControllerImpl with VideoControllerMixin {
         );
       });
 
+      // Determine if filePath is an HTTP URL or local file path
+      final mediaUri =
+          filePath.startsWith('http://') || filePath.startsWith('https://')
+              ? Uri.parse(filePath)
+              : Uri.file(filePath);
+
+      debugPrint('VideoController: Opening media from: $mediaUri');
+
       await withInitializationTimeout(
         _player!.open(
-          Media(Uri.file(filePath).toString()),
+          Media(mediaUri.toString()),
           play: false, // Disable autoplay
         ),
         'initialize media_kit player',
@@ -75,6 +85,12 @@ class VideoControllerImpl with VideoControllerMixin {
       // Setup position listener with coalescing (post-seek) & debouncing to prevent rapid UI updates
       _positionSubscription = _player!.stream.position.listen((position) {
         if (!_isDisposed) {
+          // Force position to 0 until video has started playing (prevents initial jump to first keyframe)
+          if (!_hasStartedPlaying) {
+            _updatePositionAndCheck(Duration.zero);
+            return;
+          }
+
           // During the post-seek coalescing window, accumulate the latest position and return.
           if (_coalescingSeek) {
             _postSeekLatestPosition = position;
@@ -143,6 +159,7 @@ class VideoControllerImpl with VideoControllerMixin {
         // For assets, we need to get the full path
         // This might need adjustment based on how assets are bundled
         path,
+      HttpVideoSource(url: final url) => url, // Direct HTTP streaming
       Base64VideoSource() => await _createTempFileFromBase64(),
     };
   }
@@ -164,6 +181,7 @@ class VideoControllerImpl with VideoControllerMixin {
     if (_player == null) {
       throw VideoControllerException('Cannot play: player not initialized');
     }
+    _hasStartedPlaying = true;
     await withOperationTimeout(
       _player!.play(),
       'play video',
@@ -184,6 +202,7 @@ class VideoControllerImpl with VideoControllerMixin {
     if (_player == null) {
       throw VideoControllerException('Cannot stop: player not initialized');
     }
+    _hasStartedPlaying = false; // Reset flag to lock playhead at 0
     await withOperationTimeout(
       Future.wait([
         _player!.pause(),
@@ -197,6 +216,10 @@ class VideoControllerImpl with VideoControllerMixin {
   Future<void> seekTo(Duration position) async {
     if (_player == null) {
       throw VideoControllerException('Cannot seek: player not initialized');
+    }
+    // If user seeks to non-zero position, allow playhead to move
+    if (position > Duration.zero) {
+      _hasStartedPlaying = true;
     }
     // Begin coalescing position events to avoid showing the unsynchronized position
     _coalescingSeek = true;
@@ -238,7 +261,8 @@ class VideoControllerImpl with VideoControllerMixin {
     _lastReportedPosition = position;
 
     // Check if we're in a deleted zone and skip if needed
-    if (_player!.state.playing) {
+    // Only check if we have started playing to avoid initial seek loops or jumps
+    if (_player!.state.playing && _hasStartedPlaying) {
       _checkAndSkipDeletedZones(position);
     }
   }

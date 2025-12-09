@@ -179,7 +179,7 @@ class _GenerateWorkflowsProviderElement
 }
 
 String _$getTasksForFactoryHash() =>
-    r'3b62e59712ddbbbfa95b4bb5df3c7c2bbfcf2182';
+    r'5b9e13c597a6fbe16d3a2453a9fef84cf889cb70';
 
 /// See also [getTasksForFactory].
 @ProviderFor(getTasksForFactory)

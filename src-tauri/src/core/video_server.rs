@@ -59,7 +59,7 @@ fn verify_recording_exists(app_handle: &AppHandle, recording_id: &str) -> Result
     Ok(video_file)
 }
 
-fn start_server(app_handle: AppHandle) -> Result<SocketAddr> {
+async fn start_server(app_handle: AppHandle) -> Result<SocketAddr> {
     // 1. Get recordings dir path safely using the app_handle with environment suffix
     let recordings_dir = get_custom_app_local_data_dir(&app_handle)
         .map_err(|e| anyhow::anyhow!("Failed to get custom app data dir: {}", e))?
@@ -76,15 +76,14 @@ fn start_server(app_handle: AppHandle) -> Result<SocketAddr> {
     // 3. Setup router
     let app = Router::new().nest_service("/", service);
 
-    // 4. Find an available port, bind it with std::net, then convert to tokio::net
+    // 4. Bind to any available port using tokio directly
     let addr = SocketAddr::from(([127, 0, 0, 1], 0));
-    let std_listener =
-        std::net::TcpListener::bind(addr).context("Failed to bind to a free port")?;
-    let local_addr = std_listener
+    let tokio_listener = tokio::net::TcpListener::bind(addr)
+        .await
+        .context("Failed to bind to a free port")?;
+    let local_addr = tokio_listener
         .local_addr()
         .context("Failed to get local address")?;
-    let tokio_listener = tokio::net::TcpListener::from_std(std_listener)
-        .context("Failed to convert listener to tokio type")?;
 
     // 5. Spawn the server in a Tokio thread
     tokio::spawn(async move {
@@ -97,14 +96,16 @@ fn start_server(app_handle: AppHandle) -> Result<SocketAddr> {
     Ok(local_addr)
 }
 
-fn ensure_server_is_running(app_handle: AppHandle) -> Result<&'static SocketAddr, String> {
+async fn ensure_server_is_running(
+    app_handle: AppHandle,
+) -> Result<&'static SocketAddr, String> {
     // Try to get existing address first
     if let Some(addr) = SERVER_ADDR.get() {
         return Ok(addr);
     }
 
     // If not set, start server and set address
-    match start_server(app_handle) {
+    match start_server(app_handle).await {
         Ok(addr) => {
             // Try to set the address, but if another thread beat us, use theirs
             match SERVER_ADDR.set(addr) {
@@ -121,7 +122,7 @@ fn ensure_server_is_running(app_handle: AppHandle) -> Result<&'static SocketAddr
 
 /// Builds the full URL to access a specific recording's video.
 /// Returns an error if the recording doesn't exist or if security validation fails.
-pub fn get_video_url(app_handle: AppHandle, recording_id: &str) -> Result<String, String> {
+pub async fn get_video_url(app_handle: AppHandle, recording_id: &str) -> Result<String, String> {
     // Step 1: Validate recording ID for security
     validate_recording_id(recording_id)?;
 
@@ -129,7 +130,7 @@ pub fn get_video_url(app_handle: AppHandle, recording_id: &str) -> Result<String
     verify_recording_exists(&app_handle, recording_id)?;
 
     // Step 3: Ensure server is running
-    let addr = ensure_server_is_running(app_handle)?;
+    let addr = ensure_server_is_running(app_handle).await?;
 
     // Step 4: Build URL (no need for encoding since validation ensures safe chars)
     Ok(format!("http://{}/{}/recording.mp4", addr, recording_id))

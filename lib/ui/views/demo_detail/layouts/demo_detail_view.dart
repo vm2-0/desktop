@@ -43,6 +43,7 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
   String? _currentVideoId;
   VideoSource? _lastVideoSource;
   late AnimationController _animationController;
+  bool _hasViewedEventsTab = false; // Track if Events tab has ever been viewed
 
   @override
   void initState() {
@@ -114,8 +115,9 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
   }
 
   Widget _buildVideoPreview({bool showExpandButton = true}) {
-    final demoDetail = ref.watch(demoDetailNotifierProvider);
-    final videoSource = demoDetail.videoSource;
+    final videoSource = ref.watch(
+      demoDetailNotifierProvider.select((s) => s.videoSource),
+    );
 
     if (videoSource == null) {
       return DemoDetailVideoPreview(
@@ -192,19 +194,21 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
       return const WalletNotConnected();
     }
 
-    final demoDetail = ref.watch(demoDetailNotifierProvider);
+    final recording = ref.watch(
+      demoDetailNotifierProvider.select((s) => s.recording),
+    );
 
-    if (demoDetail.recording == null && widget.recordingId != null) {
+    if (recording == null && widget.recordingId != null) {
       return const Center(child: Text('Recording not found'));
     }
 
-    final submission =
-        ref.watch(demoDetailNotifierProvider).recording?.submission;
-    final demoDetailState = ref.watch(demoDetailNotifierProvider);
-
-    final showTrainingSessionModal = demoDetailState.showTrainingSessionModal;
-    final recording = demoDetailState.recording;
-    final userAccessType = demoDetailState.userAccessType;
+    final submission = recording?.submission;
+    final showTrainingSessionModal = ref.watch(
+      demoDetailNotifierProvider.select((s) => s.showTrainingSessionModal),
+    );
+    final userAccessType = ref.watch(
+      demoDetailNotifierProvider.select((s) => s.userAccessType),
+    );
     final isFactoryCreator = userAccessType == 'factory_creator';
 
     return LayoutBuilder(
@@ -252,7 +256,10 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
                 );
               },
             ),
-            if (ref.watch(demoDetailNotifierProvider).showTrainingSessionModal)
+            if (ref.watch(
+              demoDetailNotifierProvider
+                  .select((s) => s.showTrainingSessionModal),
+            ))
               _buildTrainingSessionModal(),
           ],
         );
@@ -465,26 +472,45 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
     return CardWidget(
       child: DefaultTabController(
         length: 2,
-        child: Column(
-          children: [
-            TabBar(
-              labelColor: ClonesColors.secondary,
-              unselectedLabelColor: ClonesColors.secondaryText,
-              dividerColor: ClonesColors.secondary,
-              tabs: const [
-                Tab(text: 'Editor'),
-                Tab(text: 'Events'),
+        child: Builder(
+          builder: (context) {
+            return Column(
+              children: [
+                TabBar(
+                  labelColor: ClonesColors.secondary,
+                  unselectedLabelColor: ClonesColors.secondaryText,
+                  dividerColor: ClonesColors.secondary,
+                  onTap: (index) {
+                    if (index == 1 && !_hasViewedEventsTab) {
+                      setState(() {
+                        _hasViewedEventsTab = true;
+                      });
+                    }
+                  },
+                  tabs: const [
+                    Tab(text: 'Editor'),
+                    Tab(text: 'Events'),
+                  ],
+                ),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      const DemoDetailEditor(),
+                      // Lazy load Events tab - only build after first click
+                      _hasViewedEventsTab
+                          ? const DemoDetailEvents()
+                          : const Center(
+                              child: CircularProgressIndicator(
+                                color: ClonesColors.primary,
+                                strokeWidth: 1,
+                              ),
+                            ),
+                    ],
+                  ),
+                ),
               ],
-            ),
-            const Expanded(
-              child: TabBarView(
-                children: [
-                  DemoDetailEditor(),
-                  DemoDetailEvents(),
-                ],
-              ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );

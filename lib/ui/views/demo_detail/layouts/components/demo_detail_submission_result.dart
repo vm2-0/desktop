@@ -235,7 +235,7 @@ class _DemoDetailSubmissionResultState
                               Expanded(
                                 child: AppText(
                                   text: item['description'] ?? '',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                  style: theme.textTheme.bodySmall?.copyWith(
                                     height: 1.4,
                                   ),
                                 ),
