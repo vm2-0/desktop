@@ -13,6 +13,7 @@ import 'package:clones_desktop/ui/views/demo_detail/layouts/demo_detail_view.dar
 import 'package:clones_desktop/ui/views/factory/layouts/factory_view.dart';
 import 'package:clones_desktop/ui/views/factory_history/layouts/factory_history_view.dart';
 import 'package:clones_desktop/ui/views/forge/layouts/forge_view.dart';
+import 'package:clones_desktop/ui/views/forge_detail/layouts/forge_factory_datasets_tab.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/forge_factory_demos_tab.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/forge_factory_detail_shell.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/forge_factory_general_tab.dart';
@@ -121,6 +122,14 @@ final _router = GoRouter(
               pageBuilder: (context, state) {
                 return const NoTransitionPage(
                   child: ForgeFactoryDemonstrationsTab(),
+                );
+              },
+            ),
+            GoRoute(
+              path: '/forge/:id/datasets',
+              pageBuilder: (context, state) {
+                return const NoTransitionPage(
+                  child: ForgeFactoryDatasetsTab(),
                 );
               },
             ),

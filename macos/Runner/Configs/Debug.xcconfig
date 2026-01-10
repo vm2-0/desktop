@@ -1,2 +1,9 @@
 #include "../../Flutter/Flutter-Debug.xcconfig"
 #include "Warnings.xcconfig"
+
+// Fix for Xcode 16 - Explicitly unset non-macOS deployment targets
+IPHONEOS_DEPLOYMENT_TARGET =
+TVOS_DEPLOYMENT_TARGET =
+WATCHOS_DEPLOYMENT_TARGET =
+XROS_DEPLOYMENT_TARGET =
+DRIVERKIT_DEPLOYMENT_TARGET =

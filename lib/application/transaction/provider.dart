@@ -87,6 +87,69 @@ class TransactionManager extends _$TransactionManager {
     }
   }
 
+  Future<void> createDataset({
+    required String datasetId,
+    required String name,
+    required String symbol,
+    required int burnThresholdPercentage,
+    required String creator,
+  }) async {
+    try {
+      state = state.copyWith(isLoading: true);
+      final apiClient = ref.read(apiClientProvider);
+
+      final session = ref.read(sessionNotifierProvider);
+      final connectionToken = session.connectionToken;
+
+      if (connectionToken == null) {
+        throw Exception(
+          'No wallet connection found. Please connect your wallet first.',
+        );
+      }
+
+      final response = await apiClient.post<Map<String, dynamic>>(
+        '/transaction/prepare-tx',
+        data: {
+          'type': 'createDataset',
+          'sessionToken': connectionToken,
+          'datasetId': datasetId,
+          'creator': creator,
+          'name': name,
+          'symbol': symbol,
+          'burnThresholdPercentage': burnThresholdPercentage,
+        },
+      );
+
+      final sessionId = response['sessionId'] as String;
+
+      // Generate website URL with session ID for transaction execution
+      final url =
+          '${Env.apiWebsiteUrl}/wallet/transaction?sessionId=$sessionId';
+
+      if (!await launchUrl(
+        Uri.parse(url),
+        mode: LaunchMode.externalApplication,
+      )) {
+        throw Exception('Failed to launch URL: $url');
+      }
+
+      // Start polling for transaction status
+      _startTransactionPolling(sessionId);
+
+      state = state.copyWith(
+        isLoading: false,
+        awaitingCallback: true,
+        currentTransactionType: 'createDataset',
+        currentSessionId: sessionId,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Failed to create dataset: $e',
+      );
+    }
+  }
+
   /// Create and fund a factory transaction workflow (atomic operation)
   Future<void> createAndFundPool({
     required String token,

@@ -14,6 +14,8 @@ import 'package:clones_desktop/ui/components/modals/permissions_modal.dart';
 import 'package:clones_desktop/ui/components/modals/privacy_modal.dart';
 import 'package:clones_desktop/ui/components/modals/upload_progress_modal.dart';
 import 'package:clones_desktop/ui/components/modals/wallet_modal.dart';
+import 'package:clones_desktop/ui/views/create_dataset/bloc/provider.dart';
+import 'package:clones_desktop/ui/views/create_dataset/layouts/create_dataset_modal_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -31,6 +33,9 @@ class ModalsManagement extends ConsumerWidget {
         ref.watch(factoryWithdrawModalNotifierProvider).isShown;
     final showClaimRewardModal =
         ref.watch(claimRewardModalNotifierProvider).isShown;
+    final showCreateDatasetModal = ref.watch(
+      createDatasetNotifierProvider.select((s) => s.demoHashes != null),
+    );
     final gasAlertState = ref.watch(gasAlertProvider);
     final showPrivacyModal = ref.watch(privacyModalProvider);
     final showPermissionsModal = ref.watch(permissionsModalProvider);
@@ -53,6 +58,7 @@ class ModalsManagement extends ConsumerWidget {
           if (showFactoryFundsModal) const FactoryFundsModal(),
           if (showFactoryWithdrawModal) const FactoryWithdrawModal(),
           if (showClaimRewardModal) const ClaimRewardModal(),
+          if (showCreateDatasetModal) const CreateDatasetModalContainer(),
           if (showPrivacyModal) const PrivacyModal(),
           if (showPermissionsModal) const PermissionsModal(),
           if (gasAlertState.isVisible && gasAlertState.currentAlert != null)

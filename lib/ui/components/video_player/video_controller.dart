@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:clones_desktop/ui/components/video_player/video_state.dart';
-import 'package:flutter/foundation.dart';
 
 /// Exception for video controller errors
 class VideoControllerException implements Exception {

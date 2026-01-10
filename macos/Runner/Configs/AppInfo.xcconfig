@@ -12,3 +12,11 @@ PRODUCT_BUNDLE_IDENTIFIER = ai.clones
 
 // The copyright displayed in the application's About box.
 PRODUCT_COPYRIGHT = Copyright © 2025 Clones AI. All rights reserved.
+
+// Fix for Xcode 16 - Only macOS deployment target should be set
+MACOSX_DEPLOYMENT_TARGET = 15.0
+IPHONEOS_DEPLOYMENT_TARGET =
+TVOS_DEPLOYMENT_TARGET =
+WATCHOS_DEPLOYMENT_TARGET =
+XROS_DEPLOYMENT_TARGET =
+DRIVERKIT_DEPLOYMENT_TARGET =
