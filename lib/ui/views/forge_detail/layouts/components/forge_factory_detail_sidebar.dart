@@ -50,6 +50,12 @@ class _ForgeFactoryDetailSidebarState
         label: 'Demos',
         key: 'demos',
       ),
+      SidebarButtonData(
+        path: '/forge/${widget.poolId}/datasets',
+        imagePath: Assets.factoryDatasetsIcon,
+        label: 'Datasets',
+        key: 'datasets',
+      ),
     ];
 
     var activeIndex = buttons.indexWhere((b) => b.key == currentTab);

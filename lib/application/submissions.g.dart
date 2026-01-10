@@ -637,7 +637,7 @@ class _GetDemoFileAsBase64ProviderElement
 }
 
 String _$paginatedSubmissionsNotifierHash() =>
-    r'9ea7869b33790047768f1204d2814bc0a5288223';
+    r'529e54a8931d06e20f397293fa74437d03c7f15a';
 
 /// See also [PaginatedSubmissionsNotifier].
 @ProviderFor(PaginatedSubmissionsNotifier)

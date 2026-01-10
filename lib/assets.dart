@@ -36,6 +36,8 @@ class Assets {
       '${assetIconsFolder}factory_tasks_icon.png';
   static const String factoryDemosIcon =
       '${assetIconsFolder}factory_demos_icon.png';
+  static const String factoryDatasetsIcon =
+      '${assetIconsFolder}factory_datasets_icon.png';
 
   // Menu
   static const String menuFarm = '${assetMenuFolder}farmer_menu.png';
