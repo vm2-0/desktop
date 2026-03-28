@@ -1,4 +1,5 @@
 import 'package:clones_desktop/ui/components/video_player/axtree_overlay.dart';
+import 'package:clones_desktop/ui/components/video_player/blur_preview_overlay.dart';
 import 'package:clones_desktop/ui/components/video_player/video_controller.dart';
 import 'package:clones_desktop/ui/components/video_player/video_controller_impl.dart';
 import 'package:clones_desktop/ui/components/video_player/video_player_interface.dart';
@@ -175,6 +176,27 @@ class _VideoPlayerState extends ConsumerVideoPlayerState<VideoPlayer>
                     recordingResolution: Size(
                       recording?.primaryMonitor.width.toDouble() ?? 1920,
                       recording?.primaryMonitor.height.toDouble() ?? 1080,
+                    ),
+                  ),
+                ),
+              ),
+
+            // Blur regions preview overlay
+            if (demoDetail.blurRegions.isNotEmpty)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: BlurPreviewOverlay(
+                    blurRegions: demoDetail.blurRegions,
+                    currentTimeMs: videoState.currentPosition.inMilliseconds.toDouble(),
+                    videoSize: Size(
+                      videoController.rect.value?.width ?? 1920,
+                      videoController.rect.value?.height ?? 1080,
+                    ),
+                    recordingResolution: Size(
+                      demoDetail.recording?.primaryMonitor.width.toDouble() ??
+                          1920,
+                      demoDetail.recording?.primaryMonitor.height.toDouble() ??
+                          1080,
                     ),
                   ),
                 ),
